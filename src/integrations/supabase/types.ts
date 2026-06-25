@@ -787,14 +787,60 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_audit: {
+        Row: {
+          action: string
+          admin_email: string | null
+          admin_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          new_status: string
+          previous_status: string | null
+          withdrawal_id: string
+        }
+        Insert: {
+          action: string
+          admin_email?: string | null
+          admin_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          previous_status?: string | null
+          withdrawal_id: string
+        }
+        Update: {
+          action?: string
+          admin_email?: string | null
+          admin_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          previous_status?: string | null
+          withdrawal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_audit_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawals: {
         Row: {
+          admin_comment: string | null
           admin_note: string | null
           amount_usd: number
           created_at: string
           id: string
           network: string
           processed_at: string | null
+          processed_by: string | null
           status: string
           tx_hash: string | null
           updated_at: string
@@ -802,12 +848,14 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          admin_comment?: string | null
           admin_note?: string | null
           amount_usd: number
           created_at?: string
           id?: string
           network: string
           processed_at?: string | null
+          processed_by?: string | null
           status?: string
           tx_hash?: string | null
           updated_at?: string
@@ -815,12 +863,14 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          admin_comment?: string | null
           admin_note?: string | null
           amount_usd?: number
           created_at?: string
           id?: string
           network?: string
           processed_at?: string | null
+          processed_by?: string | null
           status?: string
           tx_hash?: string | null
           updated_at?: string
@@ -856,6 +906,16 @@ export type Database = {
       }
     }
     Functions: {
+      handle_redirect_click: {
+        Args: {
+          _is_bot: boolean
+          _link_id: string
+          _routed_to: string
+          _ua: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -863,6 +923,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_messages_read: { Args: { _ids: string[] }; Returns: number }
       record_bot_fingerprint: {
         Args: {
           _block_threshold?: number
