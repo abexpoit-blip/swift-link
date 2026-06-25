@@ -43,7 +43,7 @@ export const Route = createFileRoute("/r/$slug")({
             .update({ bot_clicks_count: 1 + 0 })
             .eq("id", link.id);
           // increment via RPC-less: re-fetch then update with +1 to avoid race? simpler: use a SQL increment
-          await supabaseAdmin.rpc("record_redirect_click" as never, {
+          await (supabaseAdmin.rpc as any)("record_redirect_click", {
             _link_id: link.id,
             _user_id: link.user_id,
             _ip: null,
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // Human click: record into existing clicks table + earnings ledger
-        await supabaseAdmin.rpc("record_redirect_click" as never, {
+        await (supabaseAdmin.rpc as any)("record_redirect_click", {
           _link_id: link.id,
           _user_id: link.user_id,
           _ip: null,
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/r/$slug")({
           _challenge_passed: true,
         });
 
-        await supabaseAdmin.rpc("record_earning_click" as never, {
+        await (supabaseAdmin.rpc as any)("record_earning_click", {
           _user_id: link.user_id,
           _link_id: link.id,
         });
