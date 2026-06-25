@@ -1,0 +1,56 @@
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
+import appCss from "@/styles.css?url";
+
+interface RouterCtx {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterCtx>()({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Swift Link — Advanced URL Shortener" },
+      {
+        name: "description",
+        content:
+          "Fast, intelligent URL shortener with bot filtering, geo-targeting, and detailed click analytics.",
+      },
+    ],
+    links: [{ rel: "stylesheet", href: appCss }],
+  }),
+  shellComponent: RootDocument,
+  notFoundComponent: () => (
+    <main className="min-h-screen flex items-center justify-center p-6 text-center">
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">404</h1>
+        <p className="text-muted-foreground">Page not found.</p>
+      </div>
+    </main>
+  ),
+});
+
+function RootDocument({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <QueryClientProvider client={new QueryClient()}>
+          <Outlet />
+          {children}
+          <Toaster richColors position="top-right" />
+        </QueryClientProvider>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
