@@ -337,8 +337,10 @@ function EarningsCalculator() {
         </div>
 
         <p className="text-xs text-center text-muted-foreground mt-6">
-          Based on a flat rate of <strong className="text-foreground">$1 per 100,000 real visits</strong>.
-          Bot traffic is filtered automatically.
+        <p className="text-xs text-center text-muted-foreground mt-6 leading-relaxed">
+          Flat rate: <strong className="text-foreground">$1 per 100,000 real visits</strong> · Adsterra share:{" "}
+          <strong className="text-foreground">200 of every 5,000 clicks (4%)</strong> · Minimum withdrawal:{" "}
+          <strong className="text-foreground">$25 USDT (TRC20 / BEP20)</strong>. Bot traffic auto-filtered.
         </p>
       </div>
     </section>
