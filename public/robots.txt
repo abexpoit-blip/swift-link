@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /control-panel
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /funnel
+Disallow: /domains
+Disallow: /links/
+Disallow: /r/
+
+# Sitemap is generated dynamically per host — sleepox.com/sitemap.xml lists
+# sleepox.com URLs, breezysocial.com/sitemap.xml lists breezysocial.com URLs.
+Sitemap: https://sleepox.com/sitemap.xml
+Sitemap: https://breezysocial.com/sitemap.xml
