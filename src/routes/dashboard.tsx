@@ -203,6 +203,7 @@ function DashboardPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium">Dashboard</Link>
+            <Link to="/inbox" className="text-muted-foreground hover:text-foreground">Inbox</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
           </nav>
           <div className="flex items-center gap-3">

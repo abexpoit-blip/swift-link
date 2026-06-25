@@ -469,6 +469,62 @@ export type Database = {
         }
         Relationships: []
       }
+      message_reads: {
+        Row: {
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_broadcast: boolean
+          recipient_id: string | null
+          sender_id: string | null
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          recipient_id?: string | null
+          sender_id?: string | null
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          recipient_id?: string | null
+          sender_id?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           click_quota: number | null
@@ -844,6 +900,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      unread_message_count: { Args: { _user_id: string }; Returns: number }
     }
     Enums: {
       app_role: "user" | "admin"
