@@ -1,11 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Public shortener redirect.
-// GET /r/<short_code>
-// - Looks up the link via the service-role admin client (bypasses RLS).
-// - Naively classifies obvious bots by UA; only human clicks count toward earnings.
-// - Records the click into the earnings ledger via record_earning_click().
-// - 302s to the destination URL.
+// Per-isolate link cache: avoids hitting DB for repeat short codes.
+// Survives across requests on the same Worker isolate (~minutes).
+type CachedLink = {
+  id: string;
+  user_id: string;
+  adsterra_url: string;
+  safe_url: string | null;
+  is_active: boolean;
+  expires: number;
+};
+const LINK_CACHE = new Map<string, CachedLink>();
+const CACHE_TTL_MS = 60_000; // 60s — short enough to honour deletes/edits
+const CACHE_MAX = 1000;
+
+const BOT_RE =
+  /bot|crawler|spider|crawling|preview|facebookexternalhit|whatsapp|telegrambot|slackbot|discordbot|headlesschrome|phantomjs|curl|wget|python-requests|httpclient|axios\//i;
+
 export const Route = createFileRoute("/r/$slug")({
   server: {
     handlers: {
@@ -13,85 +24,68 @@ export const Route = createFileRoute("/r/$slug")({
         const slug = String(params.slug || "").slice(0, 64);
         if (!slug) return new Response("Not found", { status: 404 });
 
+        const now = Date.now();
+        let link = LINK_CACHE.get(slug);
+        if (link && link.expires < now) {
+          LINK_CACHE.delete(slug);
+          link = undefined;
+        }
+
+        if (!link) {
+          const { supabaseAdmin } = await import(
+            "@/integrations/supabase/client.server"
+          );
+          const { data, error } = await supabaseAdmin
+            .from("links")
+            .select("id, user_id, adsterra_url, safe_url, is_active")
+            .eq("short_code", slug)
+            .maybeSingle();
+
+          if (error || !data || !data.is_active) {
+            return new Response("Link not found", {
+              status: 404,
+              headers: { "content-type": "text/plain", "cache-control": "public, max-age=30" },
+            });
+          }
+
+          link = { ...data, expires: now + CACHE_TTL_MS };
+          if (LINK_CACHE.size >= CACHE_MAX) {
+            // simple eviction: drop oldest
+            const firstKey = LINK_CACHE.keys().next().value;
+            if (firstKey) LINK_CACHE.delete(firstKey);
+          }
+          LINK_CACHE.set(slug, link);
+        }
+
+        const ua = (request.headers.get("user-agent") || "").toLowerCase();
+        const isBot = !ua || BOT_RE.test(ua);
+        const target = (isBot && link.safe_url) || link.adsterra_url;
+
+        // Single combined RPC: insert click + earnings in one DB roundtrip.
+        // Imported lazily so the module isn't bundled on the client.
         const { supabaseAdmin } = await import(
           "@/integrations/supabase/client.server"
         );
 
-        const { data: link, error } = await supabaseAdmin
-          .from("links")
-          .select("id, user_id, adsterra_url, safe_url, is_active")
-          .eq("short_code", slug)
-          .maybeSingle();
-
-        if (error || !link || !link.is_active) {
-          return new Response("Link not found", {
-            status: 404,
-            headers: { "content-type": "text/plain" },
-          });
-        }
-
-        const ua = (request.headers.get("user-agent") || "").toLowerCase();
-        const isBot =
-          !ua ||
-          /bot|crawler|spider|crawling|preview|facebookexternalhit|whatsapp|telegrambot|slackbot|discordbot|headlesschrome|phantomjs|curl|wget|python-requests|httpclient|axios\//i.test(
-            ua,
-          );
-
-        if (isBot) {
-          await supabaseAdmin
-            .from("links")
-            .update({ bot_clicks_count: 1 + 0 })
-            .eq("id", link.id);
-          // increment via RPC-less: re-fetch then update with +1 to avoid race? simpler: use a SQL increment
-          await (supabaseAdmin.rpc as any)("record_redirect_click", {
-            _link_id: link.id,
-            _user_id: link.user_id,
-            _ip: null,
-            _country: null,
-            _ua: ua,
-            _is_bot: true,
-            _bot_reason: "ua",
-            _routed_to: link.safe_url,
-            _utm_source: null,
-            _utm_medium: null,
-            _utm_campaign: null,
-            _utm_term: null,
-            _utm_content: null,
-            _referer_host: null,
-            _bot_score: 100,
-            _signals: {},
-            _challenge_passed: false,
-          });
-          return Response.redirect(link.safe_url || link.adsterra_url, 302);
-        }
-
-        // Human click: record into existing clicks table + earnings ledger
-        await (supabaseAdmin.rpc as any)("record_redirect_click", {
+        // Fire the write but don't block the redirect on it — user gets
+        // the 302 immediately. The promise still runs to completion on
+        // the worker; we just don't await it.
+        void (supabaseAdmin.rpc as any)("handle_redirect_click", {
           _link_id: link.id,
           _user_id: link.user_id,
-          _ip: null,
-          _country: null,
+          _is_bot: isBot,
           _ua: ua,
-          _is_bot: false,
-          _bot_reason: null,
-          _routed_to: link.adsterra_url,
-          _utm_source: null,
-          _utm_medium: null,
-          _utm_campaign: null,
-          _utm_term: null,
-          _utm_content: null,
-          _referer_host: null,
-          _bot_score: 0,
-          _signals: {},
-          _challenge_passed: true,
+          _routed_to: target,
         });
 
-        await (supabaseAdmin.rpc as any)("record_earning_click", {
-          _user_id: link.user_id,
-          _link_id: link.id,
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: target,
+            "cache-control": "no-store",
+            "referrer-policy": "no-referrer",
+          },
         });
-
-        return Response.redirect(link.adsterra_url, 302);
       },
     },
   },
