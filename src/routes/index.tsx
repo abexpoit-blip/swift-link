@@ -188,12 +188,12 @@ function HowItWorks() {
     {
       icon: Users,
       title: "Share it everywhere",
-      desc: "Drop it on Facebook, Telegram channels, Twitter, your blog. Every real visit counts.",
+      desc: "Drop it on Facebook, Telegram channels, Twitter, your blog. Every real human visit counts toward earnings.",
     },
     {
       icon: Wallet,
       title: "Cash out in crypto",
-      desc: "Hit $25 in earnings and withdraw to your USDT (TRC20/BEP20) wallet — usually within 24 hours.",
+      desc: "Hit $25 in earnings and withdraw to your USDT (TRC20 / BEP20) wallet — processed within 24 hours.",
     },
   ];
   return (
@@ -207,7 +207,7 @@ function HowItWorks() {
         </h2>
       </div>
 
-      <div className="relative grid md:grid-cols-3 gap-6">
+      <div className="relative grid md:grid-cols-3 gap-6 mb-12">
         <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
         {steps.map((s, i) => (
           <div
@@ -224,6 +224,49 @@ function HowItWorks() {
             <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* Transparent earnings policy */}
+      <div className="max-w-4xl mx-auto rounded-2xl border border-primary/30 bg-primary/5 p-7 md:p-9">
+        <div className="flex items-center gap-2 mb-4">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          <h3 className="font-display text-lg font-semibold">Our earnings policy — fully transparent</h3>
+        </div>
+        <div className="grid md:grid-cols-3 gap-5 text-sm">
+          <div className="rounded-xl bg-card border border-border p-5">
+            <div className="font-mono text-xs text-muted-foreground mb-1">PER 5,000 CLICKS</div>
+            <div className="font-display text-2xl font-bold mb-1">
+              <span className="text-gradient">4,800</span> yours
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Out of every 5,000 real visits, <strong className="text-foreground">200 clicks (4%)</strong> are
+              routed through Adsterra — that's how we cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
+            </p>
+          </div>
+          <div className="rounded-xl bg-card border border-border p-5">
+            <div className="font-mono text-xs text-muted-foreground mb-1">PAYOUT RATE</div>
+            <div className="font-display text-2xl font-bold mb-1">
+              <span className="text-gradient">$1</span> / 100K
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              You earn <strong className="text-foreground">$1 for every 100,000 real visits</strong> sent through your short links.
+              Flat global rate — same for every country, no hidden tiers.
+            </p>
+          </div>
+          <div className="rounded-xl bg-card border border-border p-5">
+            <div className="font-mono text-xs text-muted-foreground mb-1">MIN WITHDRAWAL</div>
+            <div className="font-display text-2xl font-bold mb-1">
+              <span className="text-gradient">$25</span> USDT
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Request a withdrawal once your balance hits <strong className="text-foreground">$25</strong>.
+              Paid in USDT (<strong className="text-foreground">TRC20 or BEP20</strong>) within 24 hours.
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-5 text-center">
+          Bot traffic is filtered automatically — only verified human visits count toward your earnings.
+        </p>
       </div>
     </section>
   );
