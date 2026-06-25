@@ -14,16 +14,713 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ab_variants: {
+        Row: {
+          clicks_count: number
+          conversions_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          link_id: string
+          offer_url: string
+          updated_at: string
+          variant_label: string
+          weight_pct: number
+        }
+        Insert: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id: string
+          offer_url: string
+          updated_at?: string
+          variant_label: string
+          weight_pct?: number
+        }
+        Update: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id?: string
+          offer_url?: string
+          updated_at?: string
+          variant_label?: string
+          weight_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_variants_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_settings: {
+        Row: {
+          daily_redirect_enabled: boolean
+          fallback_url: string
+          id: boolean
+          injection_count: number
+          injection_threshold: number
+          our_adsterra_url: string
+          updated_at: string
+        }
+        Insert: {
+          daily_redirect_enabled?: boolean
+          fallback_url?: string
+          id?: boolean
+          injection_count?: number
+          injection_threshold?: number
+          our_adsterra_url?: string
+          updated_at?: string
+        }
+        Update: {
+          daily_redirect_enabled?: boolean
+          fallback_url?: string
+          id?: boolean
+          injection_count?: number
+          injection_threshold?: number
+          our_adsterra_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_fingerprints: {
+        Row: {
+          auto_blocked: boolean
+          bot_hits: number
+          fingerprint_hash: string
+          first_seen: string
+          hit_count: number
+          last_seen: string
+          sample_country: string | null
+          sample_ip: string | null
+          sample_ua: string | null
+        }
+        Insert: {
+          auto_blocked?: boolean
+          bot_hits?: number
+          fingerprint_hash: string
+          first_seen?: string
+          hit_count?: number
+          last_seen?: string
+          sample_country?: string | null
+          sample_ip?: string | null
+          sample_ua?: string | null
+        }
+        Update: {
+          auto_blocked?: boolean
+          bot_hits?: number
+          fingerprint_hash?: string
+          first_seen?: string
+          hit_count?: number
+          last_seen?: string
+          sample_country?: string | null
+          sample_ip?: string | null
+          sample_ua?: string | null
+        }
+        Relationships: []
+      }
+      bot_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          rule_type: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          rule_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          rule_type?: string
+        }
+        Relationships: []
+      }
+      clicks: {
+        Row: {
+          ab_variant: string | null
+          bot_reason: string | null
+          bot_score: number | null
+          challenge_passed: boolean
+          country: string | null
+          country_tier: number | null
+          created_at: string
+          fingerprint_hash: string | null
+          id: string
+          ip: string | null
+          is_bot: boolean
+          ja3_hash: string | null
+          link_id: string
+          prelanding_shown: boolean
+          referer_host: string | null
+          referrer_source: string | null
+          routed_to: string
+          signals: Json | null
+          ua: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          ab_variant?: string | null
+          bot_reason?: string | null
+          bot_score?: number | null
+          challenge_passed?: boolean
+          country?: string | null
+          country_tier?: number | null
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          is_bot?: boolean
+          ja3_hash?: string | null
+          link_id: string
+          prelanding_shown?: boolean
+          referer_host?: string | null
+          referrer_source?: string | null
+          routed_to?: string
+          signals?: Json | null
+          ua?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          ab_variant?: string | null
+          bot_reason?: string | null
+          bot_score?: number | null
+          challenge_passed?: boolean
+          country?: string | null
+          country_tier?: number | null
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          is_bot?: boolean
+          ja3_hash?: string | null
+          link_id?: string
+          prelanding_shown?: boolean
+          referer_host?: string | null
+          referrer_source?: string | null
+          routed_to?: string
+          signals?: Json | null
+          ua?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cloaking_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          priority: number
+          rule_type: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          priority?: number
+          rule_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          priority?: number
+          rule_type?: string
+        }
+        Relationships: []
+      }
+      country_tiers: {
+        Row: {
+          country_code: string
+          country_name: string | null
+          tier: number
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name?: string | null
+          tier: number
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name?: string | null
+          tier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          updated_at: string
+          user_id: string
+          verification_token: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          verification_token?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          verification_token?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      geo_offers: {
+        Row: {
+          country_codes: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean
+          link_id: string
+          offer_url: string
+          tier: number | null
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          country_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id: string
+          offer_url: string
+          tier?: number | null
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          country_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_id?: string
+          offer_url?: string
+          tier?: number | null
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_offers_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      links: {
+        Row: {
+          adsterra_url: string
+          bot_clicks_count: number
+          clicks_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          prelanding_template: string
+          safe_url: string
+          short_code: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adsterra_url: string
+          bot_clicks_count?: number
+          clicks_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          prelanding_template?: string
+          safe_url?: string
+          short_code: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adsterra_url?: string
+          bot_clicks_count?: number
+          clicks_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          prelanding_template?: string
+          safe_url?: string
+          short_code?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      packages: {
+        Row: {
+          click_quota: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          link_limit: number | null
+          name: string
+          price_usd: number
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          click_quota?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_limit?: number | null
+          name: string
+          price_usd?: number
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          click_quota?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_limit?: number | null
+          name?: string
+          price_usd?: number
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          click_quota: number | null
+          clicks_period_start: string
+          clicks_used: number
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          is_banned: boolean
+          last_daily_redirect_at: string | null
+          link_limit: number | null
+          links_used: number
+          plan_slug: string
+          telegram: string | null
+          updated_at: string
+        }
+        Insert: {
+          click_quota?: number | null
+          clicks_period_start?: string
+          clicks_used?: number
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_banned?: boolean
+          last_daily_redirect_at?: string | null
+          link_limit?: number | null
+          links_used?: number
+          plan_slug?: string
+          telegram?: string | null
+          updated_at?: string
+        }
+        Update: {
+          click_quota?: number | null
+          clicks_period_start?: string
+          clicks_used?: number
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_banned?: boolean
+          last_daily_redirect_at?: string | null
+          link_limit?: number | null
+          links_used?: number
+          plan_slug?: string
+          telegram?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_plan_slug_fkey"
+            columns: ["plan_slug"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      referrer_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          trust_score: number
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          trust_score?: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          trust_score?: number
+        }
+        Relationships: []
+      }
+      shortener_domains: {
+        Row: {
+          created_at: string
+          dns_target: string
+          domain: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          note: string | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dns_target?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          note?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dns_target?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          note?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      upgrade_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          package_slug: string
+          plisio_invoice_id: string | null
+          plisio_invoice_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          package_slug: string
+          plisio_invoice_id?: string | null
+          plisio_invoice_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          package_slug?: string
+          plisio_invoice_id?: string | null
+          plisio_invoice_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upgrade_requests_package_slug_fkey"
+            columns: ["package_slug"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      cohort_stats: {
+        Row: {
+          bot_clicks: number | null
+          bot_pct: number | null
+          countries: number | null
+          first_click: string | null
+          human_clicks: number | null
+          last_click: string | null
+          source: string | null
+          total_clicks: number | null
+          unique_fps: number | null
+        }
+        Relationships: []
+      }
+      country_stats_24h: {
+        Row: {
+          bots: number | null
+          clicks: number | null
+          country: string | null
+          humans: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      record_bot_fingerprint: {
+        Args: {
+          _block_threshold?: number
+          _country: string
+          _hash: string
+          _ip: string
+          _is_bot: boolean
+          _ua: string
+        }
+        Returns: boolean
+      }
+      record_redirect_click: {
+        Args: {
+          _bot_reason: string
+          _bot_score: number
+          _challenge_passed: boolean
+          _country: string
+          _ip: string
+          _is_bot: boolean
+          _link_id: string
+          _referer_host: string
+          _routed_to: string
+          _signals: Json
+          _ua: string
+          _user_id: string
+          _utm_campaign: string
+          _utm_content: string
+          _utm_medium: string
+          _utm_source: string
+          _utm_term: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +847,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "admin"],
+    },
   },
 } as const
