@@ -1,6 +1,5 @@
 import {
   HeadContent,
-  Outlet,
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
@@ -53,7 +52,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={new QueryClient()}>
-          <Outlet />
           {children}
           <Toaster richColors position="top-right" />
         </QueryClientProvider>
