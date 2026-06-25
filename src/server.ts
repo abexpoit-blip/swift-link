@@ -1,8 +1,3 @@
-import "./lib/error-capture";
-
-import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
-
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -12,28 +7,47 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => (m.default ?? m) as ServerEntry,
+      (m) => (m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry),
     );
   }
   return serverEntryPromise;
 }
 
-// h3 swallows in-handler throws into a normal 500 Response with body
-// {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
-  if (response.status < 500) return response;
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) return response;
+// Security headers applied to every response (improves domain trust score).
+// Note: do NOT set X-Frame-Options on /r/* article responses for FB crawler — FB embeds in iframe.
+function applySecurityHeaders(request: Request, response: Response): Response {
+  const url = new URL(request.url);
+  const headers = new Headers(response.headers);
 
-  const body = await response.clone().text();
-  if (!body.includes('"unhandled":true') || !body.includes('"message":"HTTPError"')) {
-    return response;
+  // Always-on baseline
+  if (!headers.has("strict-transport-security")) {
+    headers.set("strict-transport-security", "max-age=31536000; includeSubDomains; preload");
+  }
+  if (!headers.has("x-content-type-options")) {
+    headers.set("x-content-type-options", "nosniff");
+  }
+  if (!headers.has("referrer-policy")) {
+    headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  }
+  if (!headers.has("permissions-policy")) {
+    headers.set("permissions-policy", "geolocation=(), microphone=(), camera=(), payment=()");
+  }
+  if (!headers.has("x-xss-protection")) {
+    headers.set("x-xss-protection", "0");
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
-    status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+  // X-Frame-Options: skip for /r/* (cloaked article may be previewed in social iframes)
+  const isRedirectRoute = url.pathname.startsWith("/r/");
+  if (!isRedirectRoute && !headers.has("x-frame-options")) {
+    headers.set("x-frame-options", "SAMEORIGIN");
+  }
+
+  const nullBodyStatus = response.status === 204 || response.status === 205 || response.status === 304;
+
+  return new Response(nullBodyStatus ? null : response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
 }
 
@@ -42,13 +56,16 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return applySecurityHeaders(request, response);
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return applySecurityHeaders(
+        request,
+        new Response("Internal Server Error", {
+          status: 500,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        }),
+      );
     }
   },
 };

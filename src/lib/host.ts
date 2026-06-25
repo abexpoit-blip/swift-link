@@ -1,0 +1,33 @@
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+
+/**
+ * Returns the current request host (lowercased, no port), e.g. "breezysocial.com".
+ * Works on both server (reads x-forwarded-host / host header) and client
+ * (reads window.location.hostname). Used to switch the homepage between the
+ * Sleepox SaaS landing and the BreezySocial gadget storefront on the same app.
+ */
+export const getHost = createIsomorphicFn()
+  .server(() => {
+    try {
+      const req = getRequest();
+      const raw =
+        req.headers.get("x-forwarded-host") ||
+        req.headers.get("host") ||
+        "";
+      return raw.split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+    } catch {
+      return "";
+    }
+  })
+  .client(() => {
+    if (typeof window === "undefined") return "";
+    return window.location.hostname.toLowerCase();
+  });
+
+export type SiteVariant = "breezysocial" | "sleepox";
+
+export function variantFromHost(host: string): SiteVariant {
+  if (host.includes("breezysocial")) return "breezysocial";
+  return "sleepox";
+}
