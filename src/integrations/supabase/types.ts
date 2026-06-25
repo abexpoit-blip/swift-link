@@ -333,6 +333,53 @@ export type Database = {
         }
         Relationships: []
       }
+      earnings_ledger: {
+        Row: {
+          adsterra_clicks: number
+          created_at: string
+          day: string
+          earnings_usd: number
+          id: string
+          link_id: string | null
+          total_clicks: number
+          updated_at: string
+          user_clicks: number
+          user_id: string
+        }
+        Insert: {
+          adsterra_clicks?: number
+          created_at?: string
+          day?: string
+          earnings_usd?: number
+          id?: string
+          link_id?: string | null
+          total_clicks?: number
+          updated_at?: string
+          user_clicks?: number
+          user_id: string
+        }
+        Update: {
+          adsterra_clicks?: number
+          created_at?: string
+          day?: string
+          earnings_usd?: number
+          id?: string
+          link_id?: string | null
+          total_clicks?: number
+          updated_at?: string
+          user_clicks?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_ledger_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geo_offers: {
         Row: {
           country_codes: string[] | null
@@ -460,6 +507,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          balance_available: number
+          balance_withdrawn: number
           click_quota: number | null
           clicks_period_start: string
           clicks_used: number
@@ -476,6 +525,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          balance_available?: number
+          balance_withdrawn?: number
           click_quota?: number | null
           clicks_period_start?: string
           clicks_used?: number
@@ -492,6 +543,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          balance_available?: number
+          balance_withdrawn?: number
           click_quota?: number | null
           clicks_period_start?: string
           clicks_used?: number
@@ -651,6 +704,75 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wallets: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          label: string | null
+          network: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          network: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          network?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          admin_note: string | null
+          amount_usd: number
+          created_at: string
+          id: string
+          network: string
+          processed_at: string | null
+          status: string
+          tx_hash: string | null
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_usd: number
+          created_at?: string
+          id?: string
+          network: string
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_usd?: number
+          created_at?: string
+          id?: string
+          network?: string
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       cohort_stats: {
@@ -695,6 +817,10 @@ export type Database = {
           _ua: string
         }
         Returns: boolean
+      }
+      record_earning_click: {
+        Args: { _link_id: string; _user_id: string }
+        Returns: undefined
       }
       record_redirect_click: {
         Args: {
