@@ -120,49 +120,59 @@ function LeaderboardPage() {
 
         {/* Leaderboard table */}
         <div className="max-w-4xl mx-auto rounded-2xl border border-border bg-card overflow-hidden shadow-card">
-          <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-border/60 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-            <div>#</div>
-            <div>Publisher</div>
-            <div className="text-right">Traffic / day</div>
-            <div className="text-right">Earnings</div>
-            <div className="text-right">Withdrawn</div>
+          {/* Mobile cards */}
+          <div className="sm:hidden divide-y divide-border/40">
+            {rows.map((r, i) => (
+              <div key={r.id} className="px-4 py-3 flex items-center gap-3">
+                <div className="w-6 shrink-0 text-center">
+                  {i === 0 ? <Trophy className="h-4 w-4 text-primary mx-auto" /> : <span className="font-mono text-xs text-muted-foreground">{i + 1}</span>}
+                </div>
+                <img src={flagUrl(r.country)} alt={r.country.toUpperCase()} loading="lazy" className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm truncate">{r.user}</div>
+                  <div className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
+                    {r.trend === 1 && <TrendingUp className="h-3 w-3 text-emerald-500" />}
+                    {r.trend === -1 && <TrendingDown className="h-3 w-3 text-rose-500" />}
+                    {r.traffic.toLocaleString()}/day
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-mono text-sm font-semibold text-gradient">${r.earnings.toFixed(2)}</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">${r.withdrawn.toFixed(2)} out</div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {rows.map((r, i) => (
-            <div
-              key={r.id}
-              className="grid grid-cols-[40px_1fr_1fr_1fr_1fr] gap-3 px-5 py-4 border-b border-border/40 last:border-b-0 items-center text-sm transition-colors hover:bg-secondary/30"
-            >
-              <div className="flex items-center">
-                {i === 0 ? (
-                  <Trophy className="h-4 w-4 text-primary" />
-                ) : (
-                  <span className="font-mono text-muted-foreground">{i + 1}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2.5 font-medium">
-                <img
-                  src={flagUrl(r.country)}
-                  alt={r.country.toUpperCase()}
-                  loading="lazy"
-                  className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0"
-                />
-                <span className="truncate">{r.user}</span>
-              </div>
-              <div className="text-right font-mono flex items-center justify-end gap-1.5">
-                {r.trend === 1 && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
-                {r.trend === -1 && <TrendingDown className="h-3.5 w-3.5 text-rose-500" />}
-                <span>{r.traffic.toLocaleString()}</span>
-              </div>
-              <div className="text-right font-mono text-gradient font-semibold">
-                ${r.earnings.toFixed(2)}
-              </div>
-              <div className="text-right font-mono">
-                ${r.withdrawn.toFixed(2)}
-              </div>
+          {/* Desktop grid */}
+          <div className="hidden sm:block">
+            <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-border/60 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+              <div>#</div>
+              <div>Publisher</div>
+              <div className="text-right">Traffic / day</div>
+              <div className="text-right">Earnings</div>
+              <div className="text-right">Withdrawn</div>
             </div>
-          ))}
+            {rows.map((r, i) => (
+              <div key={r.id} className="grid grid-cols-[40px_1fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-border/40 last:border-b-0 items-center text-sm transition-colors hover:bg-secondary/30">
+                <div className="flex items-center">
+                  {i === 0 ? <Trophy className="h-4 w-4 text-primary" /> : <span className="font-mono text-muted-foreground">{i + 1}</span>}
+                </div>
+                <div className="flex items-center gap-2.5 font-medium min-w-0">
+                  <img src={flagUrl(r.country)} alt={r.country.toUpperCase()} loading="lazy" className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0" />
+                  <span className="truncate">{r.user}</span>
+                </div>
+                <div className="text-right font-mono flex items-center justify-end gap-1.5">
+                  {r.trend === 1 && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                  {r.trend === -1 && <TrendingDown className="h-3.5 w-3.5 text-rose-500" />}
+                  <span>{r.traffic.toLocaleString()}</span>
+                </div>
+                <div className="text-right font-mono text-gradient font-semibold">${r.earnings.toFixed(2)}</div>
+                <div className="text-right font-mono">${r.withdrawn.toFixed(2)}</div>
+              </div>
+            ))}
+          </div>
         </div>
+
 
         <p className="text-xs text-center text-muted-foreground mt-6">
           Usernames are partially hidden for privacy. Numbers reflect verified human traffic only.
