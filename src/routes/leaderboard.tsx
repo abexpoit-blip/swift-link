@@ -97,26 +97,27 @@ function LeaderboardPage() {
         </div>
 
         {/* Totals bar */}
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 mb-8">
-          <div className="rounded-2xl glass-deep border border-border/60 p-5 text-center">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Combined daily traffic</div>
-            <div className="font-display text-2xl md:text-3xl font-bold mt-1">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
+          <div className="rounded-xl sm:rounded-2xl glass-deep border border-border/60 p-3 sm:p-5 text-center min-w-0">
+            <div className="text-[9px] sm:text-[11px] uppercase tracking-wider text-muted-foreground leading-tight">Daily traffic</div>
+            <div className="font-display text-base sm:text-2xl md:text-3xl font-bold mt-1 truncate">
               {totals.traffic.toLocaleString()}
             </div>
           </div>
-          <div className="rounded-2xl glass-deep border border-primary/40 p-5 text-center">
-            <div className="text-[11px] uppercase tracking-wider text-primary">Total earned</div>
-            <div className="font-display text-2xl md:text-3xl font-bold text-gradient mt-1">
-              ${totals.earnings.toFixed(2)}
+          <div className="rounded-xl sm:rounded-2xl glass-deep border border-primary/40 p-3 sm:p-5 text-center min-w-0">
+            <div className="text-[9px] sm:text-[11px] uppercase tracking-wider text-primary leading-tight">Total earned</div>
+            <div className="font-display text-base sm:text-2xl md:text-3xl font-bold text-gradient mt-1 truncate">
+              ${totals.earnings.toFixed(0)}
             </div>
           </div>
-          <div className="rounded-2xl glass-deep border border-border/60 p-5 text-center">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Total withdrawn</div>
-            <div className="font-display text-2xl md:text-3xl font-bold mt-1">
-              ${totals.withdrawn.toFixed(2)}
+          <div className="rounded-xl sm:rounded-2xl glass-deep border border-border/60 p-3 sm:p-5 text-center min-w-0">
+            <div className="text-[9px] sm:text-[11px] uppercase tracking-wider text-muted-foreground leading-tight">Withdrawn</div>
+            <div className="font-display text-base sm:text-2xl md:text-3xl font-bold mt-1 truncate">
+              ${totals.withdrawn.toFixed(0)}
             </div>
           </div>
         </div>
+
 
         {/* Leaderboard table */}
         <div className="max-w-4xl mx-auto rounded-2xl border border-border bg-card overflow-hidden shadow-card">
