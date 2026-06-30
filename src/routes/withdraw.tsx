@@ -22,7 +22,7 @@ export const Route = createFileRoute("/withdraw")({
   component: WithdrawPage,
   head: () => ({
     meta: [
-      { title: "Withdraw earnings — Linkly" },
+      { title: "Withdraw earnings — AdsPx" },
       {
         name: "description",
         content:
@@ -221,7 +221,7 @@ function WithdrawPage() {
       <header className="border-b border-border/60 glass sticky top-0 z-40">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to Linkly
+            <ArrowLeft className="h-4 w-4" /> Back to AdsPx
           </Link>
           <span className="font-display font-semibold">Withdraw</span>
         </div>

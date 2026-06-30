@@ -18,12 +18,13 @@ import {
   Banknote,
   ChevronDown,
 } from "lucide-react";
+import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "Linkly — Earn money from every link you share" },
+      { title: "AdsPx — Earn money from every link you share" },
       {
         name: "description",
         content:
@@ -56,11 +57,9 @@ function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 glass">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
-            <Link2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold text-lg tracking-tight">
-            Link<span className="text-gradient">ly</span>
+          <AdspxMark className="h-8 w-8" />
+          <span className="font-display font-bold text-lg tracking-tight">
+            Ads<span className="text-gradient">Px</span>
           </span>
           <span className="ml-2 hidden md:inline rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-accent-foreground">
             Earn
@@ -107,7 +106,7 @@ function Hero() {
             <span className="text-gradient">Get paid per click.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Linkly turns any URL into a paid short link. Share it on Facebook,
+            AdsPx turns any URL into a paid short link. Share it on Facebook,
             Telegram, YouTube — earn <strong className="text-foreground">$1 for every 100,000 visits</strong>.
             Withdraw in <strong className="text-foreground">USDT crypto</strong> from just $25.
           </p>
@@ -384,7 +383,7 @@ function FeatureGrid() {
     <section className="container mx-auto px-6 py-24">
       <div className="text-center mb-14 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          Why Linkly
+          Why AdsPx
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
           Built for <span className="text-gradient">people who share links</span>
@@ -603,11 +602,11 @@ function FaqStrip() {
       a: "No. We filter datacenter IPs, known bot networks, and suspicious patterns automatically. Only real visits add to your balance.",
     },
     {
-      q: "Where can I share my Linkly links?",
+      q: "Where can I share my AdsPx links?",
       a: "Anywhere your audience is — Facebook, Telegram, Twitter/X, YouTube, blog, WhatsApp groups. No platform restrictions.",
     },
     {
-      q: "Do I need a Linkly referral to sign up?",
+      q: "Do I need an AdsPx referral to sign up?",
       a: "No, signup is open and free. There is a referral program if you want to earn from inviting friends, but it's optional.",
     },
   ];
@@ -688,11 +687,9 @@ function SiteFooter() {
         <div className="grid md:grid-cols-4 gap-8 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-7 w-7 rounded-lg bg-primary-gradient grid place-items-center">
-                <Link2 className="h-3.5 w-3.5 text-primary-foreground" />
-              </div>
-              <span className="font-display font-semibold">
-                Link<span className="text-gradient">ly</span>
+              <AdspxMark className="h-7 w-7" glow={false} />
+              <span className="font-display font-bold">
+                Ads<span className="text-gradient">Px</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -719,7 +716,7 @@ function SiteFooter() {
           ))}
         </div>
         <div className="pt-6 border-t border-border/60 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} Linkly. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} AdsPx. All rights reserved.</div>
           <div>Built for creators worldwide ✦</div>
         </div>
       </div>

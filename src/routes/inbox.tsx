@@ -17,7 +17,7 @@ import {
 
 export const Route = createFileRoute("/inbox")({
   component: InboxPage,
-  head: () => ({ meta: [{ title: "Inbox — Linkly" }] }),
+  head: () => ({ meta: [{ title: "Inbox — AdsPx" }] }),
 });
 
 type Msg = {

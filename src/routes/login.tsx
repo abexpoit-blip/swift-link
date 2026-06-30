@@ -11,8 +11,8 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
     meta: [
-      { title: "Sign in — Linkly" },
-      { name: "description", content: "Sign in to your Linkly account." },
+      { title: "Sign in — AdsPx" },
+      { name: "description", content: "Sign in to your AdsPx account." },
     ],
   }),
 });

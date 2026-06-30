@@ -16,11 +16,11 @@ export const Route = createRootRouteWithContext<RouterCtx>()({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Swift Link — Advanced URL Shortener" },
+      { title: "AdsPx — Paid short links for creators" },
       {
         name: "description",
         content:
-          "Fast, intelligent URL shortener with bot filtering, geo-targeting, and detailed click analytics.",
+          "AdsPx (adspx.com) — turn any link into a paid short link. Share, earn per click, withdraw in crypto.",
       },
     ],
     links: [
