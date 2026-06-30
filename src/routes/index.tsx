@@ -56,11 +56,9 @@ function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 glass">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
-            <Link2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold text-lg tracking-tight">
-            Link<span className="text-gradient">ly</span>
+          <AdspxMark className="h-8 w-8" />
+          <span className="font-display font-bold text-lg tracking-tight">
+            Ads<span className="text-gradient">Px</span>
           </span>
           <span className="ml-2 hidden md:inline rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-accent-foreground">
             Earn
