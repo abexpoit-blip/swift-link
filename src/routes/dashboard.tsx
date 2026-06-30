@@ -221,7 +221,7 @@ function DashboardPage() {
               <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create cloaked link</h2>
               <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
                 <div>
-                  <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (Adsterra)</Label>
+                  <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (ad partner)</Label>
                   <Input id="dest" type="url" required placeholder="https://offer.adsterra.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-muted/40" />
                 </div>
                 <div>
@@ -272,7 +272,7 @@ function DashboardPage() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                           <Mini label="Clicks" value={total.toLocaleString()} />
-                          <Mini label="Adsterra 4%" value={ads.toLocaleString()} sub={`${total ? ((ads / total) * 100).toFixed(1) : "0"}%`} />
+                          <Mini label="Partner 4%" value={ads.toLocaleString()} sub={`${total ? ((ads / total) * 100).toFixed(1) : "0"}%`} />
                           <Mini label="Yours" value={usr.toLocaleString()} />
                           <Mini label="Earned" value={`$${earned.toFixed(4)}`} highlight />
                         </div>

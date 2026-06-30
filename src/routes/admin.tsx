@@ -88,7 +88,7 @@ function AdminPage() {
 
   const [totalUsers, setTotalUsers] = useState(0);
   const [realClicks, setRealClicks] = useState(0);
-  const [adsterraClicks, setAdsterraClicks] = useState(0);
+  const [partnerClicks, setAdsterraClicks] = useState(0);
   const [paidOut, setPaidOut] = useState(0);
   const [pendingPayouts, setPendingPayouts] = useState(0);
 
@@ -362,7 +362,7 @@ function AdminPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Stat icon={Users} label="Total users" value={totalUsers.toLocaleString()} />
             <Stat icon={MousePointerClick} label="Real clicks (paid)" value={realClicks.toLocaleString()} accent />
-            <Stat icon={Megaphone} label="Adsterra (4%)" value={adsterraClicks.toLocaleString()} />
+            <Stat icon={Megaphone} label="Ad partner (4%)" value={partnerClicks.toLocaleString()} />
             <Stat icon={DollarSign} label="User revenue" value={`$${revenueUsd.toFixed(4)}`} />
             <Stat icon={Wallet} label="Paid out" value={`$${paidOut.toFixed(2)}`} sub={`Pending $${pendingPayouts.toFixed(2)}`} />
           </div>
