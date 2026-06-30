@@ -11,10 +11,11 @@ import {
   MousePointerClick, Wallet, LogOut, TrendingUp, ShieldCheck, Bot,
   Settings2, Inbox as InboxIcon, Activity, Globe2,
 } from "lucide-react";
+import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
-  head: () => ({ meta: [{ title: "Cloaking Console — CloakX" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — AdsPx" }] }),
 });
 
 type LinkRow = {
@@ -178,10 +179,10 @@ function DashboardPage() {
       <header className="glass sticky top-0 z-40 border-b border-border">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
-              <ShieldCheck className="h-4.5 w-4.5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-lg">Cloak<span className="text-gradient">X</span></span>
+            <AdspxMark className="h-8 w-8" />
+            <span className="font-display font-bold text-lg tracking-tight">
+              Ads<span className="text-gradient">Px</span>
+            </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium text-primary">Console</Link>

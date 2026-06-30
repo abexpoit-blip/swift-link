@@ -42,6 +42,7 @@ import {
   RotateCw,
   AlertTriangle,
 } from "lucide-react";
+import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -326,11 +327,9 @@ function AdminPage() {
       <header className="border-b border-border/60 glass sticky top-0 z-40">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
-              <Link2 className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-semibold">
-              Link<span className="text-gradient">ly</span>
+            <AdspxMark className="h-8 w-8" />
+            <span className="font-display font-bold text-lg tracking-tight">
+              Ads<span className="text-gradient">Px</span>
             </span>
             <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5">
               <ShieldCheck className="h-3 w-3" /> ADMIN

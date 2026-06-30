@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trophy, TrendingUp, TrendingDown, ArrowLeft, Zap } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { TOP_PUBLISHERS, type Publisher } from "@/lib/publishers";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -23,32 +24,12 @@ export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
 });
 
-type Row = {
-  id: string;
-  user: string;
-  flag: string;
-  traffic: number; // daily visits today
-  earnings: number; // lifetime $ earned
-  withdrawn: number; // lifetime $ withdrawn
-  trend: 1 | -1 | 0; // direction since last tick
-};
+type Row = Publisher & { trend: 1 | -1 | 0 };
 
-const SEEDS: Array<Omit<Row, "trend">> = [
-  { id: "1", user: "arjun.k***",   flag: "🇮🇳", traffic: 184320, earnings: 1842.10, withdrawn: 1750.00 },
-  { id: "2", user: "michael.b***", flag: "🇺🇸", traffic: 162540, earnings: 1604.55, withdrawn: 1525.00 },
-  { id: "3", user: "priya.s***",   flag: "🇮🇳", traffic: 138210, earnings: 1387.40, withdrawn: 1300.00 },
-  { id: "4", user: "kevin.r***",   flag: "🇺🇸", traffic: 121870, earnings: 1218.05, withdrawn: 1175.00 },
-  { id: "5", user: "rahul.m***",   flag: "🇮🇳", traffic: 109450, earnings:  982.65, withdrawn:  900.00 },
-  { id: "6", user: "daniel.w***",  flag: "🇺🇸", traffic:  94780, earnings:  874.20, withdrawn:  825.00 },
-  { id: "7", user: "neha.p***",    flag: "🇮🇳", traffic:  82140, earnings:  741.10, withdrawn:  700.00 },
-  { id: "8", user: "james.t***",   flag: "🇺🇸", traffic:  71860, earnings:  628.95, withdrawn:  575.00 },
-  { id: "9", user: "vikram.l***",  flag: "🇮🇳", traffic:  61320, earnings:  524.40, withdrawn:  475.00 },
-  { id: "10", user: "sophia.d***", flag: "🇺🇸", traffic:  52740, earnings:  461.85, withdrawn:  425.00 },
-];
 
 function LeaderboardPage() {
   const [rows, setRows] = useState<Row[]>(() =>
-    SEEDS.map((s) => ({ ...s, trend: 0 as 0 })),
+    TOP_PUBLISHERS.map((p) => ({ ...p, trend: 0 as const })),
   );
 
   // tick every 4s — small random bumps + occasional re-sort
