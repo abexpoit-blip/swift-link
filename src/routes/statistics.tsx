@@ -285,53 +285,75 @@ function StatisticsPage() {
                 {countries.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-8 text-center">No geolocated clicks in the last 30 days.</p>
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-border">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-                        <tr>
-                          <th className="text-left px-4 py-2.5">Country</th>
-                          <th className="text-right px-4 py-2.5">Clicks</th>
-                          <th className="text-right px-4 py-2.5">Humans / Bots</th>
-                          <th className="text-right px-4 py-2.5">Share</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {countries.map((r) => {
-                          const tot = countries.reduce((a, c) => a + c.clicks, 0) || 1;
-                          const pct = (r.clicks / tot) * 100;
-                          return (
-                            <tr key={r.code} className="border-t border-border hover:bg-muted/30">
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center gap-3">
-                                  <img
-                                    src={flagUrl(r.code)} alt={r.name} loading="lazy"
-                                    className="h-4 w-6 rounded-sm border border-border object-cover"
-                                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                                  />
-                                  <span className="font-medium">{r.name}</span>
-                                  <span className="text-[10px] font-mono text-muted-foreground uppercase">{r.code}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-2.5 text-right font-mono">{r.clicks.toLocaleString()}</td>
-                              <td className="px-4 py-2.5 text-right text-xs">
-                                <span className="text-primary font-mono">{r.humans}</span>
-                                <span className="text-muted-foreground"> / </span>
-                                <span className="text-[#FF3D71] font-mono">{r.bots}</span>
-                              </td>
-                              <td className="px-4 py-2.5 text-right">
-                                <div className="inline-flex items-center gap-2">
-                                  <div className="hidden md:block w-20 h-1.5 rounded-full bg-muted overflow-hidden">
-                                    <div className="h-full bg-primary-gradient" style={{ width: `${Math.min(100, pct)}%` }} />
+                  <>
+                    {/* Mobile: card list */}
+                    <div className="grid gap-2 sm:hidden">
+                      {countries.map((r) => {
+                        const tot = countries.reduce((a, c) => a + c.clicks, 0) || 1;
+                        const pct = (r.clicks / tot) * 100;
+                        return (
+                          <div key={r.code} className="rounded-xl border border-border bg-muted/20 p-3">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <img src={flagUrl(r.code)} alt={r.name} loading="lazy" className="h-4 w-6 rounded-sm border border-border object-cover shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }} />
+                                <span className="font-medium text-sm truncate">{r.name}</span>
+                              </div>
+                              <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(1)}%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-mono">{r.clicks.toLocaleString()} clicks</span>
+                              <span><span className="text-primary font-mono">{r.humans}</span><span className="text-muted-foreground"> / </span><span className="text-[#FF3D71] font-mono">{r.bots}</span></span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Desktop: table */}
+                    <div className="hidden sm:block overflow-x-auto rounded-xl border border-border">
+                      <table className="w-full text-sm min-w-[480px]">
+                        <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <tr>
+                            <th className="text-left px-3 py-2">Country</th>
+                            <th className="text-right px-3 py-2">Clicks</th>
+                            <th className="text-right px-3 py-2">Humans / Bots</th>
+                            <th className="text-right px-3 py-2">Share</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {countries.map((r) => {
+                            const tot = countries.reduce((a, c) => a + c.clicks, 0) || 1;
+                            const pct = (r.clicks / tot) * 100;
+                            return (
+                              <tr key={r.code} className="border-t border-border hover:bg-muted/30">
+                                <td className="px-3 py-2">
+                                  <div className="flex items-center gap-2">
+                                    <img src={flagUrl(r.code)} alt={r.name} loading="lazy" className="h-4 w-6 rounded-sm border border-border object-cover shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }} />
+                                    <span className="font-medium">{r.name}</span>
+                                    <span className="text-[10px] font-mono text-muted-foreground uppercase">{r.code}</span>
                                   </div>
-                                  <span className="font-mono text-xs text-muted-foreground tabular-nums">{pct.toFixed(1)}%</span>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                                </td>
+                                <td className="px-3 py-2 text-right font-mono">{r.clicks.toLocaleString()}</td>
+                                <td className="px-3 py-2 text-right text-xs">
+                                  <span className="text-primary font-mono">{r.humans}</span>
+                                  <span className="text-muted-foreground"> / </span>
+                                  <span className="text-[#FF3D71] font-mono">{r.bots}</span>
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <div className="inline-flex items-center gap-2">
+                                    <div className="hidden md:block w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                                      <div className="h-full bg-primary-gradient" style={{ width: `${Math.min(100, pct)}%` }} />
+                                    </div>
+                                    <span className="font-mono text-xs text-muted-foreground tabular-nums">{pct.toFixed(1)}%</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+
                 )}
               </div>
 
