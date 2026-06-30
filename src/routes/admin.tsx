@@ -119,6 +119,14 @@ function AdminPage() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 
+  // user management
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [inactiveDays, setInactiveDays] = useState<number>(14);
+  const [savingDays, setSavingDays] = useState(false);
+
+
   // decision dialog
   const [decision, setDecision] = useState<{ w: Withdrawal; action: "approved" | "rejected" } | null>(null);
   const [comment, setComment] = useState("");
