@@ -483,38 +483,54 @@ function WithdrawPage() {
               No withdrawals yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="text-left py-3 pr-4">Date</th>
-                    <th className="text-left py-3 pr-4">Amount</th>
-                    <th className="text-left py-3 pr-4">Network</th>
-                    <th className="text-left py-3 pr-4">Wallet</th>
-                    <th className="text-left py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((w) => (
-                    <tr key={w.id} className="border-b border-border/60 last:border-0">
-                      <td className="py-3 pr-4 text-muted-foreground">
-                        {new Date(w.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 pr-4 font-semibold">${Number(w.amount_usd).toFixed(2)}</td>
-                      <td className="py-3 pr-4 font-mono text-xs">
-                        {w.network.replace("_", " ")}
-                      </td>
-                      <td className="py-3 pr-4 font-mono text-xs text-muted-foreground truncate max-w-[180px]">
-                        {w.wallet_address.slice(0, 8)}…{w.wallet_address.slice(-6)}
-                      </td>
-                      <td className="py-3">
-                        <StatusBadge status={w.status} />
-                      </td>
+            <>
+              {/* Mobile: cards */}
+              <div className="grid gap-2 sm:hidden">
+                {history.map((w) => (
+                  <div key={w.id} className="rounded-xl border border-border bg-background/40 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-semibold">${Number(w.amount_usd).toFixed(2)}</span>
+                      <StatusBadge status={w.status} />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{new Date(w.created_at).toLocaleDateString()}</span>
+                      <span className="font-mono">{w.network.replace("_", " ")}</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-muted-foreground truncate">
+                      {w.wallet_address.slice(0, 10)}…{w.wallet_address.slice(-8)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm min-w-[560px]">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                      <th className="text-left py-2.5 pr-3">Date</th>
+                      <th className="text-left py-2.5 pr-3">Amount</th>
+                      <th className="text-left py-2.5 pr-3">Network</th>
+                      <th className="text-left py-2.5 pr-3">Wallet</th>
+                      <th className="text-left py-2.5">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {history.map((w) => (
+                      <tr key={w.id} className="border-b border-border/60 last:border-0">
+                        <td className="py-2.5 pr-3 text-muted-foreground">{new Date(w.created_at).toLocaleDateString()}</td>
+                        <td className="py-2.5 pr-3 font-semibold">${Number(w.amount_usd).toFixed(2)}</td>
+                        <td className="py-2.5 pr-3 font-mono text-xs">{w.network.replace("_", " ")}</td>
+                        <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground truncate max-w-[180px]">
+                          {w.wallet_address.slice(0, 8)}…{w.wallet_address.slice(-6)}
+                        </td>
+                        <td className="py-2.5"><StatusBadge status={w.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+
           )}
         </section>
       </main>
