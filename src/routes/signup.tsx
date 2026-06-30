@@ -28,13 +28,18 @@ function SignupPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail.endsWith("@gmail.com")) {
+      toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
+      return;
+    }
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: trimmedEmail,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
