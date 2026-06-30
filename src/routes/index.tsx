@@ -70,6 +70,7 @@ function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
           <a href="#calculator" className="hover:text-foreground transition-colors">Calculator</a>
+          <Link to="/statistics" className="hover:text-foreground transition-colors">Statistics</Link>
           <Link to="/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link>
           <a href="#payouts" className="hover:text-foreground transition-colors">Payouts</a>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
@@ -114,9 +115,10 @@ function Hero() {
             <span className="text-gradient">Get paid per click.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            AdsPx turns any URL into a paid short link. Share it on Facebook,
-            Telegram, YouTube — earn <strong className="text-foreground">$1 for every 100,000 visits</strong>.
-            Withdraw in <strong className="text-foreground">USDT crypto</strong> from just $25.
+            AdsPx is the link shortener built for <strong className="text-foreground">Adsterra</strong> and
+            other ad-network offers — share on <strong className="text-foreground">Facebook</strong>,
+            Telegram or YouTube and earn <strong className="text-foreground">$1 per 100,000 visits</strong>.
+            A giant AI shield rejects bots so your offer stays alive. Withdraw in <strong className="text-foreground">USDT</strong> from just $25.
           </p>
 
           <form
@@ -365,41 +367,40 @@ function EarningsCalculator() {
 
 /* ─────────────────────────────────────────────── SPONSORS */
 function Sponsors() {
-  const brands = [
-    "Mediavine", "PropellerAds", "Monetag", "Clickadu",
-    "AdMaven", "PopAds", "HilltopAds", "RichAds",
-  ];
+  // Lazy import to keep this section colocated.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { PARTNER_LOGOS } = require("@/components/BrandLogos") as typeof import("@/components/BrandLogos");
   return (
     <section id="sponsors" className="container mx-auto px-6 py-24">
       <div className="text-center mb-12 max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          How we pay you
+          Built for ad networks
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
-          Backed by <span className="text-gradient">global ad partners</span>
+          Promote <span className="text-gradient">Adsterra</span> &amp; other offers on Facebook
         </h2>
         <p className="text-muted-foreground leading-relaxed">
-          AdsPx runs direct deals and bulk sponsorships with the world's biggest ad networks and brands.
-          Because we negotiate at scale, we keep a tiny share and pass <strong className="text-foreground">most of the revenue back to you</strong> —
+          AdsPx is engineered specifically for promoting <strong className="text-foreground">Adsterra</strong>,
+          PropellerAds, Monetag and other ad-network links on <strong className="text-foreground">Facebook</strong>.
+          We negotiate bulk deals with these networks at scale, then pass <strong className="text-foreground">most of the revenue back to you</strong> —
           that's how we can pay <strong className="text-foreground">$1 per 100,000 visits</strong> with zero hidden cuts.
         </p>
       </div>
 
-      <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {brands.map((b) => (
+      <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4">
+        {PARTNER_LOGOS.map(({ name, Comp, note }) => (
           <div
-            key={b}
-            className="glass rounded-2xl px-4 py-6 flex items-center justify-center text-center border border-border/60 hover:border-primary/40 transition-colors"
+            key={name}
+            className="glass rounded-2xl px-5 py-6 border border-border/60 hover:border-primary/40 transition-colors flex flex-col items-center text-center gap-2"
           >
-            <span className="font-display text-lg font-semibold tracking-tight text-foreground/80">
-              {b}
-            </span>
+            <Comp className="h-7" />
+            <span className="text-[11px] text-muted-foreground">{note}</span>
           </div>
         ))}
       </div>
 
       <p className="text-xs text-center text-muted-foreground mt-8">
-        Placeholder partners — real sponsor logos will be added soon.
+        Logos shown for reference — AdsPx works with any ad network that accepts paid traffic.
       </p>
     </section>
   );
