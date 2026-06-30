@@ -70,7 +70,7 @@ function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 glass">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <AdspxMark className="h-8 w-8" />
             <span className="font-display font-bold text-lg tracking-tight">
@@ -88,7 +88,7 @@ function LeaderboardPage() {
 
       <section className="container mx-auto px-6 py-16">
         <div className="text-center mb-10 max-w-2xl mx-auto space-y-3">
-          <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight">
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">
             Top <span className="text-gradient">publishers</span> right now
           </h1>
           <p className="text-muted-foreground">

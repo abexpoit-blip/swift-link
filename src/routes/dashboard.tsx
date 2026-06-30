@@ -212,7 +212,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen text-foreground">
       <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <AdspxMark className="h-8 w-8" />
             <span className="font-display font-bold text-lg tracking-tight">
@@ -232,7 +232,7 @@ function DashboardPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-10 max-w-7xl space-y-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl space-y-5 sm:space-y-7">
         {/* Hero metrics */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />

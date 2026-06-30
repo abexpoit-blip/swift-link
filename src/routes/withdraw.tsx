@@ -219,7 +219,7 @@ function WithdrawPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border/60 glass sticky top-0 z-40">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to AdsPx
           </Link>
@@ -227,7 +227,7 @@ function WithdrawPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-10 max-w-5xl space-y-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-5xl space-y-5 sm:space-y-7">
         {/* Balance cards */}
         <section className="grid md:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
@@ -250,7 +250,7 @@ function WithdrawPage() {
         </section>
 
         {/* Wallets */}
-        <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5 md:p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="font-display text-xl font-semibold flex items-center gap-2">
@@ -373,7 +373,7 @@ function WithdrawPage() {
         </section>
 
         {/* Withdrawal form */}
-        <section className="rounded-2xl border border-primary/30 bg-card p-6 md:p-8 shadow-elegant">
+        <section className="rounded-2xl border border-primary/30 bg-card p-4 sm:p-5 md:p-6 shadow-elegant">
           <h2 className="font-display text-xl font-semibold mb-1">Request a withdrawal</h2>
           <p className="text-xs text-muted-foreground mb-6">
             Min ${MIN_AMOUNT} · Processed within 24 hours · No network fees deducted
@@ -476,7 +476,7 @@ function WithdrawPage() {
         </section>
 
         {/* History */}
-        <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5 md:p-6">
           <h2 className="font-display text-xl font-semibold mb-5">Withdrawal history</h2>
           {history.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-6">

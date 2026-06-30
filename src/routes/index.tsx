@@ -58,7 +58,7 @@ function HomePage() {
 function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 glass">
-      <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
           <AdspxMark className="h-8 w-8" />
           <span className="font-display font-bold text-lg tracking-tight">
@@ -101,7 +101,7 @@ function Hero() {
       <div className="orb orb-indigo -top-32 -left-24 h-80 w-80" />
       <div className="orb orb-pink top-32 -right-24 h-96 w-96" style={{ animationDelay: "-6s" }} />
 
-      <div className="container mx-auto px-6 pt-24 pb-24 md:pt-32 md:pb-28 relative">
+      <div className="container mx-auto px-6 pt-14 pb-14 md:pt-24 md:pb-20 relative">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 glass-card px-3.5 py-1.5 text-xs font-medium text-primary">
             <span className="relative flex h-2 w-2">
@@ -110,7 +110,7 @@ function Hero() {
             </span>
             <Sparkles className="h-3 w-3" /> Paid out $284,000+ to creators this year
           </div>
-          <h1 className="font-display font-bold tracking-tight text-5xl md:text-7xl lg:text-[5.5rem] leading-[0.98]">
+          <h1 className="font-display font-bold tracking-tight text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] leading-[0.98]">
             Shorten links.
             <br />
             <span className="text-gradient">Get paid per click.</span>
@@ -212,12 +212,12 @@ function HowItWorks() {
     },
   ];
   return (
-    <section id="how" className="container mx-auto px-6 py-24">
+    <section id="how" className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-14 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           How it works
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           From link to wallet in <span className="text-gradient">three steps</span>
         </h2>
       </div>
@@ -297,18 +297,18 @@ function EarningsCalculator() {
   const yearlyEarn = dailyEarn * 365;
 
   return (
-    <section id="calculator" className="container mx-auto px-6 py-24">
+    <section id="calculator" className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-12 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           Earnings calculator
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           See what your daily traffic is <span className="text-gradient">worth</span>
         </h2>
         <p className="text-muted-foreground text-sm">Move the slider to your daily visits — see live daily, monthly &amp; yearly revenue.</p>
       </div>
 
-      <div className="max-w-3xl mx-auto rounded-3xl border border-primary/30 glass-deep p-8 md:p-10 shadow-elegant">
+      <div className="max-w-3xl mx-auto rounded-3xl border border-primary/30 glass-deep p-5 sm:p-6 md:p-8 shadow-elegant">
         <label htmlFor="clicks-range" className="block text-sm font-medium text-muted-foreground mb-3">
           Daily visits you can send
         </label>
@@ -369,12 +369,12 @@ function EarningsCalculator() {
 /* ─────────────────────────────────────────────── SPONSORS */
 function Sponsors() {
   return (
-    <section id="sponsors" className="container mx-auto px-6 py-24">
+    <section id="sponsors" className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-12 max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           Built for ad networks
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           Promote <span className="text-gradient">Adsterra</span> &amp; other offers on Facebook
         </h2>
         <p className="text-muted-foreground leading-relaxed">
@@ -440,12 +440,12 @@ function FeatureGrid() {
     },
   ];
   return (
-    <section className="container mx-auto px-6 py-24">
+    <section className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-14 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           Why AdsPx
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           Built for <span className="text-gradient">people who share links</span>
         </h2>
       </div>
@@ -522,12 +522,12 @@ function RecentPayouts() {
   ];
 
   return (
-    <section id="payouts" className="container mx-auto px-6 py-24">
+    <section id="payouts" className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-10 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           <Banknote className="h-3 w-3" /> Live payouts
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           Real publishers. <span className="text-gradient">Real withdrawals.</span>
         </h2>
       </div>
@@ -624,12 +624,12 @@ function FaqStrip() {
   ];
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="container mx-auto px-6 py-24">
+    <section id="faq" className="container mx-auto px-6 py-12 md:py-20">
       <div className="text-center mb-12 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           FAQ
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           Quick answers
         </h2>
       </div>
@@ -665,11 +665,11 @@ function FaqStrip() {
 function FinalCta() {
   return (
     <section className="container mx-auto px-6 pb-24">
-      <div className="relative rounded-3xl border border-primary/30 bg-card p-12 md:p-16 text-center overflow-hidden shadow-elegant">
+      <div className="relative rounded-3xl border border-primary/30 bg-card p-6 sm:p-8 md:p-12 text-center overflow-hidden shadow-elegant">
         <div className="absolute inset-0 bg-hero opacity-70 pointer-events-none" />
         <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 h-60 w-[600px] rounded-full bg-primary-gradient opacity-25 blur-3xl" />
         <div className="relative space-y-6 max-w-2xl mx-auto">
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
             Start turning clicks into <span className="text-gradient">crypto today</span>
           </h2>
           <p className="text-muted-foreground">

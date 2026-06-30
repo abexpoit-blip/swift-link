@@ -190,7 +190,7 @@ function StatisticsPage() {
   return (
     <div className="min-h-screen text-foreground">
       <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <AdspxMark className="h-8 w-8" />
             <span className="font-display font-bold text-lg tracking-tight">
@@ -206,12 +206,12 @@ function StatisticsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-7xl space-y-10">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl space-y-6 sm:space-y-8">
         <section className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 glass-card px-3.5 py-1.5 text-xs font-medium text-primary">
             <Activity className="h-3 w-3" /> Your real-time statistics
           </div>
-          <h1 className="font-display font-bold tracking-tight text-4xl md:text-6xl">
+          <h1 className="font-display font-bold tracking-tight text-3xl sm:text-4xl md:text-5xl">
             Every click, <span className="text-gradient">measured</span>
           </h1>
           <p className="text-muted-foreground leading-relaxed">
@@ -430,7 +430,7 @@ function Legend2({ color, label }: { color: string; label: string }) {
 
 function EmptyState({ title, body, cta }: { title: string; body: string; cta: React.ReactNode }) {
   return (
-    <section className="rounded-2xl glass-card p-12 text-center space-y-3 max-w-xl mx-auto">
+    <section className="rounded-2xl glass-card p-8 sm:p-10 text-center space-y-3 max-w-xl mx-auto">
       <h2 className="font-display text-2xl font-semibold">{title}</h2>
       <p className="text-sm text-muted-foreground">{body}</p>
       <div className="pt-2">{cta}</div>
