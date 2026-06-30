@@ -251,7 +251,7 @@ function HowItWorks() {
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
               Out of every 5,000 real visits, <strong className="text-foreground">200 clicks (4%)</strong> are
-              routed through Adsterra — that's how we cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
+              monetized through our ad partners to cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
             </p>
           </div>
           <div className="rounded-xl bg-card border border-border p-5">
