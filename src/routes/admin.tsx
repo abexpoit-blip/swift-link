@@ -480,6 +480,104 @@ function AdminPage() {
           )}
         </section>
 
+        {/* Test Link — cloaking simulator */}
+        <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+          <h2 className="font-display text-xl font-semibold mb-1 flex items-center gap-2">
+            <FlaskConical className="h-5 w-5 text-primary" /> Test Link — cloak simulator
+          </h2>
+          <p className="text-sm text-muted-foreground mb-5">
+            Kono ekta short code er against e bivinno traffic profile simulate koro. Real click hisebe count hobe na — sudhu decision dekha jabe.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-3 mb-4">
+            <div className="md:col-span-1">
+              <Label htmlFor="sim-code" className="text-xs">Short code</Label>
+              <Input id="sim-code" placeholder="abc123" value={simCode} onChange={(e) => setSimCode(e.target.value)} className="mt-1.5 font-mono" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">Traffic profile</Label>
+              <div className="mt-1.5 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {(
+                  [
+                    { id: "fb_crawler", label: "FB Crawler", icon: Bot },
+                    { id: "human_mobile_fb", label: "Mobile (FB IAB)", icon: User },
+                    { id: "human_desktop", label: "Desktop human", icon: User },
+                    { id: "datacenter", label: "Datacenter IP", icon: Server },
+                    { id: "reused_fbclid", label: "Reused fbclid", icon: RotateCw },
+                    { id: "low_coherence", label: "Low coherence", icon: AlertTriangle },
+                    { id: "blocked_country", label: "Geo blocked", icon: Globe },
+                  ] as { id: SimProfile; label: string; icon: typeof Bot }[]
+                ).map((p) => {
+                  const Active = simProfile === p.id;
+                  const Ic = p.icon;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSimProfile(p.id)}
+                      className={`text-left rounded-lg border px-3 py-2 text-xs flex items-center gap-2 transition-colors ${Active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <Ic className="h-3.5 w-3.5" /> {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <Button onClick={runSimulation} disabled={simRunning} className="bg-primary-gradient shadow-glow">
+            {simRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FlaskConical className="h-4 w-4 mr-1.5" /> Run simulation</>}
+          </Button>
+
+          {simResult && (
+            <div className="mt-5 rounded-xl border border-border bg-background/40 p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Decision:</span>
+                <span className={`inline-flex items-center rounded-full border text-xs font-semibold uppercase tracking-wider px-3 py-1 ${
+                  simResult.decision === "money"
+                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                    : simResult.decision === "block"
+                    ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                    : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                }`}>
+                  → {simResult.decision === "money" ? "Money URL" : simResult.decision === "block" ? "Blocked" : "Safe Page"}
+                </span>
+              </div>
+
+              {simResult.reasons.length > 0 && (
+                <div className="text-xs">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Reasons</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {simResult.reasons.map((r, i) => (
+                      <span key={i} className="rounded-md bg-muted text-foreground/80 px-2 py-0.5 text-[11px] font-mono">{r}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Inputs</div>
+                  <div className="space-y-0.5 font-mono text-[11px] text-muted-foreground">
+                    <div>IP: <span className="text-foreground">{simResult.inputs.ip}</span> · ASN {simResult.inputs.asn}</div>
+                    <div>Country: <span className="text-foreground">{simResult.inputs.country}</span> · Mobile: {String(simResult.inputs.is_mobile)}</div>
+                    <div>Hard bot: {String(simResult.inputs.is_hard_bot)} · DC: {String(simResult.inputs.is_datacenter)}</div>
+                    <div>Coherence: <span className="text-foreground">{simResult.inputs.coherence}</span></div>
+                    <div className="truncate" title={simResult.inputs.ua}>UA: {simResult.inputs.ua.slice(0, 60)}…</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Routes</div>
+                  <div className="space-y-0.5 font-mono text-[11px] break-all">
+                    <div className="text-muted-foreground">Money: <span className="text-foreground">{simResult.money_url}</span></div>
+                    <div className="text-muted-foreground">Safe: <span className="text-foreground">{simResult.safe_url || "(inline article)"}</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Sent messages */}
         <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
           <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2">
