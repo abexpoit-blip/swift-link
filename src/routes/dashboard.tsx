@@ -206,6 +206,11 @@ function DashboardPage() {
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(4)}`} sub={`$${balance.toFixed(2)} available`} />
         </section>
 
+        {/* AI Protection showcase */}
+        <AIProtectionPanel humans={humansCount} bots={botsCount} />
+
+
+
         {/* Withdraw CTA */}
         <section className="rounded-2xl glass-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ring-cyan">
           <div>
