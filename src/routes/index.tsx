@@ -284,10 +284,12 @@ function HowItWorks() {
 
 /* ─────────────────────────────────────────────── EARNINGS CALCULATOR */
 function EarningsCalculator() {
-  const [clicks, setClicks] = useState(100000);
-  // $1 per 100,000 = $0.01 per 1000
-  const earnings = (clicks / 100000) * 1;
-  const monthsTo25 = clicks > 0 ? Math.ceil(2500000 / clicks) : 0;
+  const [daily, setDaily] = useState(5000);
+  // $1 per 100,000 clicks
+  const rate = 1 / 100000;
+  const dailyEarn = daily * rate;
+  const monthlyEarn = dailyEarn * 30;
+  const yearlyEarn = dailyEarn * 365;
 
   return (
     <section id="calculator" className="container mx-auto px-6 py-24">
@@ -296,68 +298,111 @@ function EarningsCalculator() {
           Earnings calculator
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
-          See what your traffic is <span className="text-gradient">worth</span>
+          See what your daily traffic is <span className="text-gradient">worth</span>
         </h2>
+        <p className="text-muted-foreground text-sm">Move the slider to your daily visits — see live daily, monthly &amp; yearly revenue.</p>
       </div>
 
-      <div className="max-w-3xl mx-auto rounded-3xl border border-primary/30 bg-card p-8 md:p-10 shadow-elegant">
+      <div className="max-w-3xl mx-auto rounded-3xl border border-primary/30 glass-deep p-8 md:p-10 shadow-elegant">
         <label htmlFor="clicks-range" className="block text-sm font-medium text-muted-foreground mb-3">
-          Monthly clicks you can send
+          Daily visits you can send
         </label>
         <input
           id="clicks-range"
           type="range"
-          aria-label="Monthly clicks slider"
-          min={10000}
-          max={5000000}
-          step={10000}
-          value={clicks}
-          onChange={(e) => setClicks(Number(e.target.value))}
+          aria-label="Daily visits slider"
+          min={500}
+          max={200000}
+          step={500}
+          value={daily}
+          onChange={(e) => setDaily(Number(e.target.value))}
           className="w-full h-2 rounded-full bg-secondary appearance-none cursor-pointer accent-primary"
         />
 
         <div className="flex justify-between text-xs text-muted-foreground mt-2 font-mono">
-          <span>10K</span>
-          <span>1M</span>
-          <span>5M</span>
+          <span>500</span>
+          <span>50K</span>
+          <span>200K</span>
         </div>
 
         <div className="mt-4 text-center">
           <div className="font-display text-3xl font-bold tracking-tight">
-            {clicks.toLocaleString()} <span className="text-base font-normal text-muted-foreground">clicks / month</span>
+            {daily.toLocaleString()} <span className="text-base font-normal text-muted-foreground">visits / day</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <div className="rounded-xl border border-border bg-background/50 p-5 text-center">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Monthly</div>
-            <div className="font-display text-3xl font-bold text-gradient mt-1">
-              ${earnings.toFixed(2)}
+          <div className="rounded-xl border border-border bg-background/40 p-5 text-center">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Daily</div>
+            <div className="font-display text-3xl font-bold mt-1">
+              ${dailyEarn.toFixed(2)}
             </div>
           </div>
           <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 text-center">
-            <div className="text-xs uppercase tracking-wider text-primary">Yearly</div>
+            <div className="text-xs uppercase tracking-wider text-primary">Monthly</div>
             <div className="font-display text-3xl font-bold text-gradient mt-1">
-              ${(earnings * 12).toFixed(2)}
+              ${monthlyEarn.toFixed(2)}
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-background/50 p-5 text-center">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Days to $25</div>
+          <div className="rounded-xl border border-border bg-background/40 p-5 text-center">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Yearly</div>
             <div className="font-display text-3xl font-bold mt-1">
-              {clicks > 0 ? Math.max(1, Math.ceil((2500000 / clicks) * 30)) : "—"}
+              ${yearlyEarn.toFixed(2)}
             </div>
           </div>
         </div>
 
         <p className="text-xs text-center text-muted-foreground mt-6 leading-relaxed">
-          Flat rate: <strong className="text-foreground">$1 per 100,000 real visits</strong> · Adsterra share:{" "}
-          <strong className="text-foreground">200 of every 5,000 clicks (4%)</strong> · Minimum withdrawal:{" "}
-          <strong className="text-foreground">$25 USDT (TRC20 / BEP20)</strong>. Bot traffic auto-filtered.
+          Flat rate: <strong className="text-foreground">$1 per 100,000 real visits</strong> · Minimum withdrawal:{" "}
+          <strong className="text-foreground">$25 USDT (TRC20 / BEP20)</strong> · Bot traffic auto-filtered.
         </p>
       </div>
     </section>
   );
 }
+
+/* ─────────────────────────────────────────────── SPONSORS */
+function Sponsors() {
+  const brands = [
+    "Adsterra", "PropellerAds", "Monetag", "Clickadu",
+    "AdMaven", "PopAds", "HilltopAds", "RichAds",
+  ];
+  return (
+    <section id="sponsors" className="container mx-auto px-6 py-24">
+      <div className="text-center mb-12 max-w-3xl mx-auto space-y-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+          How we pay you
+        </div>
+        <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+          Backed by <span className="text-gradient">global ad partners</span>
+        </h2>
+        <p className="text-muted-foreground leading-relaxed">
+          AdsPx runs direct deals and bulk sponsorships with the world's biggest ad networks and brands.
+          Because we negotiate at scale, we keep a tiny share and pass <strong className="text-foreground">most of the revenue back to you</strong> —
+          that's how we can pay <strong className="text-foreground">$1 per 100,000 visits</strong> with zero hidden cuts.
+        </p>
+      </div>
+
+      <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {brands.map((b) => (
+          <div
+            key={b}
+            className="glass rounded-2xl px-4 py-6 flex items-center justify-center text-center border border-border/60 hover:border-primary/40 transition-colors"
+          >
+            <span className="font-display text-lg font-semibold tracking-tight text-foreground/80">
+              {b}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs text-center text-muted-foreground mt-8">
+        Placeholder partners — real sponsor logos will be added soon.
+      </p>
+    </section>
+  );
+}
+
 
 /* ─────────────────────────────────────────────── FEATURES */
 function FeatureGrid() {
