@@ -75,11 +75,12 @@ function SiteHeader() {
           <Button variant="ghost" size="sm" asChild>
             <a href="/login">Sign in</a>
           </Button>
-          <Button size="sm" className="bg-primary-gradient shadow-glow" asChild>
+          <Button size="sm" className="btn-premium rounded-lg" asChild>
             <a href="/signup">
               Start earning <ArrowRight className="ml-1 h-4 w-4" />
             </a>
           </Button>
+
         </div>
       </div>
     </header>
@@ -91,16 +92,20 @@ function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 bg-hero pointer-events-none" />
-      <div className="absolute inset-0 grid-pattern opacity-50 pointer-events-none" />
-      <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-      <div className="absolute top-40 -right-24 h-80 w-80 rounded-full bg-primary-glow/25 blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 grid-pattern opacity-60 pointer-events-none" />
+      <div className="orb orb-indigo -top-32 -left-24 h-80 w-80" />
+      <div className="orb orb-pink top-32 -right-24 h-96 w-96" style={{ animationDelay: "-6s" }} />
 
-      <div className="container mx-auto px-6 pt-20 pb-20 md:pt-28 md:pb-24 relative">
-        <div className="max-w-4xl mx-auto text-center space-y-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/70 backdrop-blur px-3 py-1 text-xs font-medium text-primary">
+      <div className="container mx-auto px-6 pt-24 pb-24 md:pt-32 md:pb-28 relative">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 glass-card px-3.5 py-1.5 text-xs font-medium text-primary">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+            </span>
             <Sparkles className="h-3 w-3" /> Paid out $284,000+ to creators this year
           </div>
-          <h1 className="font-display font-bold tracking-tight text-5xl md:text-7xl leading-[1.02]">
+          <h1 className="font-display font-bold tracking-tight text-5xl md:text-7xl lg:text-[5.5rem] leading-[0.98]">
             Shorten links.
             <br />
             <span className="text-gradient">Get paid per click.</span>
@@ -112,25 +117,27 @@ function Hero() {
           </p>
 
           <form
-            className="flex flex-col sm:flex-row gap-2 max-w-xl mx-auto pt-2"
+            className="relative max-w-xl mx-auto pt-2"
             onSubmit={(e) => {
               e.preventDefault();
               window.location.href = "/signup";
             }}
           >
-            <Input
-              type="url"
-              required
-              placeholder="Paste your long URL here…"
-              className="h-12 text-base bg-card/80 border-border"
-            />
-            <Button
-              type="submit"
-              size="lg"
-              className="h-12 px-6 bg-primary-gradient shadow-glow"
-            >
-              Shorten & earn <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+            <div className="glass-deep rounded-2xl p-1.5 flex flex-col sm:flex-row gap-1.5">
+              <Input
+                type="url"
+                required
+                placeholder="Paste your long URL here…"
+                className="h-12 text-base bg-transparent border-0 shadow-none focus-visible:ring-0 px-4 flex-1"
+              />
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-6 btn-premium rounded-xl font-semibold"
+              >
+                Shorten & earn <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </form>
 
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground pt-2">
@@ -149,6 +156,7 @@ function Hero() {
     </section>
   );
 }
+
 
 /* ─────────────────────────────────────────────── PAYOUT BAR */
 function PayoutBar() {
