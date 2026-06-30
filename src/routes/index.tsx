@@ -78,12 +78,12 @@ function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <a href="/login">Sign in</a>
+            <Link to="/login">Sign in</Link>
           </Button>
           <Button size="sm" className="btn-premium rounded-lg" asChild>
-            <a href="/signup">
+            <Link to="/signup">
               Start earning <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
+            </Link>
           </Button>
 
         </div>
