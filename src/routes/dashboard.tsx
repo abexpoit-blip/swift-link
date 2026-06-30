@@ -175,7 +175,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen text-foreground">
-      <header className="glass sticky top-0 z-40 border-b border-white/10">
+      <header className="glass sticky top-0 z-40 border-b border-border">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
@@ -221,11 +221,11 @@ function DashboardPage() {
               <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
                 <div>
                   <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (Adsterra)</Label>
-                  <Input id="dest" type="url" required placeholder="https://offer.adsterra.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-white/5" />
+                  <Input id="dest" type="url" required placeholder="https://offer.adsterra.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-muted/40" />
                 </div>
                 <div>
                   <Label htmlFor="title" className="text-xs uppercase tracking-wider text-muted-foreground">Label</Label>
-                  <Input id="title" placeholder="Campaign name" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 bg-white/5" />
+                  <Input id="title" placeholder="Campaign name" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 bg-muted/40" />
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating}>
@@ -250,7 +250,7 @@ function DashboardPage() {
                     const expanded = expandedLink === l.id;
                     const cloak = cloakByLink[l.id];
                     return (
-                      <div key={l.id} className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-primary/30">
+                      <div key={l.id} className="rounded-xl border border-border bg-muted/40 p-4 transition hover:border-primary/30">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
@@ -294,9 +294,9 @@ function DashboardPage() {
             ) : (
               <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
                 {logs.slice(0, 30).map((row) => (
-                  <div key={row.id} className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 text-xs">
+                  <div key={row.id} className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.decision === "money" ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40" : "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.decision === "money" ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30" : "bg-rose-500/15 text-rose-700 ring-1 ring-rose-500/30"}`}>
                         {row.decision === "money" ? "HUMAN" : "BLOCKED"}
                       </span>
                       <span className="text-muted-foreground">{new Date(row.created_at).toLocaleTimeString()}</span>
@@ -307,7 +307,7 @@ function DashboardPage() {
                       {row.coherence_score != null && <span>· score {row.coherence_score}</span>}
                     </div>
                     {row.reasons.length > 0 && (
-                      <div className="mt-1 text-[10px] text-rose-300/80 font-mono truncate">{row.reasons.join(" · ")}</div>
+                      <div className="mt-1 text-[10px] text-rose-700/80 font-mono truncate">{row.reasons.join(" · ")}</div>
                     )}
                   </div>
                 ))}
@@ -335,7 +335,7 @@ function MetricCard({ icon: Icon, label, value, sub, accent }: { icon: typeof Do
 
 function Mini({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className="rounded-lg bg-white/[0.04] border border-white/5 px-3 py-2">
+    <div className="rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
       <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={`font-display font-bold ${highlight ? "text-gradient text-base" : "text-sm"}`}>{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground font-mono">{sub}</div>}
@@ -348,11 +348,11 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
   const [poolInput, setPoolInput] = useState(cloak.safe_page_pool.join("\n"));
 
   return (
-    <div className="mt-4 border-t border-white/10 pt-4 space-y-4">
+    <div className="mt-4 border-t border-border pt-4 space-y-4">
       <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Cloaking Rules</div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        <label className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 cursor-pointer">
+        <label className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5 cursor-pointer">
           <div>
             <div className="text-sm font-medium">🚀 Campaign Launch Mode</div>
             <div className="text-[11px] text-muted-foreground">Route ALL traffic to safe page for {cloak.launch_window_hours}h after launch</div>
@@ -360,7 +360,7 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
           <Switch checked={cloak.campaign_launch_mode} onCheckedChange={(v) => onUpdate({ campaign_launch_mode: v, launched_at: v ? new Date().toISOString() : cloak.launched_at })} />
         </label>
 
-        <label className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 cursor-pointer">
+        <label className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5 cursor-pointer">
           <div>
             <div className="text-sm font-medium">🖥️ Block Desktop</div>
             <div className="text-[11px] text-muted-foreground">Only mobile traffic reaches the money page</div>
@@ -372,26 +372,26 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
       <div className="grid md:grid-cols-3 gap-3">
         <div>
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Launch window (hours)</Label>
-          <Input type="number" min={1} max={72} value={cloak.launch_window_hours} onChange={(e) => onUpdate({ launch_window_hours: Math.max(1, Math.min(72, Number(e.target.value))) })} className="mt-1 bg-white/5" />
+          <Input type="number" min={1} max={72} value={cloak.launch_window_hours} onChange={(e) => onUpdate({ launch_window_hours: Math.max(1, Math.min(72, Number(e.target.value))) })} className="mt-1 bg-muted/40" />
         </div>
         <div>
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Coherence threshold (0-100)</Label>
-          <Input type="number" min={0} max={100} value={cloak.coherence_threshold} onChange={(e) => onUpdate({ coherence_threshold: Math.max(0, Math.min(100, Number(e.target.value))) })} className="mt-1 bg-white/5" />
+          <Input type="number" min={0} max={100} value={cloak.coherence_threshold} onChange={(e) => onUpdate({ coherence_threshold: Math.max(0, Math.min(100, Number(e.target.value))) })} className="mt-1 bg-muted/40" />
         </div>
         <div>
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">fbclid max reuse</Label>
-          <Input type="number" min={1} max={10} value={cloak.fbclid_max_hits} onChange={(e) => onUpdate({ fbclid_max_hits: Math.max(1, Math.min(10, Number(e.target.value))) })} className="mt-1 bg-white/5" />
+          <Input type="number" min={1} max={10} value={cloak.fbclid_max_hits} onChange={(e) => onUpdate({ fbclid_max_hits: Math.max(1, Math.min(10, Number(e.target.value))) })} className="mt-1 bg-muted/40" />
         </div>
       </div>
 
       <div>
         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Allowed countries (ISO codes, comma separated; empty = all)</Label>
-        <Input value={countriesInput} onChange={(e) => setCountriesInput(e.target.value)} onBlur={() => onUpdate({ allowed_countries: countriesInput.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) })} placeholder="US, BD, IN" className="mt-1 bg-white/5 font-mono text-sm" />
+        <Input value={countriesInput} onChange={(e) => setCountriesInput(e.target.value)} onBlur={() => onUpdate({ allowed_countries: countriesInput.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) })} placeholder="US, BD, IN" className="mt-1 bg-muted/40 font-mono text-sm" />
       </div>
 
       <div>
         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Safe page pool (one URL per line, up to 5; empty = built-in article)</Label>
-        <textarea value={poolInput} onChange={(e) => setPoolInput(e.target.value)} onBlur={() => onUpdate({ safe_page_pool: poolInput.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 5) })} rows={3} placeholder="https://example.com/safe-article-1" className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm font-mono" />
+        <textarea value={poolInput} onChange={(e) => setPoolInput(e.target.value)} onBlur={() => onUpdate({ safe_page_pool: poolInput.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 5) })} rows={3} placeholder="https://example.com/safe-article-1" className="mt-1 w-full rounded-md bg-muted/40 border border-border px-3 py-2 text-sm font-mono" />
       </div>
     </div>
   );
