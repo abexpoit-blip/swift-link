@@ -250,7 +250,7 @@ function DashboardPage() {
                     const expanded = expandedLink === l.id;
                     const cloak = cloakByLink[l.id];
                     return (
-                      <div key={l.id} className="rounded-xl border border-border bg-muted/40 p-4 transition hover:border-primary/30">
+                      <div key={l.id} className="rounded-xl surface-soft p-4 hover:shadow-card">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
