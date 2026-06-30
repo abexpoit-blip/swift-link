@@ -490,6 +490,125 @@ function AdminPage() {
           </form>
         </section>
 
+        {/* User management */}
+        <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+          <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
+            <div>
+              <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" /> User management
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Delete, ban/unban, force-verify. Inactive users auto-delete after the threshold below.
+              </p>
+            </div>
+            <div className="flex items-end gap-2">
+              <div>
+                <Label className="text-xs">Inactive-days threshold</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={inactiveDays}
+                  onChange={(e) => setInactiveDays(Number(e.target.value) || 0)}
+                  className="mt-1.5 w-28"
+                />
+              </div>
+              <Button size="sm" onClick={saveInactiveDays} disabled={savingDays}>
+                {savingDays ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-4">
+            <Input
+              placeholder="Search by email or name…"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") loadUsers(userSearch); }}
+              className="max-w-md"
+            />
+            <Button size="sm" variant="outline" onClick={() => loadUsers(userSearch)} disabled={usersLoading}>
+              {usersLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+
+          {users.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">No users found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 pr-3">User</th>
+                    <th className="text-left py-2 pr-3">Plan</th>
+                    <th className="text-left py-2 pr-3">Verified</th>
+                    <th className="text-left py-2 pr-3">Last login</th>
+                    <th className="text-left py-2 pr-3">Status</th>
+                    <th className="text-right py-2 pl-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => {
+                    const lastLogin = u.last_login_at ? new Date(u.last_login_at) : null;
+                    const daysIdle = lastLogin ? Math.floor((Date.now() - lastLogin.getTime()) / 86400000) : null;
+                    const idleWarn = daysIdle !== null && daysIdle >= Math.max(1, inactiveDays - 3);
+                    return (
+                      <tr key={u.id} className="border-b border-border/60">
+                        <td className="py-2 pr-3 min-w-0">
+                          <div className="font-medium truncate max-w-[220px]">{u.email}</div>
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[220px]">{u.full_name || "—"}</div>
+                        </td>
+                        <td className="py-2 pr-3 text-xs uppercase tracking-wider">{u.plan_slug ?? "free"}</td>
+                        <td className="py-2 pr-3">
+                          {u.email_confirmed_at ? (
+                            <span className="text-emerald-600 text-xs">✓ verified</span>
+                          ) : (
+                            <span className="text-amber-600 text-xs">pending</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3 text-xs">
+                          {lastLogin ? (
+                            <span className={idleWarn ? "text-amber-600" : ""}>
+                              {daysIdle}d ago
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="py-2 pr-3">
+                          {u.banned ? (
+                            <span className="inline-flex items-center rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-700 px-2 py-0.5 text-[10px] uppercase tracking-wider">banned</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 px-2 py-0.5 text-[10px] uppercase tracking-wider">active</span>
+                          )}
+                        </td>
+                        <td className="py-2 pl-3 text-right whitespace-nowrap">
+                          <div className="inline-flex gap-1">
+                            {!u.email_confirmed_at && (
+                              <Button size="sm" variant="ghost" onClick={() => verifyUser(u)} title="Mark verified">
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {u.banned ? (
+                              <Button size="sm" variant="outline" onClick={() => unbanUser(u)}>Unban</Button>
+                            ) : (
+                              <Button size="sm" variant="ghost" onClick={() => banUser(u)} title="Ban">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" onClick={() => deleteUser(u)} title="Delete" className="text-rose-600 hover:text-rose-700">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+
         {/* Withdrawals */}
         <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
           <h2 className="font-display text-xl font-semibold mb-5">Withdrawal requests</h2>
