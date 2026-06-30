@@ -1,19 +1,15 @@
 /**
- * AdsPx brand mark — uses the polished logo image.
+ * AdsPx brand mark — uses local public assets for self-host friendliness.
  */
-import logoIcon from "@/assets/adspx-icon-sm.png.asset.json";
-import logoFull from "@/assets/adspx-logo.png.asset.json";
-
 type LogoMarkProps = {
   className?: string;
-  /** Soft drop-shadow under the mark. */
   glow?: boolean;
 };
 
 export function AdspxMark({ className, glow = true }: LogoMarkProps) {
   return (
     <img
-      src={logoIcon.url}
+      src="/adspx-icon-sm.png"
       alt="AdsPx"
       width={48}
       height={48}
@@ -38,7 +34,7 @@ export function AdspxWordmark({
   return (
     <span className={`inline-flex items-center ${className ?? ""}`}>
       <img
-        src={logoFull.url}
+        src="/adspx-logo.png"
         alt="AdsPx"
         className={imgClassName ?? "h-10 w-auto"}
       />
