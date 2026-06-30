@@ -69,6 +69,7 @@ function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
           <a href="#calculator" className="hover:text-foreground transition-colors">Calculator</a>
+          <Link to="/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link>
           <a href="#payouts" className="hover:text-foreground transition-colors">Payouts</a>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
@@ -497,8 +498,8 @@ function pickRand<T>(arr: T[]): T {
 }
 
 function randomAmount(): number {
-  // realistic small-to-mid withdrawals: $26 – $540
-  const v = 26 + Math.random() * 514;
+  // realistic small withdrawals: $10 – $57
+  const v = 10 + Math.random() * 47;
   return Math.round(v * 100) / 100;
 }
 
