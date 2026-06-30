@@ -279,6 +279,56 @@ export type Database = {
         }
         Relationships: []
       }
+      cloaking_settings: {
+        Row: {
+          allowed_countries: string[]
+          block_desktop: boolean
+          campaign_launch_mode: boolean
+          coherence_threshold: number
+          created_at: string
+          fbclid_max_hits: number
+          launch_window_hours: number
+          launched_at: string | null
+          link_id: string
+          safe_page_pool: string[]
+          updated_at: string
+        }
+        Insert: {
+          allowed_countries?: string[]
+          block_desktop?: boolean
+          campaign_launch_mode?: boolean
+          coherence_threshold?: number
+          created_at?: string
+          fbclid_max_hits?: number
+          launch_window_hours?: number
+          launched_at?: string | null
+          link_id: string
+          safe_page_pool?: string[]
+          updated_at?: string
+        }
+        Update: {
+          allowed_countries?: string[]
+          block_desktop?: boolean
+          campaign_launch_mode?: boolean
+          coherence_threshold?: number
+          created_at?: string
+          fbclid_max_hits?: number
+          launch_window_hours?: number
+          launched_at?: string | null
+          link_id?: string
+          safe_page_pool?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cloaking_settings_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: true
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       country_tiers: {
         Row: {
           country_code: string
@@ -380,6 +430,47 @@ export type Database = {
           },
         ]
       }
+      fbclid_tracking: {
+        Row: {
+          fbclid: string
+          first_seen: string
+          flagged_bot: boolean
+          hit_count: number
+          human_confirmed: boolean
+          id: string
+          last_seen: string
+          link_id: string
+        }
+        Insert: {
+          fbclid: string
+          first_seen?: string
+          flagged_bot?: boolean
+          hit_count?: number
+          human_confirmed?: boolean
+          id?: string
+          last_seen?: string
+          link_id: string
+        }
+        Update: {
+          fbclid?: string
+          first_seen?: string
+          flagged_bot?: boolean
+          hit_count?: number
+          human_confirmed?: boolean
+          id?: string
+          last_seen?: string
+          link_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fbclid_tracking_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geo_offers: {
         Row: {
           country_codes: string[] | null
@@ -423,6 +514,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ip_blacklist: {
+        Row: {
+          auto_added: boolean
+          created_at: string
+          fingerprint_hash: string | null
+          id: string
+          ip: string | null
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auto_added?: boolean
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auto_added?: boolean
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ip_whitelist: {
+        Row: {
+          created_at: string
+          fingerprint_hash: string | null
+          id: string
+          ip: string | null
+          note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       links: {
         Row: {
@@ -656,6 +804,33 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_page_snippets: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       shortener_domains: {
         Row: {
           created_at: string
@@ -694,6 +869,71 @@ export type Database = {
           verified_at?: string | null
         }
         Relationships: []
+      }
+      traffic_logs: {
+        Row: {
+          asn: string | null
+          bot_score: number | null
+          coherence_score: number | null
+          country: string | null
+          created_at: string
+          decision: string
+          fbclid: string | null
+          fingerprint_hash: string | null
+          id: string
+          ip: string | null
+          is_mobile: boolean | null
+          link_id: string | null
+          reasons: string[]
+          referer: string | null
+          ua: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asn?: string | null
+          bot_score?: number | null
+          coherence_score?: number | null
+          country?: string | null
+          created_at?: string
+          decision: string
+          fbclid?: string | null
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          is_mobile?: boolean | null
+          link_id?: string | null
+          reasons?: string[]
+          referer?: string | null
+          ua?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asn?: string | null
+          bot_score?: number | null
+          coherence_score?: number | null
+          country?: string | null
+          created_at?: string
+          decision?: string
+          fbclid?: string | null
+          fingerprint_hash?: string | null
+          id?: string
+          ip?: string | null
+          is_mobile?: boolean | null
+          link_id?: string | null
+          reasons?: string[]
+          referer?: string | null
+          ua?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_logs_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       upgrade_requests: {
         Row: {
@@ -784,6 +1024,30 @@ export type Database = {
           label?: string | null
           network?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      velocity_tracking: {
+        Row: {
+          blocked: boolean
+          fingerprint_hash: string
+          last_seen: string
+          short_codes: string[]
+          window_start: string
+        }
+        Insert: {
+          blocked?: boolean
+          fingerprint_hash: string
+          last_seen?: string
+          short_codes?: string[]
+          window_start?: string
+        }
+        Update: {
+          blocked?: boolean
+          fingerprint_hash?: string
+          last_seen?: string
+          short_codes?: string[]
+          window_start?: string
         }
         Relationships: []
       }
@@ -906,6 +1170,29 @@ export type Database = {
       }
     }
     Functions: {
+      confirm_human_fbclid: {
+        Args: { _fbclid: string; _link_id: string }
+        Returns: undefined
+      }
+      evaluate_redirect: {
+        Args: {
+          _asn: string
+          _coherence_score: number
+          _country: string
+          _fbclid: string
+          _fingerprint: string
+          _ip: string
+          _is_datacenter: boolean
+          _is_hard_bot: boolean
+          _is_mobile: boolean
+          _link_id: string
+          _referer: string
+          _short_code: string
+          _ua: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       handle_redirect_click: {
         Args: {
           _is_bot: boolean

@@ -17,6 +17,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RSlugRouteImport } from './routes/r.$slug'
+import { Route as ApiPublicBehaviorCheckRouteImport } from './routes/api/public/behavior-check'
 
 const WithdrawRoute = WithdrawRouteImport.update({
   id: '/withdraw',
@@ -58,6 +59,11 @@ const RSlugRoute = RSlugRouteImport.update({
   path: '/r/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBehaviorCheckRoute = ApiPublicBehaviorCheckRouteImport.update({
+  id: '/api/public/behavior-check',
+  path: '/api/public/behavior-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
+  '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
+  '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
+  '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/withdraw'
     | '/r/$slug'
+    | '/api/public/behavior-check'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/withdraw'
     | '/r/$slug'
+    | '/api/public/behavior-check'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/withdraw'
     | '/r/$slug'
+    | '/api/public/behavior-check'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   WithdrawRoute: typeof WithdrawRoute
   RSlugRoute: typeof RSlugRoute
+  ApiPublicBehaviorCheckRoute: typeof ApiPublicBehaviorCheckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/behavior-check': {
+      id: '/api/public/behavior-check'
+      path: '/api/public/behavior-check'
+      fullPath: '/api/public/behavior-check'
+      preLoaderRoute: typeof ApiPublicBehaviorCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,17 +224,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   WithdrawRoute: WithdrawRoute,
   RSlugRoute: RSlugRoute,
+  ApiPublicBehaviorCheckRoute: ApiPublicBehaviorCheckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
