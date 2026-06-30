@@ -1,8 +1,9 @@
 /**
  * AdsPx brand mark — uses the polished premium logo image.
  */
-import logoIcon from "@/assets/adspx-icon.png.asset.json";
+import logoIcon from "@/assets/adspx-icon-sm.png.asset.json";
 import logoFull from "@/assets/adspx-logo.png.asset.json";
+
 
 type LogoMarkProps = {
   className?: string;
@@ -15,6 +16,9 @@ export function AdspxMark({ className, glow = true }: LogoMarkProps) {
     <img
       src={logoIcon.url}
       alt="AdsPx"
+      width={48}
+      height={48}
+      decoding="async"
       className={className}
       style={
         glow
@@ -24,6 +28,7 @@ export function AdspxMark({ className, glow = true }: LogoMarkProps) {
     />
   );
 }
+
 
 export function AdspxWordmark({
   className,
