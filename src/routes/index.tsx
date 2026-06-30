@@ -497,8 +497,8 @@ function pickRand<T>(arr: T[]): T {
 }
 
 function randomAmount(): number {
-  // realistic small-to-mid withdrawals: $26 – $540
-  const v = 26 + Math.random() * 514;
+  // realistic small withdrawals: $10 – $57
+  const v = 10 + Math.random() * 47;
   return Math.round(v * 100) / 100;
 }
 
