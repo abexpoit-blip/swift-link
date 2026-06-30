@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   Link2, Loader2, Plus, Copy, Trash2, ExternalLink, DollarSign,
   MousePointerClick, Wallet, LogOut, TrendingUp, ShieldCheck, Bot,
-  Settings2, Inbox as InboxIcon, ChevronDown, Activity, Globe2,
+  Settings2, Inbox as InboxIcon, Activity, Globe2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
