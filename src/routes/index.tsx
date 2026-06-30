@@ -412,12 +412,18 @@ function FeatureGrid() {
 /* ─────────────────────────────────────────────── RECENT PAYOUTS */
 function RecentPayouts() {
   const payouts = [
-    { user: "rashed***", amount: 142.5, method: "USDT TRC20", when: "2 hours ago", country: "🇧🇩" },
-    { user: "priya***", amount: 89.0, method: "USDT BEP20", when: "5 hours ago", country: "🇮🇳" },
-    { user: "mike***", amount: 320.75, method: "USDT TRC20", when: "yesterday", country: "🇺🇸" },
-    { user: "kamal***", amount: 56.25, method: "USDT BEP20", when: "yesterday", country: "🇧🇩" },
-    { user: "ahmed***", amount: 215.0, method: "USDT TRC20", when: "2 days ago", country: "🇵🇰" },
-    { user: "lina***", amount: 41.5, method: "USDT BEP20", when: "2 days ago", country: "🇮🇩" },
+    { user: "michael.b***", amount: 412.80, method: "USDT TRC20", when: "1 hour ago", country: "🇺🇸" },
+    { user: "rahul.s***", amount: 286.50, method: "USDT BEP20", when: "2 hours ago", country: "🇮🇳" },
+    { user: "jessica.m***", amount: 198.25, method: "USDT TRC20", when: "3 hours ago", country: "🇺🇸" },
+    { user: "amit.k***", amount: 154.00, method: "USDT BEP20", when: "5 hours ago", country: "🇮🇳" },
+    { user: "david.r***", amount: 367.40, method: "USDT TRC20", when: "7 hours ago", country: "🇺🇸" },
+    { user: "priya.n***", amount: 92.75, method: "USDT BEP20", when: "9 hours ago", country: "🇮🇳" },
+    { user: "sarah.j***", amount: 245.00, method: "USDT TRC20", when: "yesterday", country: "🇺🇸" },
+    { user: "vikram.p***", amount: 178.30, method: "USDT BEP20", when: "yesterday", country: "🇮🇳" },
+    { user: "james.w***", amount: 521.60, method: "USDT TRC20", when: "yesterday", country: "🇺🇸" },
+    { user: "ananya.r***", amount: 134.90, method: "USDT BEP20", when: "2 days ago", country: "🇮🇳" },
+    { user: "robert.c***", amount: 308.15, method: "USDT TRC20", when: "2 days ago", country: "🇺🇸" },
+    { user: "arjun.m***", amount: 87.45, method: "USDT BEP20", when: "2 days ago", country: "🇮🇳" },
   ];
 
   return (
