@@ -71,6 +71,15 @@ type AuditRow = {
   created_at: string;
 };
 
+type MessageRow = {
+  id: string;
+  subject: string;
+  body: string;
+  is_broadcast: boolean;
+  recipient_id: string | null;
+  created_at: string;
+};
+
 type AdminUser = {
   id: string;
   email: string | null;
