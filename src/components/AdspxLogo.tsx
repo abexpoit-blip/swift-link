@@ -1,8 +1,9 @@
 /**
  * AdsPx brand mark — uses the polished premium logo image.
  */
-import logoIcon from "@/assets/adspx-icon.png.asset.json";
+import logoIcon from "@/assets/adspx-icon-sm.png.asset.json";
 import logoFull from "@/assets/adspx-logo.png.asset.json";
+
 
 type LogoMarkProps = {
   className?: string;
