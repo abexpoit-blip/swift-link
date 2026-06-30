@@ -167,7 +167,7 @@ function PayoutBar() {
   const stats = [
     { label: "Active publishers", value: "42,180+" },
     { label: "Clicks served", value: "2.4B+" },
-    { label: "Paid in 2025", value: "$284K+" },
+    { label: "Paid in 2026", value: "$284K+" },
     { label: "Min payout", value: "$25" },
   ];
   return (
