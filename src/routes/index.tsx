@@ -127,9 +127,11 @@ function Hero() {
               <Input
                 type="url"
                 required
+                aria-label="Paste your long URL"
                 placeholder="Paste your long URL here…"
                 className="h-12 text-base bg-transparent border-0 shadow-none focus-visible:ring-0 px-4 flex-1"
               />
+
               <Button
                 type="submit"
                 size="lg"
