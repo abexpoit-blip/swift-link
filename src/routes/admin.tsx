@@ -108,6 +108,30 @@ function AdminPage() {
   const [comment, setComment] = useState("");
   const [submittingDecision, setSubmittingDecision] = useState(false);
 
+  // test link simulator
+  const runSim = useServerFn(simulateRedirect);
+  const [simCode, setSimCode] = useState("");
+  const [simProfile, setSimProfile] = useState<SimProfile>("fb_crawler");
+  const [simRunning, setSimRunning] = useState(false);
+  const [simResult, setSimResult] = useState<{
+    profile: string; decision: string; reasons: string[]; safe_url: string | null; money_url: string;
+    inputs: { ua: string; ip: string; country: string; asn: string; is_hard_bot: boolean; is_datacenter: boolean; is_mobile: boolean; coherence: number; fbclid: string | null };
+  } | null>(null);
+
+  async function runSimulation() {
+    if (!simCode.trim()) { toast.error("Short code dao"); return; }
+    setSimRunning(true);
+    setSimResult(null);
+    try {
+      const res = await runSim({ data: { short_code: simCode.trim(), profile: simProfile } });
+      setSimResult(res as any);
+    } catch (e: any) {
+      toast.error(e?.message || "Simulation failed");
+    } finally {
+      setSimRunning(false);
+    }
+  }
+
   async function loadAll() {
     const [usersRes, ledgerRes, profilesRes, withdrawRes, msgRes, auditRes] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
