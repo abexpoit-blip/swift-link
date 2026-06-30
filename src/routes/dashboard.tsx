@@ -136,7 +136,7 @@ function DashboardPage() {
     setCreating(true);
     const { error } = await supabase.from("links").insert({
       user_id: userId, short_code: genCode(),
-      title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: null,
+      title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
     });
     setCreating(false);
     if (error) { toast.error(error.message); return; }
