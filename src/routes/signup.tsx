@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Link2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -57,11 +58,9 @@ function SignupPage() {
     <div className="min-h-screen grid place-items-center bg-background px-6 py-10">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-8 w-8 rounded-xl bg-primary-gradient grid place-items-center shadow-glow">
-            <Link2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold text-lg">
-            Link<span className="text-gradient">ly</span>
+          <AdspxMark className="h-8 w-8" />
+          <span className="font-display font-semibold text-lg tracking-tight">
+            Ads<span className="text-gradient">Px</span>
           </span>
         </Link>
 

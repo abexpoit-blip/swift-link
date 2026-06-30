@@ -19,6 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { makeRecentPayout } from "@/lib/publishers";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -470,59 +471,7 @@ function FeatureGrid() {
 
 /* ─────────────────────────────────────────────── RECENT PAYOUTS */
 type Country = "all" | "us" | "in";
-type Payout = {
-  user: string;
-  amount: number;
-  method: "USDT TRC20" | "USDT BEP20";
-  minutesAgo: number;
-  country: Country;
-  flag: string;
-};
-
-const US_NAMES = [
-  "michael.b", "david.r", "james.w", "robert.c", "daniel.k", "kevin.m",
-  "brandon.t", "ethan.s", "jacob.h", "ryan.p", "nathan.l", "tyler.g",
-  "andrew.f", "joshua.d", "matthew.o", "christopher.v", "anthony.n",
-  "benjamin.a", "samuel.q", "logan.e", "noah.z", "william.j",
-];
-const IN_NAMES = [
-  "rahul.s", "amit.k", "vikram.p", "arjun.m", "rohan.t", "karan.d",
-  "siddharth.g", "manish.r", "nikhil.b", "aditya.v", "harsh.j", "varun.c",
-  "rajesh.n", "abhishek.l", "yash.h", "ankit.o", "deepak.f", "sandeep.a",
-  "tushar.q", "pranav.e", "rishabh.z", "saurabh.w",
-];
-const METHODS: Payout["method"][] = ["USDT TRC20", "USDT BEP20"];
-
-function pickRand<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function randomAmount(): number {
-  // realistic small withdrawals: $10 – $57
-  const v = 10 + Math.random() * 47;
-  return Math.round(v * 100) / 100;
-}
-
-function makePayout(country: Country, minutesAgo: number): Payout {
-  if (country === "us") {
-    return {
-      user: pickRand(US_NAMES) + "***",
-      amount: randomAmount(),
-      method: pickRand(METHODS),
-      minutesAgo,
-      country: "us",
-      flag: "🇺🇸",
-    };
-  }
-  return {
-    user: pickRand(IN_NAMES) + "***",
-    amount: randomAmount(),
-    method: pickRand(METHODS),
-    minutesAgo,
-    country: "in",
-    flag: "🇮🇳",
-  };
-}
+type Payout = import("@/lib/publishers").RecentPayout;
 
 function formatWhen(min: number): string {
   if (min < 1) return "just now";
@@ -535,12 +484,11 @@ function formatWhen(min: number): string {
 }
 
 function buildInitial(): Payout[] {
-  // ~8 entries, alternating countries, spread across time
+  // 8 entries, mixed countries, spread across time
   const list: Payout[] = [];
   const minutes = [3, 11, 24, 47, 82, 130, 210, 340];
   for (let i = 0; i < minutes.length; i++) {
-    const c: Country = Math.random() < 0.5 ? "us" : "in";
-    list.push(makePayout(c, minutes[i] + Math.floor(Math.random() * 6)));
+    list.push(makeRecentPayout(minutes[i] + Math.floor(Math.random() * 6)));
   }
   return list;
 }
@@ -555,7 +503,7 @@ function RecentPayouts() {
       setPayouts((prev) => {
         const aged = prev.map((p) => ({ ...p, minutesAgo: p.minutesAgo + 1 }));
         // every tick, replace the oldest with a fresh "just now" entry
-        const fresh = makePayout(Math.random() < 0.5 ? "us" : "in", 0);
+        const fresh = makeRecentPayout(0);
         const trimmed = aged.slice(0, aged.length - 1);
         return [fresh, ...trimmed];
       });
