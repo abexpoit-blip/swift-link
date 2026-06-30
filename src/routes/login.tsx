@@ -27,13 +27,20 @@ function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed.endsWith("@gmail.com")) {
+      toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
     setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
+    // bump last_login_at; ignore errors
+    supabase.rpc("touch_last_login").then(() => {});
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   }
