@@ -71,13 +71,19 @@ type AuditRow = {
   created_at: string;
 };
 
-type MessageRow = {
+type AdminUser = {
   id: string;
-  subject: string;
-  body: string;
-  is_broadcast: boolean;
-  recipient_id: string | null;
+  email: string | null;
+  full_name: string | null;
+  plan_slug: string | null;
+  banned: boolean;
+  banned_reason: string | null;
+  email_confirmed_at: string | null;
+  last_login_at: string | null;
   created_at: string;
+  links_used: number | null;
+  clicks_used: number | null;
+  balance_available: number | null;
 };
 
 function AdminPage() {
