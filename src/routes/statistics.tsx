@@ -84,10 +84,16 @@ function StatisticsPage() {
   const [linkClicks, setLinkClicks] = useState(0);
 
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    async function loadOnce(showSpinner: boolean) {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setLoading(false); setSignedIn(false); return; }
-      setSignedIn(true);
+      if (!session) {
+        if (!cancelled) { setSignedIn(false); setLoading(false); }
+        return;
+      }
+      if (!cancelled) setSignedIn(true);
       const userId = session.user.id;
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
@@ -112,13 +118,21 @@ function StatisticsPage() {
           .eq("user_id", userId),
       ]);
 
+      if (cancelled) return;
       setTlogs((traffic.data ?? []) as TLog[]);
       setClicks((click.data ?? []) as unknown as ClickRow[]);
       setTotalEarnings((earnings.data ?? []).reduce((a, r: any) => a + Number(r.earnings_usd || 0), 0));
       setLinkClicks((links.data ?? []).reduce((a, r: any) => a + Number(r.clicks_count || 0) + Number(r.bot_clicks_count || 0), 0));
-      setLoading(false);
-    })();
+      if (showSpinner) setLoading(false);
+    }
+
+    loadOnce(true);
+    // stable 8-second refresh — no random jitter
+    timer = setInterval(() => { loadOnce(false); }, 8000);
+
+    return () => { cancelled = true; if (timer) clearInterval(timer); };
   }, []);
+
 
   /* ── aggregations ── */
   const trafficSeries = useMemo<DayPoint[]>(() => {
