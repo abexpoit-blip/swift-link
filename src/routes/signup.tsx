@@ -94,7 +94,7 @@ function SignupPage() {
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Gmail address</Label>
               <Input
                 id="email"
                 type="email"
