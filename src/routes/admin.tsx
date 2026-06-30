@@ -324,7 +324,7 @@ function AdminPage() {
 
   async function loadUsers(search = "") {
     setUsersLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_users", { _search: search || null, _limit: 200 });
+    const { data, error } = await supabase.rpc("admin_list_users", { _search: search || undefined, _limit: 200 });
     setUsersLoading(false);
     if (error) { toast.error(error.message); return; }
     setUsers((data ?? []) as AdminUser[]);
@@ -359,7 +359,7 @@ function AdminPage() {
   }
 
   async function unbanUser(u: AdminUser) {
-    const { error } = await supabase.rpc("admin_set_banned", { _user_id: u.id, _banned: false, _reason: null });
+    const { error } = await supabase.rpc("admin_set_banned", { _user_id: u.id, _banned: false, _reason: undefined });
     if (error) { toast.error(error.message); return; }
     toast.success("Ban removed");
     loadUsers(userSearch);
