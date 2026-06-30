@@ -606,7 +606,7 @@ function FaqStrip() {
       a: "Anywhere your audience is — Facebook, Telegram, Twitter/X, YouTube, blog, WhatsApp groups. No platform restrictions.",
     },
     {
-      q: "Do I need a AdsPx referral to sign up?",
+      q: "Do I need an AdsPx referral to sign up?",
       a: "No, signup is open and free. There is a referral program if you want to earn from inviting friends, but it's optional.",
     },
   ];
