@@ -300,11 +300,13 @@ function EarningsCalculator() {
       </div>
 
       <div className="max-w-3xl mx-auto rounded-3xl border border-primary/30 bg-card p-8 md:p-10 shadow-elegant">
-        <label className="block text-sm font-medium text-muted-foreground mb-3">
+        <label htmlFor="clicks-range" className="block text-sm font-medium text-muted-foreground mb-3">
           Monthly clicks you can send
         </label>
         <input
+          id="clicks-range"
           type="range"
+          aria-label="Monthly clicks slider"
           min={10000}
           max={5000000}
           step={10000}
@@ -312,6 +314,7 @@ function EarningsCalculator() {
           onChange={(e) => setClicks(Number(e.target.value))}
           className="w-full h-2 rounded-full bg-secondary appearance-none cursor-pointer accent-primary"
         />
+
         <div className="flex justify-between text-xs text-muted-foreground mt-2 font-mono">
           <span>10K</span>
           <span>1M</span>
