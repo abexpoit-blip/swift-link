@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
 import { makeRecentPayout } from "@/lib/publishers";
+import { PARTNER_LOGOS } from "@/components/BrandLogos";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -367,9 +368,6 @@ function EarningsCalculator() {
 
 /* ─────────────────────────────────────────────── SPONSORS */
 function Sponsors() {
-  // Lazy import to keep this section colocated.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PARTNER_LOGOS } = require("@/components/BrandLogos") as typeof import("@/components/BrandLogos");
   return (
     <section id="sponsors" className="container mx-auto px-6 py-24">
       <div className="text-center mb-12 max-w-3xl mx-auto space-y-3">
