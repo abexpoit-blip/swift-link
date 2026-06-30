@@ -69,6 +69,7 @@ function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
           <a href="#calculator" className="hover:text-foreground transition-colors">Calculator</a>
+          <Link to="/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link>
           <a href="#payouts" className="hover:text-foreground transition-colors">Payouts</a>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
