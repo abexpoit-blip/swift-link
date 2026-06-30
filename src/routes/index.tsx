@@ -365,7 +365,7 @@ function EarningsCalculator() {
 /* ─────────────────────────────────────────────── SPONSORS */
 function Sponsors() {
   const brands = [
-    "Adsterra", "PropellerAds", "Monetag", "Clickadu",
+    "Mediavine", "PropellerAds", "Monetag", "Clickadu",
     "AdMaven", "PopAds", "HilltopAds", "RichAds",
   ];
   return (
