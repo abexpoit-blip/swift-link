@@ -6,6 +6,11 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "@/styles.css?url";
+import favicon32 from "@/assets/favicon-32.png.asset.json";
+import appleTouch from "@/assets/apple-touch-icon.png.asset.json";
+import icon192 from "@/assets/icon-192.png.asset.json";
+import ogDefault from "@/assets/og-default.jpg.asset.json";
+
 
 interface RouterCtx {
   queryClient: QueryClient;
