@@ -229,6 +229,7 @@ function AdminPage() {
         return;
       }
       await loadAll();
+      await Promise.all([loadUsers(""), loadInactiveDays()]);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
