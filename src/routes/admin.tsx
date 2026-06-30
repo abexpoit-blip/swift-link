@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { simulateRedirect, type SimProfile } from "@/lib/cloak-simulate.functions";
 import {
   Link2,
   Loader2,
@@ -32,6 +34,13 @@ import {
   History,
   ChevronDown,
   ChevronUp,
+  FlaskConical,
+  Bot,
+  User,
+  Server,
+  Globe,
+  RotateCw,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
