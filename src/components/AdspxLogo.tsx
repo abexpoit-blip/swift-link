@@ -16,6 +16,9 @@ export function AdspxMark({ className, glow = true }: LogoMarkProps) {
     <img
       src={logoIcon.url}
       alt="AdsPx"
+      width={48}
+      height={48}
+      decoding="async"
       className={className}
       style={
         glow
@@ -25,6 +28,7 @@ export function AdspxMark({ className, glow = true }: LogoMarkProps) {
     />
   );
 }
+
 
 export function AdspxWordmark({
   className,
