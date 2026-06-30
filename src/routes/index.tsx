@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   DollarSign,
@@ -410,31 +410,138 @@ function FeatureGrid() {
 }
 
 /* ─────────────────────────────────────────────── RECENT PAYOUTS */
+type Country = "all" | "us" | "in";
+type Payout = {
+  user: string;
+  amount: number;
+  method: "USDT TRC20" | "USDT BEP20";
+  minutesAgo: number;
+  country: Country;
+  flag: string;
+};
+
+const US_NAMES = [
+  "michael.b", "david.r", "james.w", "robert.c", "daniel.k", "kevin.m",
+  "brandon.t", "ethan.s", "jacob.h", "ryan.p", "nathan.l", "tyler.g",
+  "andrew.f", "joshua.d", "matthew.o", "christopher.v", "anthony.n",
+  "benjamin.a", "samuel.q", "logan.e", "noah.z", "william.j",
+];
+const IN_NAMES = [
+  "rahul.s", "amit.k", "vikram.p", "arjun.m", "rohan.t", "karan.d",
+  "siddharth.g", "manish.r", "nikhil.b", "aditya.v", "harsh.j", "varun.c",
+  "rajesh.n", "abhishek.l", "yash.h", "ankit.o", "deepak.f", "sandeep.a",
+  "tushar.q", "pranav.e", "rishabh.z", "saurabh.w",
+];
+const METHODS: Payout["method"][] = ["USDT TRC20", "USDT BEP20"];
+
+function pickRand<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomAmount(): number {
+  // realistic small-to-mid withdrawals: $26 – $540
+  const v = 26 + Math.random() * 514;
+  return Math.round(v * 100) / 100;
+}
+
+function makePayout(country: Country, minutesAgo: number): Payout {
+  if (country === "us") {
+    return {
+      user: pickRand(US_NAMES) + "***",
+      amount: randomAmount(),
+      method: pickRand(METHODS),
+      minutesAgo,
+      country: "us",
+      flag: "🇺🇸",
+    };
+  }
+  return {
+    user: pickRand(IN_NAMES) + "***",
+    amount: randomAmount(),
+    method: pickRand(METHODS),
+    minutesAgo,
+    country: "in",
+    flag: "🇮🇳",
+  };
+}
+
+function formatWhen(min: number): string {
+  if (min < 1) return "just now";
+  if (min < 60) return `${Math.floor(min)} min ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} hour${h > 1 ? "s" : ""} ago`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "yesterday";
+  return `${d} days ago`;
+}
+
+function buildInitial(): Payout[] {
+  // ~8 entries, alternating countries, spread across time
+  const list: Payout[] = [];
+  const minutes = [3, 11, 24, 47, 82, 130, 210, 340];
+  for (let i = 0; i < minutes.length; i++) {
+    const c: Country = Math.random() < 0.5 ? "us" : "in";
+    list.push(makePayout(c, minutes[i] + Math.floor(Math.random() * 6)));
+  }
+  return list;
+}
+
 function RecentPayouts() {
-  const payouts = [
-    { user: "michael.b***", amount: 412.80, method: "USDT TRC20", when: "1 hour ago", country: "🇺🇸" },
-    { user: "rahul.s***", amount: 286.50, method: "USDT BEP20", when: "2 hours ago", country: "🇮🇳" },
-    { user: "jessica.m***", amount: 198.25, method: "USDT TRC20", when: "3 hours ago", country: "🇺🇸" },
-    { user: "amit.k***", amount: 154.00, method: "USDT BEP20", when: "5 hours ago", country: "🇮🇳" },
-    { user: "david.r***", amount: 367.40, method: "USDT TRC20", when: "7 hours ago", country: "🇺🇸" },
-    { user: "priya.n***", amount: 92.75, method: "USDT BEP20", when: "9 hours ago", country: "🇮🇳" },
-    { user: "sarah.j***", amount: 245.00, method: "USDT TRC20", when: "yesterday", country: "🇺🇸" },
-    { user: "vikram.p***", amount: 178.30, method: "USDT BEP20", when: "yesterday", country: "🇮🇳" },
-    { user: "james.w***", amount: 521.60, method: "USDT TRC20", when: "yesterday", country: "🇺🇸" },
-    { user: "ananya.r***", amount: 134.90, method: "USDT BEP20", when: "2 days ago", country: "🇮🇳" },
-    { user: "robert.c***", amount: 308.15, method: "USDT TRC20", when: "2 days ago", country: "🇺🇸" },
-    { user: "arjun.m***", amount: 87.45, method: "USDT BEP20", when: "2 days ago", country: "🇮🇳" },
+  const [filter, setFilter] = useState<Country>("all");
+  const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
+
+  // Age existing entries + occasionally inject a new one (every 60s)
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPayouts((prev) => {
+        const aged = prev.map((p) => ({ ...p, minutesAgo: p.minutesAgo + 1 }));
+        // every tick, replace the oldest with a fresh "just now" entry
+        const fresh = makePayout(Math.random() < 0.5 ? "us" : "in", 0);
+        const trimmed = aged.slice(0, aged.length - 1);
+        return [fresh, ...trimmed];
+      });
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const visible = useMemo(
+    () => (filter === "all" ? payouts : payouts.filter((p) => p.country === filter)),
+    [payouts, filter],
+  );
+
+  const tabs: { id: Country; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "us", label: "🇺🇸 USA" },
+    { id: "in", label: "🇮🇳 India" },
   ];
 
   return (
     <section id="payouts" className="container mx-auto px-6 py-24">
-      <div className="text-center mb-12 max-w-2xl mx-auto space-y-3">
+      <div className="text-center mb-10 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           <Banknote className="h-3 w-3" /> Live payouts
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
           Real publishers. <span className="text-gradient">Real withdrawals.</span>
         </h2>
+      </div>
+
+      <div className="flex justify-center mb-6">
+        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-card">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setFilter(t.id)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                filter === t.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card overflow-hidden shadow-card">
@@ -444,28 +551,37 @@ function RecentPayouts() {
           <div className="text-right">Amount</div>
           <div className="text-right">When</div>
         </div>
-        {payouts.map((p, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3.5 border-b border-border/40 last:border-b-0 text-sm items-center"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">{p.country}</span>
-              <span className="font-mono">{p.user}</span>
-            </div>
-            <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
-              <Bitcoin className="h-3.5 w-3.5" /> {p.method}
-            </div>
-            <div className="text-right font-display font-semibold text-success">
-              +${p.amount.toFixed(2)}
-            </div>
-            <div className="text-right text-xs text-muted-foreground">{p.when}</div>
+        {visible.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+            No payouts to show.
           </div>
-        ))}
+        ) : (
+          visible.map((p, i) => (
+            <div
+              key={`${p.user}-${i}`}
+              className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3.5 border-b border-border/40 last:border-b-0 text-sm items-center"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">{p.flag}</span>
+                <span className="font-mono">{p.user}</span>
+              </div>
+              <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
+                <Bitcoin className="h-3.5 w-3.5" /> {p.method}
+              </div>
+              <div className="text-right font-display font-semibold text-success">
+                +${p.amount.toFixed(2)}
+              </div>
+              <div className="text-right text-xs text-muted-foreground">
+                {formatWhen(p.minutesAgo)}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
 }
+
 
 /* ─────────────────────────────────────────────── FAQ */
 function FaqStrip() {
