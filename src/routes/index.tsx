@@ -551,44 +551,41 @@ function RecentPayouts() {
       </div>
 
       <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card overflow-hidden shadow-card">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border/60 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+        <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border/60 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
           <div>Publisher</div>
-          <div className="hidden md:block">Method</div>
+          <div>Method</div>
           <div className="text-right">Amount</div>
           <div className="text-right">When</div>
         </div>
         {visible.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-            No payouts to show.
-          </div>
+          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No payouts to show.</div>
         ) : (
           visible.map((p, i) => (
-            <div
-              key={`${p.user}-${i}`}
-              className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3.5 border-b border-border/40 last:border-b-0 text-sm items-center"
-            >
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={`https://flagcdn.com/${p.country}.svg`}
-                  alt={p.country.toUpperCase()}
-                  loading="lazy"
-                  className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0"
-                />
-                <span className="font-mono">{p.user}</span>
+            <div key={`${p.user}-${i}`} className="px-4 sm:px-5 py-3 border-b border-border/40 last:border-b-0 text-sm">
+              {/* Mobile */}
+              <div className="flex items-center gap-2.5 sm:hidden">
+                <img src={`https://flagcdn.com/${p.country}.svg`} alt={p.country.toUpperCase()} loading="lazy" className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-mono text-xs truncate">{p.user}</div>
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground"><Bitcoin className="h-3 w-3" />{p.method} · {formatWhen(p.minutesAgo)}</div>
+                </div>
+                <div className="text-right font-display font-semibold text-success shrink-0">+${p.amount.toFixed(2)}</div>
               </div>
-              <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
-                <Bitcoin className="h-3.5 w-3.5" /> {p.method}
-              </div>
-              <div className="text-right font-display font-semibold text-success">
-                +${p.amount.toFixed(2)}
-              </div>
-              <div className="text-right text-xs text-muted-foreground">
-                {formatWhen(p.minutesAgo)}
+              {/* Desktop */}
+              <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto] gap-4 items-center">
+                <div className="flex items-center gap-2.5">
+                  <img src={`https://flagcdn.com/${p.country}.svg`} alt={p.country.toUpperCase()} loading="lazy" className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0" />
+                  <span className="font-mono">{p.user}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground"><Bitcoin className="h-3.5 w-3.5" />{p.method}</div>
+                <div className="text-right font-display font-semibold text-success">+${p.amount.toFixed(2)}</div>
+                <div className="text-right text-xs text-muted-foreground">{formatWhen(p.minutesAgo)}</div>
               </div>
             </div>
           ))
         )}
       </div>
+
     </section>
   );
 }
