@@ -42,6 +42,7 @@ function HomePage() {
       <PayoutBar />
       <HowItWorks />
       <EarningsCalculator />
+      <Sponsors />
       <FeatureGrid />
       <RecentPayouts />
       <FaqStrip />
