@@ -75,11 +75,12 @@ function SiteHeader() {
           <Button variant="ghost" size="sm" asChild>
             <a href="/login">Sign in</a>
           </Button>
-          <Button size="sm" className="bg-primary-gradient shadow-glow" asChild>
+          <Button size="sm" className="btn-premium rounded-lg" asChild>
             <a href="/signup">
               Start earning <ArrowRight className="ml-1 h-4 w-4" />
             </a>
           </Button>
+
         </div>
       </div>
     </header>
