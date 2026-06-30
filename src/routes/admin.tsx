@@ -322,6 +322,64 @@ function AdminPage() {
     await loadAll();
   }
 
+  async function loadUsers(search = "") {
+    setUsersLoading(true);
+    const { data, error } = await supabase.rpc("admin_list_users", { _search: search || null, _limit: 200 });
+    setUsersLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setUsers((data ?? []) as AdminUser[]);
+  }
+
+  async function loadInactiveDays() {
+    const { data } = await supabase.from("system_settings").select("value").eq("key", "inactive_days").maybeSingle();
+    if (data?.value !== undefined && data?.value !== null) {
+      const n = typeof data.value === "number" ? data.value : Number(data.value);
+      if (!Number.isNaN(n)) setInactiveDays(n);
+    }
+  }
+
+  async function saveInactiveDays() {
+    if (inactiveDays < 1 || inactiveDays > 365) { toast.error("1 — 365 din er moddhe rakho"); return; }
+    setSavingDays(true);
+    const { error } = await supabase
+      .from("system_settings")
+      .upsert({ key: "inactive_days", value: inactiveDays, updated_at: new Date().toISOString() });
+    setSavingDays(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Inactive threshold ${inactiveDays} days e set kora holo`);
+  }
+
+  async function banUser(u: AdminUser) {
+    const reason = window.prompt(`Ban reason for ${u.email}?`, "Policy violation");
+    if (reason === null) return;
+    const { error } = await supabase.rpc("admin_set_banned", { _user_id: u.id, _banned: true, _reason: reason });
+    if (error) { toast.error(error.message); return; }
+    toast.success("User banned");
+    loadUsers(userSearch);
+  }
+
+  async function unbanUser(u: AdminUser) {
+    const { error } = await supabase.rpc("admin_set_banned", { _user_id: u.id, _banned: false, _reason: null });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Ban removed");
+    loadUsers(userSearch);
+  }
+
+  async function deleteUser(u: AdminUser) {
+    if (!window.confirm(`Permanently delete ${u.email}? Data is unrecoverable.`)) return;
+    const { error } = await supabase.rpc("admin_delete_user", { _user_id: u.id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("User deleted");
+    loadUsers(userSearch);
+  }
+
+  async function verifyUser(u: AdminUser) {
+    const { error } = await supabase.rpc("admin_verify_email", { _user_id: u.id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Email marked verified");
+    loadUsers(userSearch);
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
