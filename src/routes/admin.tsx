@@ -337,7 +337,7 @@ function AdminPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
-            <Link to="/inbox" className="text-muted-foreground hover:text-foreground">Inbox</Link>
+            <Link to="/inbox" className="text-muted-foreground hover:text-foreground">Messages</Link>
             <Link to="/admin" className="font-medium">Admin</Link>
           </nav>
           <div className="flex items-center gap-3">

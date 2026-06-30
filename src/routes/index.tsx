@@ -78,12 +78,12 @@ function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <a href="/login">Sign in</a>
+            <Link to="/login">Sign in</Link>
           </Button>
           <Button size="sm" className="btn-premium rounded-lg" asChild>
-            <a href="/signup">
+            <Link to="/signup">
               Start earning <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
+            </Link>
           </Button>
 
         </div>
@@ -516,9 +516,9 @@ function RecentPayouts() {
   );
 
   const tabs: { id: Country; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "us", label: "🇺🇸 USA" },
-    { id: "in", label: "🇮🇳 India" },
+    { id: "all", label: "All countries" },
+    { id: "us", label: "USA" },
+    { id: "in", label: "India" },
   ];
 
   return (
@@ -568,7 +568,12 @@ function RecentPayouts() {
               className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3.5 border-b border-border/40 last:border-b-0 text-sm items-center"
             >
               <div className="flex items-center gap-2.5">
-                <span className="text-base">{p.flag}</span>
+                <img
+                  src={`https://flagcdn.com/${p.country}.svg`}
+                  alt={p.country.toUpperCase()}
+                  loading="lazy"
+                  className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0"
+                />
                 <span className="font-mono">{p.user}</span>
               </div>
               <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">

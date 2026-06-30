@@ -88,11 +88,12 @@ function DashboardPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) { navigate({ to: "/login" }); return; }
-      setUserId(data.user.id);
-      setEmail(data.user.email ?? "");
-      await loadAll(data.user.id);
+      // fast path: read cached session from localStorage (no network roundtrip)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate({ to: "/login" }); return; }
+      setUserId(session.user.id);
+      setEmail(session.user.email ?? "");
+      await loadAll(session.user.id);
       setLoading(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -187,7 +188,7 @@ function DashboardPage() {
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium text-primary">Console</Link>
             <Link to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</Link>
-            <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Inbox</Link>
+            <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Messages</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -407,14 +408,14 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
 /* ---------------- AI Protection System (showcase) ---------------- */
 function AIProtectionPanel({ humans, bots }: { humans: number; bots: number }) {
   const layers = [
-    { label: "Neural fingerprint coherence", status: "ACTIVE" },
-    { label: "Datacenter / ASN intelligence", status: "ACTIVE" },
-    { label: "Single-use fbclid validator",   status: "ACTIVE" },
-    { label: "Behavior challenge (scroll/touch)", status: "ACTIVE" },
-    { label: "Geo-velocity anomaly model",    status: "ACTIVE" },
-    { label: "Header / sec-ch-ua coherence",  status: "ACTIVE" },
-    { label: "Auto IP blacklist (rolling)",   status: "ACTIVE" },
-    { label: "Campaign launch shield (24h)",  status: "ACTIVE" },
+    { label: "mod-fp9 :: coherence",     status: "OK" },
+    { label: "mod-asn :: net-class",     status: "OK" },
+    { label: "mod-fbq :: token-lock",    status: "OK" },
+    { label: "mod-bh4 :: interaction",   status: "OK" },
+    { label: "mod-geo :: velocity",      status: "OK" },
+    { label: "mod-hdr :: client-hints",  status: "OK" },
+    { label: "mod-ipx :: rolling-list",  status: "OK" },
+    { label: "mod-lws :: launch-window", status: "OK" },
   ];
   return (
     <section className="relative overflow-hidden rounded-2xl glass-card p-6 ring-cyan">
@@ -426,26 +427,26 @@ function AIProtectionPanel({ humans, bots }: { humans: number; bots: number }) {
               <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
-            Advanced AI Protection — ACTIVATED
+            Protection layer — engaged
           </div>
           <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-            A <span className="text-gradient">giant AI engine</span> shields every link you create
+            A <span className="text-gradient">multi-stage filter</span> guards every link you create
           </h2>
           <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-            AdsPx runs an 8-layer detection stack tuned specifically for{" "}
+            Each click runs through our proprietary stack tuned specifically for{" "}
             <strong className="text-foreground">Facebook → Adsterra</strong> and other ad-network campaigns.
-            Reviewers, scrapers and bots get rejected automatically — only verified humans reach your money URL,
+            Reviewers, scrapers and bots get filtered out automatically — only verified humans reach your money URL,
             so your offer never gets flagged.
           </p>
           <div className="flex flex-wrap gap-4 text-xs pt-1">
             <div><span className="text-muted-foreground">Humans this session: </span><span className="font-mono text-primary">{humans}</span></div>
-            <div><span className="text-muted-foreground">Bots rejected: </span><span className="font-mono text-[#FF3D71]">{bots}</span></div>
-            <div><span className="text-muted-foreground">Latency added: </span><span className="font-mono">~12ms</span></div>
+            <div><span className="text-muted-foreground">Filtered: </span><span className="font-mono text-[#FF3D71]">{bots}</span></div>
+            <div><span className="text-muted-foreground">Added latency: </span><span className="font-mono">~12ms</span></div>
           </div>
         </div>
 
         <div className="rounded-xl border border-border bg-background/60 p-4 font-mono text-[11px] min-w-[280px]">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">/ ai-shield · live</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">/ sys-q9 · pulse</div>
           <ul className="space-y-1.5">
             {layers.map((l) => (
               <li key={l.label} className="flex items-center justify-between gap-3">

@@ -18,7 +18,7 @@ import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/inbox")({
   component: InboxPage,
-  head: () => ({ meta: [{ title: "Inbox — AdsPx" }] }),
+  head: () => ({ meta: [{ title: "Messages — AdsPx" }] }),
 });
 
 type Msg = {
@@ -168,7 +168,7 @@ function InboxPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
-            <Link to="/inbox" className="font-medium">Inbox</Link>
+            <Link to="/inbox" className="font-medium">Messages</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ function InboxPage() {
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-              <InboxIcon className="h-6 w-6 text-primary" /> Inbox
+              <InboxIcon className="h-6 w-6 text-primary" /> Messages
             </h1>
             <p className="text-sm text-muted-foreground">
               {unread > 0 ? <span className="text-primary font-semibold">{unread} unread</span> : "All caught up"} · {filtered.length} of {messages.length} shown
