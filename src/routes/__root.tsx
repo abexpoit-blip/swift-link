@@ -6,10 +6,12 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "@/styles.css?url";
-import favicon32 from "@/assets/favicon-32.png.asset.json";
-import appleTouch from "@/assets/apple-touch-icon.png.asset.json";
-import icon192 from "@/assets/icon-192.png.asset.json";
-import ogDefault from "@/assets/og-default.jpg.asset.json";
+
+// Local public-path icons so self-hosted deployments (adspx.com) don't depend on CDN.
+const favicon32 = { url: "/favicon-32.png" };
+const appleTouch = { url: "/apple-touch-icon.png" };
+const icon192 = { url: "/icon-192.png" };
+const ogDefault = { url: "/og-default.jpg" };
 
 
 interface RouterCtx {
