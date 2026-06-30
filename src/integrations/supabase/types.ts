@@ -1303,7 +1303,7 @@ export type Database = {
       unread_message_count: { Args: { _user_id: string }; Returns: number }
     }
     Enums: {
-      app_role: "user" | "admin"
+      app_role: "user" | "admin" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1431,7 +1431,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["user", "admin"],
+      app_role: ["user", "admin", "super_admin"],
     },
   },
 } as const

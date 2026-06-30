@@ -37,6 +37,8 @@ function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [resending, setResending] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
@@ -47,6 +49,7 @@ function InboxPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [query, setQuery] = useState("");
+
 
   async function load(uid: string) {
     const [msgRes, readRes] = await Promise.all([
@@ -70,11 +73,26 @@ function InboxPage() {
       }
       setUserId(data.user.id);
       setEmail(data.user.email ?? "");
+      setEmailVerified(!!data.user.email_confirmed_at);
       await load(data.user.id);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function resendVerification() {
+    if (!email) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
+    setResending(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Verification email sent. Check your Gmail inbox.");
+  }
+
 
   const filtered = useMemo(() => {
     const fromTs = from ? new Date(from).getTime() : -Infinity;
@@ -181,6 +199,33 @@ function InboxPage() {
       </header>
 
       <main className="container mx-auto px-6 py-10 max-w-3xl">
+        {!emailVerified && (
+          <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
+            <div className="flex items-start gap-3">
+              <Mail className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="font-semibold text-amber-900 dark:text-amber-200">Verify your email to unlock link creation</div>
+                <p className="text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
+                  You can browse and read messages without verifying. To create short links you must confirm <span className="font-mono">{email}</span> from your Gmail inbox.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={resendVerification}
+              disabled={resending}
+              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+            >
+              {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend verification"}
+            </Button>
+          </div>
+        )}
+        {emailVerified && (
+          <div className="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+            <CheckCheck className="h-3.5 w-3.5" /> Email verified — all features unlocked
+          </div>
+        )}
+
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="font-display text-2xl font-bold flex items-center gap-2">

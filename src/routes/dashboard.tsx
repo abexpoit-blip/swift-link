@@ -49,6 +49,8 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [resendingVerify, setResendingVerify] = useState(false);
   const [balance, setBalance] = useState(0);
   const [withdrawn, setWithdrawn] = useState(0);
   const [links, setLinks] = useState<LinkRow[]>([]);
@@ -93,6 +95,7 @@ function DashboardPage() {
       if (!session) { navigate({ to: "/login" }); return; }
       setUserId(session.user.id);
       setEmail(session.user.email ?? "");
+      setEmailVerified(!!session.user.email_confirmed_at);
       // fire-and-forget: record activity for inactive-user purge
       supabase.rpc("touch_last_login").then(() => {});
       // check ban status
@@ -145,6 +148,10 @@ function DashboardPage() {
   async function createLink(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
+    if (!emailVerified) {
+      toast.error("Please verify your email first to create links.");
+      return;
+    }
     try {
       const u = new URL(destUrl.trim());
       if (!["http:", "https:"].includes(u.protocol)) throw new Error();
@@ -159,6 +166,19 @@ function DashboardPage() {
     toast.success("Short link created");
     setDestUrl(""); setTitle("");
     await loadAll(userId);
+  }
+
+  async function resendVerify() {
+    if (!email) return;
+    setResendingVerify(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
+    setResendingVerify(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Verification email sent. Check your Gmail inbox.");
   }
 
   async function deleteLink(id: string) {
@@ -240,6 +260,17 @@ function DashboardPage() {
           <div className="space-y-6">
             <div className="rounded-2xl glass-card p-6">
               <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create cloaked link</h2>
+              {!emailVerified && (
+                <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="text-sm">
+                    <span className="font-semibold text-amber-900 dark:text-amber-200">Email not verified.</span>{" "}
+                    <span className="text-amber-900/80 dark:text-amber-200/80">Confirm <span className="font-mono">{email}</span> before creating links.</span>
+                  </div>
+                  <Button size="sm" onClick={resendVerify} disabled={resendingVerify} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+                    {resendingVerify ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
+                  </Button>
+                </div>
+              )}
               <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
                 <div>
                   <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (ad partner)</Label>
@@ -250,7 +281,7 @@ function DashboardPage() {
                   <Input id="title" placeholder="Campaign name" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 bg-muted/40" />
                 </div>
                 <div className="flex items-end">
-                  <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating}>
+                  <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating || !emailVerified}>
                     {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
                   </Button>
                 </div>

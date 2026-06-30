@@ -100,6 +100,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [adminId, setAdminId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const [totalUsers, setTotalUsers] = useState(0);
   const [realClicks, setRealClicks] = useState(0);
@@ -219,15 +220,18 @@ function AdminPage() {
       }
       setEmail(data.user.email ?? "");
       setAdminId(data.user.id);
-      const { data: isAdmin } = await supabase.rpc("has_role", {
-        _user_id: data.user.id,
-        _role: "admin",
-      });
-      if (!isAdmin) {
+      const [adminCheck, superCheck] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: data.user.id, _role: "super_admin" }),
+      ]);
+      const isAdmin = !!adminCheck.data;
+      const isSuper = !!superCheck.data;
+      if (!isAdmin && !isSuper) {
         toast.error("Admin access required");
         navigate({ to: "/dashboard" });
         return;
       }
+      setIsSuperAdmin(isSuper);
       await loadAll();
       await Promise.all([loadUsers(""), loadInactiveDays()]);
       setLoading(false);
@@ -414,7 +418,7 @@ function AdminPage() {
               Ads<span className="text-gradient">Px</span>
             </span>
             <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5">
-              <ShieldCheck className="h-3 w-3" /> ADMIN
+              <ShieldCheck className="h-3 w-3" /> {isSuperAdmin ? "SUPER ADMIN" : "ADMIN"}
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
@@ -594,9 +598,15 @@ function AdminPage() {
                                 <AlertTriangle className="h-3.5 w-3.5" />
                               </Button>
                             )}
-                            <Button size="sm" variant="ghost" onClick={() => deleteUser(u)} title="Delete" className="text-rose-600 hover:text-rose-700">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            {isSuperAdmin ? (
+                              <Button size="sm" variant="ghost" onClick={() => deleteUser(u)} title="Delete (super-admin only)" className="text-rose-600 hover:text-rose-700">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="ghost" disabled title="Only super-admin can delete users" className="opacity-40">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
