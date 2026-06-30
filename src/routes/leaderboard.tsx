@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, TrendingUp, TrendingDown, ArrowLeft, Zap } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, ArrowLeft } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
-import { TOP_PUBLISHERS, type Publisher } from "@/lib/publishers";
+import { TOP_PUBLISHERS, flagUrl, type Publisher } from "@/lib/publishers";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -32,27 +32,32 @@ function LeaderboardPage() {
     TOP_PUBLISHERS.map((p) => ({ ...p, trend: 0 as const })),
   );
 
-  // tick every 4s — small random bumps + occasional re-sort
+  // tick on a randomized 4-60s cadence — small random bumps + occasional re-sort
   useEffect(() => {
-    const id = setInterval(() => {
-      setRows((prev) => {
-        const next = prev.map((r) => {
-          const delta = Math.floor((Math.random() - 0.35) * 4200); // bias positive
-          const newTraffic = Math.max(20000, r.traffic + delta);
-          const earnGain = delta > 0 ? delta / 100000 : 0;
-          return {
-            ...r,
-            traffic: newTraffic,
-            earnings: +(r.earnings + earnGain).toFixed(2),
-            trend: delta > 200 ? 1 : delta < -200 ? -1 : 0,
-          } as Row;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = 4000 + Math.floor(Math.random() * 56_000); // 4s – 60s
+      timer = setTimeout(() => {
+        setRows((prev) => {
+          const next = prev.map((r) => {
+            const delta = Math.floor((Math.random() - 0.35) * 4200); // bias positive
+            const newTraffic = Math.max(20000, r.traffic + delta);
+            const earnGain = delta > 0 ? delta / 100000 : 0;
+            return {
+              ...r,
+              traffic: newTraffic,
+              earnings: +(r.earnings + earnGain).toFixed(2),
+              trend: delta > 200 ? 1 : delta < -200 ? -1 : 0,
+            } as Row;
+          });
+          next.sort((a, b) => b.traffic - a.traffic);
+          return next;
         });
-        // re-sort by traffic so positions move up/down
-        next.sort((a, b) => b.traffic - a.traffic);
-        return next;
-      });
-    }, 4000);
-    return () => clearInterval(id);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
   }, []);
 
   const totals = useMemo(() => {
@@ -83,11 +88,8 @@ function LeaderboardPage() {
 
       <section className="container mx-auto px-6 py-16">
         <div className="text-center mb-10 max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-            <Zap className="h-3 w-3 text-primary" /> Live · updates every 4s
-          </div>
           <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight">
-            Top <span className="text-gradient">10 publishers</span> right now
+            Top <span className="text-gradient">publishers</span> right now
           </h1>
           <p className="text-muted-foreground">
             Daily traffic sent, total earnings, and what they've withdrawn. Positions move up &amp; down in real time.
@@ -138,8 +140,13 @@ function LeaderboardPage() {
                   <span className="font-mono text-muted-foreground">{i + 1}</span>
                 )}
               </div>
-              <div className="flex items-center gap-2 font-medium">
-                <span>{r.flag}</span>
+              <div className="flex items-center gap-2.5 font-medium">
+                <img
+                  src={flagUrl(r.country)}
+                  alt={r.country.toUpperCase()}
+                  loading="lazy"
+                  className="h-3.5 w-5 rounded-[2px] border border-border/60 object-cover shrink-0"
+                />
                 <span className="truncate">{r.user}</span>
               </div>
               <div className="text-right font-mono flex items-center justify-end gap-1.5">
