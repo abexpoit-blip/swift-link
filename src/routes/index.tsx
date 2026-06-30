@@ -167,7 +167,7 @@ function PayoutBar() {
   const stats = [
     { label: "Active publishers", value: "42,180+" },
     { label: "Clicks served", value: "2.4B+" },
-    { label: "Paid in 2025", value: "$284K+" },
+    { label: "Paid in 2026", value: "$284K+" },
     { label: "Min payout", value: "$25" },
   ];
   return (
@@ -251,7 +251,7 @@ function HowItWorks() {
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
               Out of every 5,000 real visits, <strong className="text-foreground">200 clicks (4%)</strong> are
-              routed through Adsterra — that's how we cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
+              monetized through our ad partners to cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
             </p>
           </div>
           <div className="rounded-xl bg-card border border-border p-5">
@@ -365,7 +365,7 @@ function EarningsCalculator() {
 /* ─────────────────────────────────────────────── SPONSORS */
 function Sponsors() {
   const brands = [
-    "Adsterra", "PropellerAds", "Monetag", "Clickadu",
+    "Mediavine", "PropellerAds", "Monetag", "Clickadu",
     "AdMaven", "PopAds", "HilltopAds", "RichAds",
   ];
   return (
