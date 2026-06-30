@@ -1,9 +1,9 @@
-# LinkShield
+# AdsPx
 
-> Bot-filtered short links built for Facebook & Instagram ad campaigns. Cut wasted spend, boost real CTR, protect your ad accounts.
+> AdsPx (adspx.com) — turn any URL into a paid short link. Share it anywhere, earn per real click, withdraw in crypto.
 
 ## Pages
 
-- [Home](/): Smart URL shortener for Meta ad boosting.
-- [Pricing](/pricing): Plans for solo media buyers, pros, and agencies.
-- [Sign up](/signup): Create an account and start a free trial.
+- [Home](/): Paid short links for creators and media buyers.
+- [Sign in](/login): Sign in to your AdsPx account.
+- [Sign up](/signup): Create an AdsPx account and start earning.
