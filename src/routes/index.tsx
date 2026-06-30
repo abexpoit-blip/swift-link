@@ -18,6 +18,7 @@ import {
   Banknote,
   ChevronDown,
 } from "lucide-react";
+import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -686,11 +687,9 @@ function SiteFooter() {
         <div className="grid md:grid-cols-4 gap-8 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-7 w-7 rounded-lg bg-primary-gradient grid place-items-center">
-                <Link2 className="h-3.5 w-3.5 text-primary-foreground" />
-              </div>
-              <span className="font-display font-semibold">
-                Link<span className="text-gradient">ly</span>
+              <AdspxMark className="h-7 w-7" glow={false} />
+              <span className="font-display font-bold">
+                Ads<span className="text-gradient">Px</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
