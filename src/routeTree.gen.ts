@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
+import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -23,6 +24,11 @@ import { Route as ApiPublicBehaviorCheckRouteImport } from './routes/api/public/
 const WithdrawRoute = WithdrawRouteImport.update({
   id: '/withdraw',
   path: '/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatisticsRoute = StatisticsRouteImport.update({
+  id: '/statistics',
+  path: '/statistics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/statistics'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/statistics'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/statistics'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  StatisticsRoute: typeof StatisticsRoute
   WithdrawRoute: typeof WithdrawRoute
   RSlugRoute: typeof RSlugRoute
   ApiPublicBehaviorCheckRoute: typeof ApiPublicBehaviorCheckRoute
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/withdraw'
       fullPath: '/withdraw'
       preLoaderRoute: typeof WithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/statistics': {
+      id: '/statistics'
+      path: '/statistics'
+      fullPath: '/statistics'
+      preLoaderRoute: typeof StatisticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  StatisticsRoute: StatisticsRoute,
   WithdrawRoute: WithdrawRoute,
   RSlugRoute: RSlugRoute,
   ApiPublicBehaviorCheckRoute: ApiPublicBehaviorCheckRoute,

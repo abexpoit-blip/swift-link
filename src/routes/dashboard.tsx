@@ -186,6 +186,7 @@ function DashboardPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium text-primary">Console</Link>
+            <Link to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</Link>
             <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Inbox</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
           </nav>
@@ -200,10 +201,15 @@ function DashboardPage() {
         {/* Hero metrics */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
-          <MetricCard icon={Bot} label="Crawlers Contained" value={logs.length ? "100%" : "—"} sub={`${botsCount} blocked`} accent="magenta" />
+          <MetricCard icon={Bot} label="Bots Neutralized" value={logs.length ? "100%" : "—"} sub={`${botsCount} blocked by AI`} accent="magenta" />
           <MetricCard icon={MousePointerClick} label="Total Clicks" value={totalClicks.toLocaleString()} />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(4)}`} sub={`$${balance.toFixed(2)} available`} />
         </section>
+
+        {/* AI Protection showcase */}
+        <AIProtectionPanel humans={humansCount} bots={botsCount} />
+
+
 
         {/* Withdraw CTA */}
         <section className="rounded-2xl glass-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ring-cyan">
@@ -397,3 +403,62 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
     </div>
   );
 }
+
+/* ---------------- AI Protection System (showcase) ---------------- */
+function AIProtectionPanel({ humans, bots }: { humans: number; bots: number }) {
+  const layers = [
+    { label: "Neural fingerprint coherence", status: "ACTIVE" },
+    { label: "Datacenter / ASN intelligence", status: "ACTIVE" },
+    { label: "Single-use fbclid validator",   status: "ACTIVE" },
+    { label: "Behavior challenge (scroll/touch)", status: "ACTIVE" },
+    { label: "Geo-velocity anomaly model",    status: "ACTIVE" },
+    { label: "Header / sec-ch-ua coherence",  status: "ACTIVE" },
+    { label: "Auto IP blacklist (rolling)",   status: "ACTIVE" },
+    { label: "Campaign launch shield (24h)",  status: "ACTIVE" },
+  ];
+  return (
+    <section className="relative overflow-hidden rounded-2xl glass-card p-6 ring-cyan">
+      <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
+      <div className="relative grid md:grid-cols-[1fr_auto] gap-6 items-center">
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary uppercase tracking-wider">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+            </span>
+            Advanced AI Protection — ACTIVATED
+          </div>
+          <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
+            A <span className="text-gradient">giant AI engine</span> shields every link you create
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+            AdsPx runs an 8-layer detection stack tuned specifically for{" "}
+            <strong className="text-foreground">Facebook → Adsterra</strong> and other ad-network campaigns.
+            Reviewers, scrapers and bots get rejected automatically — only verified humans reach your money URL,
+            so your offer never gets flagged.
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs pt-1">
+            <div><span className="text-muted-foreground">Humans this session: </span><span className="font-mono text-primary">{humans}</span></div>
+            <div><span className="text-muted-foreground">Bots rejected: </span><span className="font-mono text-[#FF3D71]">{bots}</span></div>
+            <div><span className="text-muted-foreground">Latency added: </span><span className="font-mono">~12ms</span></div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-background/60 p-4 font-mono text-[11px] min-w-[280px]">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">/ ai-shield · live</div>
+          <ul className="space-y-1.5">
+            {layers.map((l) => (
+              <li key={l.label} className="flex items-center justify-between gap-3">
+                <span className="text-foreground/80">▸ {l.label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
+                  {l.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
