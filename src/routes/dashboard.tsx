@@ -222,7 +222,7 @@ function DashboardPage() {
               <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
                 <div>
                   <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (ad partner)</Label>
-                  <Input id="dest" type="url" required placeholder="https://offer.adsterra.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-muted/40" />
+                  <Input id="dest" type="url" required placeholder="https://offer.your-ad-network.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-muted/40" />
                 </div>
                 <div>
                   <Label htmlFor="title" className="text-xs uppercase tracking-wider text-muted-foreground">Label</Label>
