@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -27,13 +28,18 @@ function SignupPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail.endsWith("@gmail.com")) {
+      toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
+      return;
+    }
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: trimmedEmail,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
@@ -67,8 +73,13 @@ function SignupPage() {
         <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
           <h1 className="font-display text-2xl font-semibold mb-1">Create account</h1>
           <p className="text-sm text-muted-foreground mb-6">
-            Start earning $1 per 100K real visits.
+            Start earning $1 per 100K real visits. <span className="text-foreground/80">Gmail-only.</span>
           </p>
+
+          <GoogleSignInButton label="Sign up with Google" />
+          <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="flex-1 h-px bg-border" /> or with gmail + password <div className="flex-1 h-px bg-border" />
+          </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
@@ -83,7 +94,7 @@ function SignupPage() {
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Gmail address</Label>
               <Input
                 id="email"
                 type="email"

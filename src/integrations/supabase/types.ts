@@ -713,6 +713,8 @@ export type Database = {
         Row: {
           balance_available: number
           balance_withdrawn: number
+          banned: boolean
+          banned_reason: string | null
           click_quota: number | null
           clicks_period_start: string
           clicks_used: number
@@ -722,6 +724,7 @@ export type Database = {
           id: string
           is_banned: boolean
           last_daily_redirect_at: string | null
+          last_login_at: string | null
           link_limit: number | null
           links_used: number
           plan_slug: string
@@ -731,6 +734,8 @@ export type Database = {
         Insert: {
           balance_available?: number
           balance_withdrawn?: number
+          banned?: boolean
+          banned_reason?: string | null
           click_quota?: number | null
           clicks_period_start?: string
           clicks_used?: number
@@ -740,6 +745,7 @@ export type Database = {
           id: string
           is_banned?: boolean
           last_daily_redirect_at?: string | null
+          last_login_at?: string | null
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
@@ -749,6 +755,8 @@ export type Database = {
         Update: {
           balance_available?: number
           balance_withdrawn?: number
+          banned?: boolean
+          banned_reason?: string | null
           click_quota?: number | null
           clicks_period_start?: string
           clicks_used?: number
@@ -758,6 +766,7 @@ export type Database = {
           id?: string
           is_banned?: boolean
           last_daily_redirect_at?: string | null
+          last_login_at?: string | null
           link_limit?: number | null
           links_used?: number
           plan_slug?: string
@@ -867,6 +876,24 @@ export type Database = {
           updated_at?: string
           verified?: boolean
           verified_at?: string | null
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -1170,6 +1197,29 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_list_users: {
+        Args: { _limit?: number; _search?: string }
+        Returns: {
+          balance_available: number
+          banned: boolean
+          banned_reason: string
+          clicks_used: number
+          created_at: string
+          email: string
+          email_confirmed_at: string
+          full_name: string
+          id: string
+          last_login_at: string
+          links_used: number
+          plan_slug: string
+        }[]
+      }
+      admin_set_banned: {
+        Args: { _banned: boolean; _reason?: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_verify_email: { Args: { _user_id: string }; Returns: undefined }
       confirm_human_fbclid: {
         Args: { _fbclid: string; _link_id: string }
         Returns: undefined
@@ -1211,6 +1261,7 @@ export type Database = {
         Returns: boolean
       }
       mark_messages_read: { Args: { _ids: string[] }; Returns: number }
+      purge_inactive_users: { Args: never; Returns: number }
       record_bot_fingerprint: {
         Args: {
           _block_threshold?: number
@@ -1248,6 +1299,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      touch_last_login: { Args: never; Returns: undefined }
       unread_message_count: { Args: { _user_id: string }; Returns: number }
     }
     Enums: {

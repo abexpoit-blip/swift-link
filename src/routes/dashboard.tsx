@@ -93,6 +93,20 @@ function DashboardPage() {
       if (!session) { navigate({ to: "/login" }); return; }
       setUserId(session.user.id);
       setEmail(session.user.email ?? "");
+      // fire-and-forget: record activity for inactive-user purge
+      supabase.rpc("touch_last_login").then(() => {});
+      // check ban status
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("banned, banned_reason")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (prof?.banned) {
+        await supabase.auth.signOut();
+        toast.error(`Account suspended${prof.banned_reason ? ": " + prof.banned_reason : ""}`);
+        navigate({ to: "/login" });
+        return;
+      }
       await loadAll(session.user.id);
       setLoading(false);
     })();

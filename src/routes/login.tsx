@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -26,13 +27,20 @@ function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed.endsWith("@gmail.com")) {
+      toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
     setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
+    // bump last_login_at; ignore errors
+    supabase.rpc("touch_last_login").then(() => {});
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   }
@@ -51,9 +59,14 @@ function LoginPage() {
           <h1 className="font-display text-2xl font-semibold mb-1">Sign in</h1>
           <p className="text-sm text-muted-foreground mb-6">Welcome back. Let's earn some money.</p>
 
+          <GoogleSignInButton label="Sign in with Google" />
+          <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="flex-1 h-px bg-border" /> or with gmail + password <div className="flex-1 h-px bg-border" />
+          </div>
+
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Gmail address</Label>
               <Input
                 id="email"
                 type="email"
