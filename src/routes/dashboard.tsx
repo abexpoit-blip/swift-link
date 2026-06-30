@@ -186,6 +186,7 @@ function DashboardPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium text-primary">Console</Link>
+            <Link to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</Link>
             <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Inbox</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
           </nav>
@@ -200,7 +201,7 @@ function DashboardPage() {
         {/* Hero metrics */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
-          <MetricCard icon={Bot} label="Crawlers Contained" value={logs.length ? "100%" : "—"} sub={`${botsCount} blocked`} accent="magenta" />
+          <MetricCard icon={Bot} label="Bots Neutralized" value={logs.length ? "100%" : "—"} sub={`${botsCount} blocked by AI`} accent="magenta" />
           <MetricCard icon={MousePointerClick} label="Total Clicks" value={totalClicks.toLocaleString()} />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(4)}`} sub={`$${balance.toFixed(2)} available`} />
         </section>
