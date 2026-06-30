@@ -11,8 +11,8 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
   head: () => ({
     meta: [
-      { title: "Create account — Linkly" },
-      { name: "description", content: "Create your Linkly account and start earning." },
+      { title: "Create account — AdsPx" },
+      { name: "description", content: "Create your AdsPx account and start earning." },
     ],
   }),
 });

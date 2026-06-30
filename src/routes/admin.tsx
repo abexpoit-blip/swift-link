@@ -45,7 +45,7 @@ import {
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
-  head: () => ({ meta: [{ title: "Admin — Linkly" }] }),
+  head: () => ({ meta: [{ title: "Admin — AdsPx" }] }),
 });
 
 type Withdrawal = {

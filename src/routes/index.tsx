@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "Linkly — Earn money from every link you share" },
+      { title: "AdsPx — Earn money from every link you share" },
       {
         name: "description",
         content:
@@ -106,7 +106,7 @@ function Hero() {
             <span className="text-gradient">Get paid per click.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Linkly turns any URL into a paid short link. Share it on Facebook,
+            AdsPx turns any URL into a paid short link. Share it on Facebook,
             Telegram, YouTube — earn <strong className="text-foreground">$1 for every 100,000 visits</strong>.
             Withdraw in <strong className="text-foreground">USDT crypto</strong> from just $25.
           </p>
@@ -383,7 +383,7 @@ function FeatureGrid() {
     <section className="container mx-auto px-6 py-24">
       <div className="text-center mb-14 max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          Why Linkly
+          Why AdsPx
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight">
           Built for <span className="text-gradient">people who share links</span>
@@ -602,11 +602,11 @@ function FaqStrip() {
       a: "No. We filter datacenter IPs, known bot networks, and suspicious patterns automatically. Only real visits add to your balance.",
     },
     {
-      q: "Where can I share my Linkly links?",
+      q: "Where can I share my AdsPx links?",
       a: "Anywhere your audience is — Facebook, Telegram, Twitter/X, YouTube, blog, WhatsApp groups. No platform restrictions.",
     },
     {
-      q: "Do I need a Linkly referral to sign up?",
+      q: "Do I need a AdsPx referral to sign up?",
       a: "No, signup is open and free. There is a referral program if you want to earn from inviting friends, but it's optional.",
     },
   ];
@@ -716,7 +716,7 @@ function SiteFooter() {
           ))}
         </div>
         <div className="pt-6 border-t border-border/60 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} Linkly. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} AdsPx. All rights reserved.</div>
           <div>Built for creators worldwide ✦</div>
         </div>
       </div>
