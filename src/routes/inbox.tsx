@@ -75,6 +75,8 @@ function InboxPage() {
       setUserId(data.user.id);
       setEmail(data.user.email ?? "");
       setEmailVerified(!!data.user.email_confirmed_at);
+      supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" })
+        .then(({ data: r }) => setIsAdmin(!!r));
       await load(data.user.id);
       setLoading(false);
     })();
