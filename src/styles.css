@@ -276,13 +276,14 @@
   .orb {
     position: absolute;
     border-radius: 9999px;
-    filter: blur(80px);
+    filter: blur(110px);
     pointer-events: none;
-    opacity: 0.55;
-    animation: orb-drift 14s ease-in-out infinite alternate;
+    opacity: 0.35;
+    animation: orb-drift 18s ease-in-out infinite alternate;
   }
-  .orb-indigo { background: oklch(0.55 0.22 280 / 60%); }
-  .orb-pink { background: oklch(0.72 0.20 340 / 60%); }
+  .orb-indigo { background: oklch(0.55 0.22 280 / 45%); }
+  .orb-pink { background: oklch(0.72 0.20 340 / 45%); }
+
 
   @keyframes orb-drift {
     0%   { transform: translate3d(0,0,0) scale(1); }
