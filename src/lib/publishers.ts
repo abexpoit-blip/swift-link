@@ -11,7 +11,7 @@ export type CountryCode =
   | "us" | "in" | "bd" | "pk" | "id" | "ng" | "br" | "mx" | "eg" | "tr"
   | "ph" | "vn" | "th" | "ma" | "dz" | "ke" | "za" | "gb" | "de" | "fr"
   | "it" | "es" | "ca" | "au" | "sa" | "ae" | "ir" | "iq" | "ru" | "ua"
-  | "pl" | "ar" | "co" | "pe" | "cl" | "my" | "sg" | "lk" | "np";
+  | "pl" | "ar" | "co" | "pe" | "cl" | "my" | "sg" | "lk" | "np" | "pt";
 
 export type Publisher = {
   id: string;
