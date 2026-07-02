@@ -38,7 +38,14 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Ambient page-wide floating orbs (fixed so they follow scroll) */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="orb orb-indigo fixed -top-24 -left-16 h-[28rem] w-[28rem] opacity-40" />
+        <div className="orb orb-pink fixed top-1/3 -right-24 h-[32rem] w-[32rem] opacity-35" style={{ animationDelay: "-6s" }} />
+        <div className="orb orb-indigo fixed bottom-0 left-1/4 h-[26rem] w-[26rem] opacity-30" style={{ animationDelay: "-10s" }} />
+        <div className="orb orb-pink fixed top-2/3 right-1/3 h-[22rem] w-[22rem] opacity-25" style={{ animationDelay: "-3s" }} />
+      </div>
       <SiteHeader />
       <Hero />
       <PayoutBar />
@@ -53,6 +60,7 @@ function HomePage() {
     </div>
   );
 }
+
 
 /* ─────────────────────────────────────────────── HEADER */
 function SiteHeader() {
