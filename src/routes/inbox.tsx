@@ -39,6 +39,7 @@ function InboxPage() {
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(true);
   const [resending, setResending] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
