@@ -228,6 +228,11 @@ function DashboardPage() {
             <Link to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</Link>
             <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Messages</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
+            {isAdmin && (
+              <Link to="/admin" className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary font-semibold px-3 py-1 hover:bg-primary/20">
+                <ShieldCheck className="h-3.5 w-3.5" /> Admin Panel
+              </Link>
+            )}
           </nav>
           <div className="flex items-center gap-3">
             <span className="hidden md:inline text-xs text-muted-foreground">{email}</span>
