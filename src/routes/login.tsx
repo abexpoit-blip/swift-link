@@ -42,6 +42,12 @@ function LoginPage() {
     // bump last_login_at; ignore errors
     supabase.rpc("touch_last_login").then(() => {});
     toast.success("Welcome back");
+    // admin auto-redirect to admin panel
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (isAdmin) { navigate({ to: "/admin" }); return; }
+    }
     navigate({ to: "/dashboard" });
   }
 
