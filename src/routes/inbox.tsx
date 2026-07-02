@@ -13,6 +13,7 @@ import {
   Mail,
   CheckCheck,
   Filter,
+  ShieldCheck,
 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
 
@@ -39,6 +40,7 @@ function InboxPage() {
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(true);
   const [resending, setResending] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
@@ -74,6 +76,8 @@ function InboxPage() {
       setUserId(data.user.id);
       setEmail(data.user.email ?? "");
       setEmailVerified(!!data.user.email_confirmed_at);
+      supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" })
+        .then(({ data: r }) => setIsAdmin(!!r));
       await load(data.user.id);
       setLoading(false);
     })();
@@ -188,6 +192,11 @@ function InboxPage() {
             <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
             <Link to="/inbox" className="font-medium">Messages</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
+            {isAdmin && (
+              <Link to="/admin" className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary font-semibold px-3 py-1 hover:bg-primary/20">
+                <ShieldCheck className="h-3.5 w-3.5" /> Admin Panel
+              </Link>
+            )}
           </nav>
           <div className="flex items-center gap-3">
             <span className="hidden md:inline text-xs text-muted-foreground">{email}</span>
