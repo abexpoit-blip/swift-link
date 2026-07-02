@@ -13,6 +13,7 @@ import {
   Mail,
   CheckCheck,
   Filter,
+  ShieldCheck,
 } from "lucide-react";
 import { AdspxMark } from "@/components/AdspxLogo";
 
