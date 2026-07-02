@@ -100,7 +100,7 @@ export const OTHER_PUBLISHERS: Publisher[] = [
   { id: "o50", user: "isaac.p***",    country: "gb", traffic: 17240, earnings: 141.65, withdrawn: 112.00 },
   { id: "o51", user: "aleksandr.v***",country: "ru", traffic: 16580, earnings: 136.10, withdrawn: 108.00 },
   { id: "o52", user: "santiago.l***", country: "cl", traffic: 15940, earnings: 130.80, withdrawn: 103.00 },
-  { id: "o53", user: "bruno.k***",    country: "pt" as CountryCode, traffic: 15320, earnings: 125.55, withdrawn:  99.00 },
+  { id: "o53", user: "bruno.k***",    country: "pt", traffic: 15320, earnings: 125.55, withdrawn:  99.00 },
   { id: "o54", user: "khaled.r***",   country: "sa", traffic: 14780, earnings: 121.10, withdrawn:  95.00 },
   { id: "o55", user: "asad.n***",     country: "pk", traffic: 14210, earnings: 116.40, withdrawn:  91.00 },
   { id: "o56", user: "krishna.b***",  country: "in", traffic: 13680, earnings: 112.05, withdrawn:  87.00 },
