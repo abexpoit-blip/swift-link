@@ -111,6 +111,9 @@ function DashboardPage() {
         navigate({ to: "/login" });
         return;
       }
+      // check admin role (fire-and-forget, non-blocking)
+      supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" })
+        .then(({ data }) => setIsAdmin(!!data));
       await loadAll(session.user.id);
       setLoading(false);
     })();
