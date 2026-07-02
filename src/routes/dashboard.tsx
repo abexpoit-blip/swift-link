@@ -50,6 +50,7 @@ function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
   const [emailVerified, setEmailVerified] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [resendingVerify, setResendingVerify] = useState(false);
   const [balance, setBalance] = useState(0);
   const [withdrawn, setWithdrawn] = useState(0);
