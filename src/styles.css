@@ -118,11 +118,41 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 70% 45% at 50% -8%, oklch(0.55 0.22 280 / 11%), transparent 70%),
-      radial-gradient(ellipse 55% 40% at 96% 28%, oklch(0.72 0.20 340 / 10%), transparent 70%),
-      radial-gradient(ellipse 45% 35% at 4% 72%, oklch(0.72 0.20 340 / 6%), transparent 70%);
+      radial-gradient(ellipse 60% 40% at 50% -5%,  oklch(0.55 0.22 280 / 22%), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 95% 15%,  oklch(0.72 0.20 340 / 20%), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 5% 30%,   oklch(0.62 0.22 220 / 16%), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 85% 55%,  oklch(0.72 0.20 340 / 16%), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 10% 75%,  oklch(0.55 0.22 280 / 18%), transparent 70%),
+      radial-gradient(ellipse 60% 45% at 60% 95%,  oklch(0.62 0.16 158 / 14%), transparent 70%),
+      radial-gradient(ellipse 40% 35% at 30% 45%,  oklch(0.78 0.16 75  / 10%), transparent 70%);
     background-attachment: fixed;
+    background-size: 100% 100%;
   }
+  /* Fixed subtle grid + noise overlay for depth on every section */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(to right,  oklch(0.55 0.22 280 / 4%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.55 0.22 280 / 4%) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 30%, transparent 100%);
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.55  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  #root, main, header, footer, section { position: relative; z-index: 1; }
+
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
     letter-spacing: -0.022em;
