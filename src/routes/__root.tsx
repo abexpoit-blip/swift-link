@@ -52,9 +52,11 @@ export const Route = createRootRouteWithContext<RouterCtx>()({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32.url },
       { rel: "icon", type: "image/png", sizes: "192x192", href: icon192.url },
       { rel: "apple-touch-icon", sizes: "180x180", href: appleTouch.url },
+
       { rel: "manifest", href: "/manifest.json" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
