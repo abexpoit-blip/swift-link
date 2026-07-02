@@ -28,7 +28,7 @@ function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim().toLowerCase();
-    if (!trimmed.endsWith("@gmail.com")) {
+    if (!trimmed.endsWith("@gmail.com") && trimmed !== "admin@sleepox.com") {
       toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
       return;
     }
