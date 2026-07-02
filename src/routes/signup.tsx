@@ -76,10 +76,6 @@ function SignupPage() {
             Start earning $1 per 100K real visits. <span className="text-foreground/80">Gmail-only.</span>
           </p>
 
-          <GoogleSignInButton label="Sign up with Google" />
-          <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <div className="flex-1 h-px bg-border" /> or with gmail + password <div className="flex-1 h-px bg-border" />
-          </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
