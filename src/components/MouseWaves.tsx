@@ -91,9 +91,9 @@ export function MouseWaves() {
           else ctx.lineTo(x, y);
         }
         // subtle gradient-ish alpha per line
-        const alpha = 0.05 + (i / LINES) * 0.08;
-        ctx.strokeStyle = `hsla(258, 90%, 66%, ${alpha})`;
-        ctx.lineWidth = 1;
+        const alpha = 0.18 + (i / LINES) * 0.22;
+        ctx.strokeStyle = `hsla(263, 70%, 45%, ${alpha})`;
+        ctx.lineWidth = 1.2;
         ctx.stroke();
       }
 
