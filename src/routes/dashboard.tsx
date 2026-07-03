@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/dashboard")({
-  component: DashboardPage,
+  component: () => (<AppShell><DashboardPage /></AppShell>),
   head: () => ({ meta: [{ title: "Dashboard — AdsPx" }] }),
 });
 

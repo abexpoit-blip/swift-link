@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -52,7 +53,7 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPage,
+  component: () => (<AppShell><AdminPage /></AppShell>),
   head: () => ({ meta: [{ title: "Admin Control Center — AdsPx" }] }),
 });
 
