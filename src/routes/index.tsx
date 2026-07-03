@@ -104,9 +104,35 @@ function SiteHeader() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
+      {/* Blueprint grid wireframe backdrop */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07]">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="hero-smallgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="oklch(0.55 0.22 280)" strokeWidth="0.5" />
+            </pattern>
+            <pattern id="hero-grid" width="100" height="100" patternUnits="userSpaceOnUse">
+              <rect width="100" height="100" fill="url(#hero-smallgrid)" />
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="oklch(0.55 0.22 280)" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#hero-grid)" />
+        </svg>
+      </div>
+      {/* Blueprint axis labels — mono technical accents */}
+      <div aria-hidden className="pointer-events-none absolute top-6 left-6 z-[1] flex flex-col gap-1 text-[10px] font-mono uppercase tracking-widest opacity-40" style={{ color: "oklch(0.55 0.22 280)" }}>
+        <span>X_COORD // 0.001</span>
+        <div className="h-px w-24" style={{ background: "oklch(0.55 0.22 280)" }} />
+      </div>
+      <div aria-hidden className="pointer-events-none absolute bottom-6 right-6 z-[1] flex flex-col items-end gap-1 text-[10px] font-mono uppercase tracking-widest opacity-40" style={{ color: "oklch(0.72 0.20 340)" }}>
+        <div className="h-px w-32" style={{ background: "oklch(0.72 0.20 340)" }} />
+        <span>SCALE // 1:0.45</span>
+      </div>
+
       {/* Soft aurora ribbons — premium editorial accents */}
       <div aria-hidden className="bg-ribbon" style={{ top: "-60px", left: "-180px" }} />
       <div aria-hidden className="bg-ribbon bg-ribbon-alt" style={{ top: "260px", right: "-220px" }} />
+
 
       {/* Pixel-dot motif backgrounds */}
       <div
