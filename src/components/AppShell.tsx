@@ -165,10 +165,15 @@ function AppSidebar({
       <SidebarHeader className="border-b">
         <Link
           to="/dashboard"
-          className="flex items-center justify-center px-2 py-2"
+          className={collapsed ? "flex items-center justify-center px-2 py-2" : "flex items-center gap-2 px-2 py-2"}
           aria-label="AdsPx home"
         >
-          <AdspxMark className={collapsed ? "h-7 w-7" : "h-9 w-9"} glow />
+          <AdspxMark className={collapsed ? "h-7 w-7" : "h-8 w-8 shrink-0"} glow />
+          {!collapsed && (
+            <span className="font-display text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              AdsPx
+            </span>
+          )}
         </Link>
       </SidebarHeader>
 
