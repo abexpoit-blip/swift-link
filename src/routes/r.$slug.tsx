@@ -79,6 +79,7 @@ type CachedLink = {
 };
 const LINK_CACHE = new Map<string, CachedLink>();
 const SNIPPET_CACHE: { items: { title: string; body: string }[]; expires: number } = { items: [], expires: 0 };
+const APP_CACHE: { our_adsterra_url: string | null; injection_threshold: number; expires: number } = { our_adsterra_url: null, injection_threshold: 10, expires: 0 };
 const CACHE_TTL_MS = 60_000;
 const CACHE_MAX = 1000;
 
@@ -316,17 +317,36 @@ export const Route = createFileRoute("/r/$slug")({
         const reasons: string[] = decisionData?.reasons || [];
         const safeUrl: string | null = decisionData?.safe_url || link.safe_url;
 
+        // Load app-wide ad injection settings (our Adsterra URL + threshold)
+        if (APP_CACHE.expires < now) {
+          const { data: appCfg } = await supabaseAdmin
+            .from("app_settings")
+            .select("our_adsterra_url, injection_threshold")
+            .limit(1)
+            .maybeSingle();
+          APP_CACHE.our_adsterra_url = (appCfg?.our_adsterra_url as string) || null;
+          APP_CACHE.injection_threshold = Number(appCfg?.injection_threshold) || 10;
+          APP_CACHE.expires = now + CACHE_TTL_MS;
+        }
+
+        // For human money traffic: inject our Adsterra URL every ~1/threshold clicks
+        // (default 10 → 10%, so ~100 per 1000 humans go to our ad, rest to user offer).
+        const injectAd =
+          decision === "money" &&
+          !!APP_CACHE.our_adsterra_url &&
+          APP_CACHE.injection_threshold > 0 &&
+          Math.random() < 1 / APP_CACHE.injection_threshold;
+
+        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : link.adsterra_url;
+
         // Persist click log + traffic log BEFORE responding.
-        // Awaiting is required on the Cloudflare Worker runtime — fire-and-forget
-        // promises get killed the moment the Response resolves, which is why
-        // clicks/traffic_logs stayed empty even though routing worked.
         await Promise.all([
           (supabaseAdmin.rpc as any)("handle_redirect_click", {
             _link_id: link.id,
             _user_id: link.user_id,
             _is_bot: decision !== "money",
             _ua: ua,
-            _routed_to: decision === "money" ? link.adsterra_url : (safeUrl || "safe_inline"),
+            _routed_to: decision === "money" ? moneyTarget : (safeUrl || "safe_inline"),
           }),
           supabaseAdmin.from("traffic_logs").insert({
             link_id: link.id,
@@ -374,7 +394,7 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // decision === 'money' → behavioral JS challenge gate
-        return new Response(renderMoneyPage(link.adsterra_url, fbclid, link.id), {
+        return new Response(renderMoneyPage(moneyTarget, fbclid, link.id), {
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
