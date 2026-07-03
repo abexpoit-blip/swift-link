@@ -216,7 +216,7 @@ function AdminPage() {
       supabase.from("clicks").select("id", { count: "exact", head: true }).eq("is_bot", true),
       supabase
         .from("earnings_ledger")
-        .select("day, user_clicks, adsterra_clicks")
+        .select("day, user_clicks, adsterra_clicks, total_clicks, earnings_usd, user_id")
         .gte("day", thirtyAgo)
         .order("day", { ascending: true }),
       supabase.from("profiles").select("balance_withdrawn"),
