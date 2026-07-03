@@ -121,7 +121,10 @@ function AdminPage() {
   const [email, setEmail] = useState("");
   const [adminId, setAdminId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [tab, setTab] = useState("overview");
+  const searchParams = Route.useSearch();
+  const [tab, setTab] = useState<string>(searchParams.tab || "overview");
+  useEffect(() => { if (searchParams.tab && searchParams.tab !== tab) setTab(searchParams.tab); }, [searchParams.tab]);
+
 
   // stats
   const [totalUsers, setTotalUsers] = useState(0);
