@@ -21,7 +21,7 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 import { makeRecentPayout } from "@/lib/publishers";
 import { PARTNER_LOGOS } from "@/components/BrandLogos";
-import { MouseWaves } from "@/components/MouseWaves";
+
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -40,14 +40,16 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative">
-      {/* Mouse-reactive wave lines */}
-      <MouseWaves />
-
-      {/* Ambient floating orbs (fixed so they follow scroll) — subtle */}
+      {/* Premium ambient background — layered gradients + soft orbs */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="orb orb-indigo fixed -top-32 -left-24 h-[30rem] w-[30rem] opacity-25" />
-        <div className="orb orb-pink fixed top-1/2 -right-32 h-[32rem] w-[32rem] opacity-20" style={{ animationDelay: "-8s" }} />
-        <div className="orb orb-indigo fixed -bottom-24 left-1/3 h-[26rem] w-[26rem] opacity-15" style={{ animationDelay: "-14s" }} />
+        {/* Warm cream base wash */}
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_15%_-10%,hsl(28_90%_92%/0.55),transparent_60%),radial-gradient(1000px_600px_at_100%_10%,hsl(262_85%_92%/0.5),transparent_60%),radial-gradient(900px_600px_at_50%_110%,hsl(340_85%_93%/0.45),transparent_65%)]" />
+        {/* Fine grain texture */}
+        <div className="absolute inset-0 opacity-[0.035] mix-blend-multiply" style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>\")" }} />
+        {/* Soft orbs */}
+        <div className="orb orb-indigo fixed -top-32 -left-24 h-[30rem] w-[30rem] opacity-20" />
+        <div className="orb orb-pink fixed top-1/2 -right-32 h-[32rem] w-[32rem] opacity-[0.18]" style={{ animationDelay: "-8s" }} />
+        <div className="orb orb-indigo fixed -bottom-24 left-1/3 h-[26rem] w-[26rem] opacity-[0.12]" style={{ animationDelay: "-14s" }} />
       </div>
 
       <SiteHeader />
