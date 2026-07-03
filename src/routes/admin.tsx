@@ -401,8 +401,8 @@ function AdminPage() {
     setSavingApp(true);
     const { error } = await supabase.from("app_settings").upsert({
       id: true,
-      fallback_url: appCfg.fallback_url || null,
-      our_adsterra_url: appCfg.our_adsterra_url || null,
+      fallback_url: appCfg.fallback_url || undefined,
+      our_adsterra_url: appCfg.our_adsterra_url || undefined,
       injection_threshold: appCfg.injection_threshold ?? 25,
       daily_redirect_enabled: appCfg.daily_redirect_enabled ?? true,
       updated_at: new Date().toISOString(),
