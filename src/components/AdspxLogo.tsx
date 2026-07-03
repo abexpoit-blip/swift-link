@@ -1,54 +1,119 @@
 /**
- * AdsPx brand mark — premium fintech monogram.
- * Rounded gradient tile with a bold "Px" cut-out and an animated
- * ascending bar-chart accent (growth motif). Wordmark pairs the
- * tile with an "Ads Px" lockup where "Px" carries the shimmer.
+ * AdsPx brand mark — premium animated monogram.
+ * Layered gradient tile featuring:
+ *   • Rotating conic-style aurora ring (outer premium halo)
+ *   • Sweeping diagonal sheen across the tile
+ *   • Crisp custom "Px" monogram
+ *   • Twinkling pixel corner accents (fintech / pixel motif)
+ *   • Subtle breathing glow
  */
 type LogoMarkProps = {
   className?: string;
   glow?: boolean;
 };
 
-/* Shared inline mark — used by AdspxMark and AdspxWordmark */
 function MarkTile({ idPrefix }: { idPrefix: string }) {
   const gid = `${idPrefix}-tile`;
   const sid = `${idPrefix}-sheen`;
+  const rid = `${idPrefix}-ring`;
+  const cid = `${idPrefix}-clip`;
   return (
     <>
       <defs>
+        {/* Base tile gradient */}
         <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#4f46e5" />
-          <stop offset="55%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#ec4899" />
+          <stop offset="0%" stopColor="#4f46e5">
+            <animate
+              attributeName="stop-color"
+              values="#4f46e5;#6366f1;#7c3aed;#4f46e5"
+              dur="6s"
+              repeatCount="indefinite"
+            />
+          </stop>
+          <stop offset="55%" stopColor="#7c3aed">
+            <animate
+              attributeName="stop-color"
+              values="#7c3aed;#a855f7;#ec4899;#7c3aed"
+              dur="6s"
+              repeatCount="indefinite"
+            />
+          </stop>
+          <stop offset="100%" stopColor="#ec4899">
+            <animate
+              attributeName="stop-color"
+              values="#ec4899;#f472b6;#4f46e5;#ec4899"
+              dur="6s"
+              repeatCount="indefinite"
+            />
+          </stop>
         </linearGradient>
-        {/* Diagonal sheen that sweeps across the tile */}
+
+        {/* Sheen */}
         <linearGradient id={sid} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.6" />
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
-        <clipPath id={`${idPrefix}-clip`}>
+
+        {/* Outer rotating aurora ring gradient */}
+        <linearGradient id={rid} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#a855f7" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="#ec4899" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.9" />
+        </linearGradient>
+
+        <clipPath id={cid}>
           <rect width="40" height="40" rx="11" />
         </clipPath>
       </defs>
 
-      {/* Base rounded tile */}
-      <rect width="40" height="40" rx="11" fill={`url(#${gid})`} />
-
-      {/* Sweeping sheen — masked to the tile */}
-      <g clipPath={`url(#${idPrefix}-clip)`}>
-        <rect x="-40" y="0" width="20" height="40" fill={`url(#${sid})`} opacity="0.9">
-          <animate
-            attributeName="x"
-            values="-40;60"
-            dur="4.5s"
-            begin="0s"
+      {/* Outer rotating halo ring (behind tile) */}
+      <g style={{ transformOrigin: "20px 20px" }}>
+        <rect
+          x="-1"
+          y="-1"
+          width="42"
+          height="42"
+          rx="12"
+          fill="none"
+          stroke={`url(#${rid})`}
+          strokeWidth="1.2"
+          opacity="0.9"
+        >
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 20 20"
+            to="360 20 20"
+            dur="8s"
             repeatCount="indefinite"
           />
         </rect>
       </g>
 
-      {/* Inner top highlight — glass edge */}
+      {/* Base rounded tile */}
+      <rect width="40" height="40" rx="11" fill={`url(#${gid})`}>
+        <animate
+          attributeName="opacity"
+          values="0.96;1;0.96"
+          dur="3.6s"
+          repeatCount="indefinite"
+        />
+      </rect>
+
+      {/* Sweeping sheen */}
+      <g clipPath={`url(#${cid})`}>
+        <rect x="-40" y="0" width="22" height="40" fill={`url(#${sid})`} transform="skewX(-18)">
+          <animate
+            attributeName="x"
+            values="-40;60"
+            dur="4.5s"
+            repeatCount="indefinite"
+          />
+        </rect>
+      </g>
+
+      {/* Glass inner border */}
       <rect
         x="0.5"
         y="0.5"
@@ -57,34 +122,36 @@ function MarkTile({ idPrefix }: { idPrefix: string }) {
         rx="10.5"
         fill="none"
         stroke="#ffffff"
-        strokeOpacity="0.28"
+        strokeOpacity="0.3"
       />
 
-      {/* Monogram "Px" — bold custom paths, crisp at any size */}
-      {/* P: vertical stem + head loop */}
-      <path
-        d="M9.4 10 h6.4 a5.2 5.2 0 0 1 0 10.4 h-3.2 v9.6 h-3.2 z M12.6 12.8 v4.8 h3.2 a2.4 2.4 0 0 0 0 -4.8 z"
-        fill="#fff"
-      />
-      {/* x: two crossing strokes */}
-      <path
-        d="M20.4 18.4 h3.1 l2.4 3.5 l2.4 -3.5 h3.1 l -3.9 5.6 l 4.1 6 h -3.2 l -2.5 -3.8 l -2.5 3.8 h -3.2 l 4.1 -6 z"
-        fill="#fff"
-      />
+      {/* Monogram "Px" */}
+      <g clipPath={`url(#${cid})`}>
+        {/* P */}
+        <path
+          d="M10 10 h6.6 a5.4 5.4 0 0 1 0 10.8 h-3.4 v9.2 h-3.2 z M13.2 12.8 v5.2 h3.4 a2.6 2.6 0 0 0 0 -5.2 z"
+          fill="#fff"
+        />
+        {/* x */}
+        <path
+          d="M20.6 18.4 h3.1 l2.5 3.6 l2.5 -3.6 h3.1 l -3.95 5.7 l 4.15 6 h -3.2 l -2.6 -3.9 l -2.6 3.9 h -3.2 l 4.15 -6 z"
+          fill="#fff"
+        />
+      </g>
 
-      {/* Ascending bar-chart — growth accent bottom-left */}
+      {/* Twinkling pixel accents at corners */}
       <g>
-        <rect x="6" y="32" width="2.4" height="3" rx="0.6" fill="#fff" fillOpacity="0.9">
-          <animate attributeName="height" values="2;4;2" dur="2.2s" repeatCount="indefinite" />
-          <animate attributeName="y" values="33;31;33" dur="2.2s" repeatCount="indefinite" />
+        <rect x="4.5" y="4.5" width="2" height="2" rx="0.4" fill="#fff" opacity="0.9">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="2.4s" repeatCount="indefinite" />
         </rect>
-        <rect x="9.2" y="30" width="2.4" height="5" rx="0.6" fill="#fff" fillOpacity="0.95">
-          <animate attributeName="height" values="4;7;4" dur="2.2s" begin="0.25s" repeatCount="indefinite" />
-          <animate attributeName="y" values="31;28;31" dur="2.2s" begin="0.25s" repeatCount="indefinite" />
+        <rect x="33.5" y="4.5" width="1.6" height="1.6" rx="0.3" fill="#fff" opacity="0.7">
+          <animate attributeName="opacity" values="1;0.15;1" dur="2.4s" begin="0.4s" repeatCount="indefinite" />
         </rect>
-        <rect x="12.4" y="28" width="2.4" height="7" rx="0.6" fill="#fff">
-          <animate attributeName="height" values="6;9;6" dur="2.2s" begin="0.5s" repeatCount="indefinite" />
-          <animate attributeName="y" values="29;26;29" dur="2.2s" begin="0.5s" repeatCount="indefinite" />
+        <rect x="33.5" y="33.5" width="2.2" height="2.2" rx="0.4" fill="#fff" opacity="0.85">
+          <animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" begin="0.8s" repeatCount="indefinite" />
+        </rect>
+        <rect x="5" y="33.6" width="1.4" height="1.4" rx="0.3" fill="#fff" opacity="0.6">
+          <animate attributeName="opacity" values="1;0.2;1" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
         </rect>
       </g>
     </>
@@ -94,14 +161,14 @@ function MarkTile({ idPrefix }: { idPrefix: string }) {
 export function AdspxMark({ className, glow = true }: LogoMarkProps) {
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox="-2 -2 44 44"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="AdsPx"
       className={`block ${className ?? ""}`}
       style={
         glow
-          ? { filter: "drop-shadow(0 8px 20px oklch(0.55 0.22 280 / 32%))" }
+          ? { filter: "drop-shadow(0 10px 24px oklch(0.55 0.22 280 / 38%))" }
           : undefined
       }
     >
@@ -121,7 +188,7 @@ export function AdspxWordmark({
   return (
     <span className={`inline-flex items-center ${className ?? ""}`}>
       <svg
-        viewBox="0 0 168 40"
+        viewBox="-2 -2 172 44"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="AdsPx"
@@ -150,7 +217,6 @@ export function AdspxWordmark({
 
         <MarkTile idPrefix="adspx-word" />
 
-        {/* "Ads" — solid foreground */}
         <text
           x="50"
           y="27"
@@ -162,7 +228,6 @@ export function AdspxWordmark({
         >
           Ads
         </text>
-        {/* "Px" — animated gradient */}
         <text
           x="97"
           y="27"
@@ -174,7 +239,6 @@ export function AdspxWordmark({
         >
           Px
         </text>
-        {/* Fine underline dot — "registered" premium touch */}
         <circle cx="140" cy="26" r="2" fill="oklch(0.72 0.20 340)">
           <animate attributeName="opacity" values="1;0.35;1" dur="2.4s" repeatCount="indefinite" />
         </circle>
