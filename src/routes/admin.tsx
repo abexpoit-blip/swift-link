@@ -54,8 +54,10 @@ import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/admin")({
   component: () => (<AppShell><AdminPage /></AppShell>),
+  validateSearch: (s: Record<string, unknown>) => ({ tab: (s.tab as string) || "overview" }),
   head: () => ({ meta: [{ title: "Admin Control Center — AdsPx" }] }),
 });
+
 
 type Withdrawal = {
   id: string;
