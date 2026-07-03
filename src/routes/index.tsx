@@ -21,6 +21,7 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 import { makeRecentPayout } from "@/lib/publishers";
 import { PARTNER_LOGOS } from "@/components/BrandLogos";
+import { MouseWaves } from "@/components/MouseWaves";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -39,6 +40,9 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative">
+      {/* Mouse-reactive wave lines */}
+      <MouseWaves />
+
       {/* Ambient floating orbs (fixed so they follow scroll) — subtle */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="orb orb-indigo fixed -top-32 -left-24 h-[30rem] w-[30rem] opacity-25" />
