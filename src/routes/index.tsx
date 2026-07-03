@@ -100,74 +100,186 @@ function SiteHeader() {
   );
 }
 
-/* ─────────────────────────────────────────────── HERO */
+/* ─────────────────────────────────────────────── HERO — Kinetic pixel bento */
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-hero pointer-events-none" />
-      <div className="absolute inset-0 grid-pattern opacity-60 pointer-events-none" />
-      <div className="orb orb-indigo -top-32 -left-24 h-80 w-80" />
-      <div className="orb orb-pink top-32 -right-24 h-96 w-96" style={{ animationDelay: "-6s" }} />
+      {/* Pixel-dot motif backgrounds */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-16 -left-16 h-72 w-72 opacity-[0.14]"
+        style={{
+          backgroundImage: "radial-gradient(oklch(0.55 0.22 280) 2px, transparent 2px)",
+          backgroundSize: "16px 16px",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-40 right-8 h-56 w-56 opacity-[0.12]"
+        style={{
+          backgroundImage: "radial-gradient(oklch(0.72 0.20 340) 2px, transparent 2px)",
+          backgroundSize: "14px 14px",
+        }}
+      />
 
-      <div className="container mx-auto px-6 pt-14 pb-14 md:pt-24 md:pb-20 relative">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 glass-card px-3.5 py-1.5 text-xs font-medium text-primary">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <Sparkles className="h-3 w-3" /> Paid out $284,000+ to creators this year
-          </div>
-          <h1 className="font-display font-bold tracking-tight text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] leading-[0.98]">
-            Shorten links.
-            <br />
-            <span className="text-gradient">Get paid per click.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            AdsPx is the link shortener built for <strong className="text-foreground">Adsterra</strong> and
-            other ad-network offers — share on <strong className="text-foreground">Facebook</strong>,
-            Telegram or YouTube and earn <strong className="text-foreground">$1 per 100,000 visits</strong>.
-            A giant AI shield rejects bots so your offer stays alive. Withdraw in <strong className="text-foreground">USDT</strong> from just $25.
-          </p>
-
-          <form
-            className="relative max-w-xl mx-auto pt-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              window.location.href = "/signup";
-            }}
-          >
-            <div className="glass-deep rounded-2xl p-1.5 flex flex-col sm:flex-row gap-1.5">
-              <Input
-                type="url"
-                required
-                aria-label="Paste your long URL"
-                placeholder="Paste your long URL here…"
-                className="h-12 text-base bg-transparent border-0 shadow-none focus-visible:ring-0 px-4 flex-1"
-              />
-
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 px-6 btn-premium rounded-xl font-semibold"
-              >
-                Shorten & earn <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
+      <div className="container mx-auto px-4 sm:px-6 pt-10 pb-14 md:pt-20 md:pb-20 relative">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          {/* LEFT — headline + copy + CTAs */}
+          <div className="lg:col-span-7 relative z-10">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-widest uppercase text-primary mb-6">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              Live payouts · $284K+ paid in 2026
             </div>
-          </form>
 
-          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground pt-2">
-            <span className="inline-flex items-center gap-1.5">
-              <Check className="h-3.5 w-3.5 text-primary" /> Free to join
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check className="h-3.5 w-3.5 text-primary" /> No referral required
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check className="h-3.5 w-3.5 text-primary" /> Min $25 withdrawal
-            </span>
+            <h1 className="font-display font-extrabold tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.25rem] leading-[0.92] text-foreground">
+              Turn clicks
+              <br />
+              <span className="text-gradient">into capital.</span>
+            </h1>
+
+            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
+              AdsPx is the short-link platform built for creators. Share on
+              <strong className="text-foreground"> Facebook</strong>, Telegram or YouTube and earn
+              <strong className="text-foreground"> $1 per 100,000 visits</strong>. Withdraw in
+              <strong className="text-foreground"> USDT</strong> from just $25.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button size="lg" className="btn-premium rounded-2xl px-7 h-12 font-bold" asChild>
+                <Link to="/signup">
+                  Start earning now <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+              <div className="inline-flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-5 h-12 font-semibold text-sm">
+                <span className="flex -space-x-2">
+                  <span className="h-6 w-6 rounded-full bg-primary border-2 border-card" />
+                  <span className="h-6 w-6 rounded-full bg-primary-glow border-2 border-card" />
+                  <span className="h-6 w-6 rounded-full bg-success border-2 border-card" />
+                </span>
+                42,180+ active publishers
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-5 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" /> Free to join
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" /> No referral required
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" /> Min $25 withdrawal
+              </span>
+            </div>
+          </div>
+
+          {/* RIGHT — Pixel-machine link mockup with neo-brutalist offset shadow */}
+          <div className="lg:col-span-5 relative">
+            {/* Floating coin card (behind, top-left) */}
+            <div
+              className="hidden sm:flex absolute -top-4 -left-4 z-0 items-center gap-2 rounded-2xl bg-card border-2 border-foreground/90 px-4 py-2.5 shadow-[6px_6px_0_0_oklch(0.72_0.20_340)] rotate-[-6deg]"
+              aria-hidden
+            >
+              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-primary-glow grid place-items-center text-primary-foreground text-xs font-black">
+                $
+              </div>
+              <div className="text-xs">
+                <div className="font-bold leading-tight">+$4.20</div>
+                <div className="text-muted-foreground leading-tight">420 clicks</div>
+              </div>
+            </div>
+
+            {/* Main pixel-machine card */}
+            <div
+              className="relative z-10 bg-card rounded-[2rem] p-6 sm:p-7 border-[3px] border-foreground/90 overflow-hidden"
+              style={{ boxShadow: "14px 14px 0 0 oklch(0.55 0.22 280)" }}
+            >
+              {/* Pixel dots — top-right */}
+              <div className="absolute top-4 right-4 grid grid-cols-3 gap-1" aria-hidden>
+                <span className="h-2 w-2 bg-primary-glow" />
+                <span className="h-2 w-2 bg-transparent" />
+                <span className="h-2 w-2 bg-primary-glow" />
+                <span className="h-2 w-2 bg-transparent" />
+                <span className="h-2 w-2 bg-primary-glow" />
+                <span className="h-2 w-2 bg-transparent" />
+              </div>
+
+              {/* Original URL */}
+              <div className="rounded-xl bg-muted border border-dashed border-border p-4">
+                <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5">
+                  Original URL
+                </div>
+                <div className="text-xs font-mono text-muted-foreground truncate">
+                  youtube.com/watch?v=your-viral-video
+                </div>
+              </div>
+
+              {/* Down arrow */}
+              <div className="flex justify-center my-4">
+                <div className="h-10 w-10 grid place-items-center bg-primary rounded-full text-primary-foreground">
+                  <ChevronDown className="h-5 w-5" />
+                </div>
+              </div>
+
+              {/* Shortened link */}
+              <div className="rounded-xl p-4 bg-primary-gradient shadow-glow">
+                <div className="text-[10px] uppercase tracking-widest font-bold text-primary-foreground/80 mb-1.5">
+                  AdsPx short link
+                </div>
+                <div className="text-lg font-black text-primary-foreground font-mono">
+                  adspx.co/reward-291
+                </div>
+              </div>
+
+              {/* Footer stat */}
+              <div className="mt-6 pt-5 border-t border-border flex justify-between items-end">
+                <div>
+                  <div className="font-display text-2xl font-black">$2,481.00</div>
+                  <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    Total user payouts today
+                  </div>
+                </div>
+                <div className="h-9 w-9 rounded-lg bg-accent grid place-items-center text-accent-foreground">
+                  <Bitcoin className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Floating "verified click" chip (front, bottom-right) */}
+            <div
+              className="hidden sm:flex absolute -bottom-5 -right-3 z-20 items-center gap-2 rounded-2xl bg-foreground text-background px-4 py-2.5 rotate-[4deg] shadow-elegant"
+              aria-hidden
+            >
+              <ShieldCheck className="h-4 w-4 text-success" />
+              <span className="text-xs font-bold">Real click verified</span>
+            </div>
           </div>
         </div>
+
+        {/* URL shortener input — full-width under the split */}
+        <form
+          className="relative max-w-2xl mx-auto pt-14 md:pt-20"
+          onSubmit={(e) => {
+            e.preventDefault();
+            window.location.href = "/signup";
+          }}
+        >
+          <div className="glass-deep rounded-2xl p-1.5 flex flex-col sm:flex-row gap-1.5">
+            <Input
+              type="url"
+              required
+              aria-label="Paste your long URL"
+              placeholder="Paste your long URL here…"
+              className="h-12 text-base bg-transparent border-0 shadow-none focus-visible:ring-0 px-4 flex-1"
+            />
+            <Button type="submit" size="lg" className="h-12 px-6 btn-premium rounded-xl font-semibold">
+              Shorten & earn <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </form>
       </div>
     </section>
   );
@@ -200,96 +312,113 @@ function PayoutBar() {
   );
 }
 
-/* ─────────────────────────────────────────────── HOW IT WORKS */
+/* ─────────────────────────────────────────────── HOW IT WORKS — Bento path */
 function HowItWorks() {
-  const steps = [
-    {
-      icon: Link2,
-      title: "Shorten any link",
-      desc: "Paste your URL — YouTube video, blog post, anything. Get a clean short link in 2 seconds.",
-    },
-    {
-      icon: Users,
-      title: "Share it everywhere",
-      desc: "Drop it on Facebook, Telegram channels, Twitter, your blog. Every real human visit counts toward earnings.",
-    },
-    {
-      icon: Wallet,
-      title: "Cash out in crypto",
-      desc: "Hit $25 in earnings and withdraw to your USDT (TRC20 / BEP20) wallet — processed within 24 hours.",
-    },
-  ];
   return (
-    <section id="how" className="container mx-auto px-6 py-12 md:py-20">
-      <div className="text-center mb-14 max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          How it works
-        </div>
-        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
-          From link to wallet in <span className="text-gradient">three steps</span>
+    <section id="how" className="container mx-auto px-4 sm:px-6 py-14 md:py-20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+          The path to <span className="text-gradient italic">profit.</span>
         </h2>
+        <p className="text-muted-foreground font-medium">Simple mechanics. Massive potential.</p>
       </div>
 
-      <div className="relative grid md:grid-cols-3 gap-6 mb-12">
-        <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-        {steps.map((s, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* 01 — Shorten */}
+        <div className="md:col-span-4 group relative overflow-hidden rounded-3xl bg-card border-2 border-border p-7 hover:border-primary/60 transition-colors">
+          <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/10 group-hover:scale-150 transition-transform duration-500" aria-hidden />
+          <div className="relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground grid place-items-center font-black text-lg italic mb-6 shadow-lg shadow-primary/20">
+              01
+            </div>
+            <div className="h-11 w-11 rounded-lg bg-primary/10 text-primary grid place-items-center mb-4">
+              <Link2 className="h-5 w-5" />
+            </div>
+            <h3 className="font-display text-2xl font-bold mb-2">Shorten any link</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Paste your URL — YouTube video, blog post, anything. Get a clean AdsPx short link in 2 seconds.
+            </p>
+          </div>
+        </div>
+
+        {/* 02 — Share (hero bento card) */}
+        <div className="md:col-span-8 relative overflow-hidden rounded-3xl p-7 md:p-8 text-primary-foreground bg-primary-gradient">
           <div
-            key={s.title}
-            className="relative rounded-2xl border border-border bg-card/60 backdrop-blur p-7 hover:shadow-glow transition-all"
-          >
-            <div className="absolute -top-3 left-7 rounded-full bg-primary-gradient px-2.5 py-0.5 text-xs font-mono font-semibold text-primary-foreground">
-              0{i + 1}
+            className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{
+              backgroundImage: "radial-gradient(rgba(255,255,255,0.6) 1.5px, transparent 1.5px)",
+              backgroundSize: "18px 18px",
+            }}
+            aria-hidden
+          />
+          <div className="relative z-10 flex flex-col h-full">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white grid place-items-center font-black text-lg italic mb-6">
+              02
             </div>
-            <div className="h-12 w-12 rounded-xl bg-primary/10 grid place-items-center text-primary mb-5">
-              <s.icon className="h-6 w-6" />
+            <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">Share everywhere</h3>
+            <p className="text-white/85 text-base md:text-lg max-w-xl leading-relaxed">
+              Drop it on Facebook, Telegram channels, Twitter, your blog. Every real human visit adds to your balance —
+              our shield filters out bots automatically.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {["Facebook", "Telegram", "YouTube", "Twitter", "Discord"].map((s) => (
+                <span
+                  key={s}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/10 border border-white/25 text-[11px] font-bold tracking-wide"
+                >
+                  {s}
+                </span>
+              ))}
             </div>
-            <h3 className="font-display text-xl font-semibold mb-2">{s.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Transparent earnings policy */}
-      <div className="max-w-4xl mx-auto rounded-2xl border border-primary/30 bg-primary/5 p-7 md:p-9">
-        <div className="flex items-center gap-2 mb-4">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg font-semibold">Our earnings policy — fully transparent</h3>
-        </div>
-        <div className="grid md:grid-cols-3 gap-5 text-sm">
-          <div className="rounded-xl bg-card border border-border p-5">
-            <div className="font-mono text-xs text-muted-foreground mb-1">PER 5,000 CLICKS</div>
-            <div className="font-display text-2xl font-bold mb-1">
-              <span className="text-gradient">4,800</span> yours
+        {/* 03 — Cash out (dark) */}
+        <div className="md:col-span-7 rounded-3xl bg-foreground text-background p-7 md:p-8 relative">
+          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+            <div className="flex-1">
+              <div className="w-12 h-12 rounded-xl bg-primary-glow text-white grid place-items-center font-black text-lg italic mb-6 shadow-lg shadow-primary-glow/30">
+                03
+              </div>
+              <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">Collect USDT</h3>
+              <p className="text-background/70 leading-relaxed text-sm md:text-base">
+                Hit the <span className="text-background font-bold">$25 threshold</span> and cash out directly to your
+                wallet in USDT (TRC20 / BEP20). Processed within 24 hours.
+              </p>
             </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Out of every 5,000 real visits, <strong className="text-foreground">200 clicks (4%)</strong> are
-              monetized through our ad partners to cover the platform. The remaining <strong className="text-foreground">4,800</strong> are credited to your account.
-            </p>
-          </div>
-          <div className="rounded-xl bg-card border border-border p-5">
-            <div className="font-mono text-xs text-muted-foreground mb-1">PAYOUT RATE</div>
-            <div className="font-display text-2xl font-bold mb-1">
-              <span className="text-gradient">$1</span> / 100K
+            <div className="shrink-0 w-28 h-28 rounded-2xl bg-background/5 border border-background/10 grid place-items-center">
+              <div className="text-center">
+                <Wallet className="h-8 w-8 mx-auto text-primary-glow" />
+                <div className="text-[10px] text-primary-glow font-bold uppercase mt-2 tracking-widest">
+                  Ready
+                </div>
+              </div>
             </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              You earn <strong className="text-foreground">$1 for every 100,000 real visits</strong> sent through your short links.
-              Flat global rate — same for every country, no hidden tiers.
-            </p>
-          </div>
-          <div className="rounded-xl bg-card border border-border p-5">
-            <div className="font-mono text-xs text-muted-foreground mb-1">MIN WITHDRAWAL</div>
-            <div className="font-display text-2xl font-bold mb-1">
-              <span className="text-gradient">$25</span> USDT
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Request a withdrawal once your balance hits <strong className="text-foreground">$25</strong>.
-              Paid in USDT (<strong className="text-foreground">TRC20 or BEP20</strong>) within 24 hours.
-            </p>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-5 text-center">
-          Bot traffic is filtered automatically — only verified human visits count toward your earnings.
-        </p>
+
+        {/* 04 — Rate stat (neo-brutalist) */}
+        <div className="md:col-span-5 rounded-3xl bg-card border-2 border-foreground p-7 flex flex-col justify-center items-center text-center">
+          <div className="font-display text-5xl md:text-6xl font-black text-gradient">$1.00</div>
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
+            Per 100,000 clicks
+          </div>
+          <div className="mt-5 grid grid-cols-8 gap-1" aria-hidden>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span
+                key={i}
+                className="h-3 w-3"
+                style={{
+                  background:
+                    i < 6
+                      ? "linear-gradient(135deg, oklch(0.55 0.22 280), oklch(0.72 0.20 340))"
+                      : "oklch(0.90 0.01 270)",
+                }}
+              />
+            ))}
+          </div>
+          <div className="mt-4 text-[11px] text-muted-foreground">Flat global rate · no hidden tiers</div>
+        </div>
       </div>
     </section>
   );
