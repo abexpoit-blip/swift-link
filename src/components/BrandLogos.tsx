@@ -115,7 +115,7 @@ export function AdMavenLogo({ className = "h-7" }: Props) {
 }
 
 export const PARTNER_LOGOS = [
-  { name: "Facebook",     Comp: FacebookLogo,     note: "Traffic source we cloak for" },
+  { name: "Facebook",     Comp: FacebookLogo,     note: "Traffic source we protect for" },
   { name: "Adsterra",     Comp: AdsterraLogo,     note: "Direct CPM / popunder partner" },
   { name: "PropellerAds", Comp: PropellerAdsLogo, note: "Push & onclick partner" },
   { name: "Monetag",      Comp: MonetagLogo,      note: "Smart-link partner" },

@@ -269,7 +269,7 @@ function DashboardPage() {
         <section className="grid lg:grid-cols-[1fr_360px] gap-6">
           <div className="space-y-6">
             <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create cloaked link</h2>
+              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create smart link</h2>
               {!emailVerified && (
                 <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="text-sm">
@@ -299,7 +299,7 @@ function DashboardPage() {
             </div>
 
             <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-5">Cloaked links</h2>
+              <h2 className="font-display text-lg font-semibold mb-5">Your smart links</h2>
               {links.length === 0 ? (
                 <div className="text-center py-10 text-sm text-muted-foreground">No links yet.</div>
               ) : (
@@ -412,7 +412,7 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
 
   return (
     <div className="mt-4 border-t border-border pt-4 space-y-4">
-      <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Cloaking Rules</div>
+      <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Traffic Rules</div>
 
       <div className="grid md:grid-cols-2 gap-3">
         <label className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5 cursor-pointer">

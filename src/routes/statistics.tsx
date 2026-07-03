@@ -230,7 +230,7 @@ function StatisticsPage() {
         ) : tlogs.length === 0 && clicks.length === 0 ? (
           <EmptyState
             title="No traffic yet"
-            body="Create a cloaked link and start sending visitors — this page will fill in automatically as clicks come in."
+            body="Create a smart link and start sending visitors — this page will fill in automatically as clicks come in."
             cta={<Link to="/dashboard" className="rounded-md bg-primary-gradient text-primary-foreground px-4 py-2 text-sm font-medium">Open Console</Link>}
           />
         ) : (

@@ -1110,7 +1110,7 @@ function AdminPage() {
           <TabsContent value="simulator" className="mt-0">
             <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
               <h2 className="font-display text-lg font-semibold mb-1 flex items-center gap-2">
-                <FlaskConical className="h-5 w-5 text-primary" /> Test Link — cloak simulator
+                <FlaskConical className="h-5 w-5 text-primary" /> Test Link — traffic simulator
               </h2>
               <p className="text-sm text-muted-foreground mb-5">
                 Kono ekta short code er against e bivinno traffic profile simulate koro. Real click hisebe count hobe na — sudhu decision dekha jabe.
