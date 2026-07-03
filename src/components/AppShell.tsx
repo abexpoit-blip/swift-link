@@ -46,7 +46,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const search = useRouterState({ select: (r) => r.location.search }) as Record<string, string>;
+  const search = useRouterState({ select: (r) => r.location.search }) as unknown as Record<string, string>;
 
   const groups: NavGroup[] = [
     {
