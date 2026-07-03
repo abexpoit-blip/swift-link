@@ -14,10 +14,10 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { TopBar } from "@/components/TopBar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
@@ -34,17 +34,58 @@ import {
   Activity,
   FlaskConical,
   Settings2,
-  LogOut,
-  UserCircle,
   Link2,
   Settings,
+  ArrowRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 type NavChild = { title: string; to: string; search?: Record<string, string>; icon: any };
 type NavGroup = { label: string; items: (NavChild & { children?: NavChild[] })[] };
 
-function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
+function BalanceWidget({ balance }: { balance: number }) {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const formatted = `$${balance.toFixed(2)}`;
+
+  if (collapsed) {
+    return (
+      <Link
+        to="/withdraw"
+        title={`Available: ${formatted}`}
+        className="mx-auto my-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition"
+      >
+        <Wallet className="h-4 w-4" />
+      </Link>
+    );
+  }
+
+  return (
+    <div className="mx-2 my-2 rounded-lg border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Wallet className="h-3.5 w-3.5" />
+        <span>Available balance</span>
+      </div>
+      <div className="mt-1 text-lg font-bold tracking-tight tabular-nums">
+        {formatted}
+      </div>
+      <Link
+        to="/withdraw"
+        search={{ view: "request" } as any}
+        className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-md bg-primary text-primary-foreground text-xs font-medium py-1.5 hover:opacity-90 transition"
+      >
+        Withdraw <ArrowRight className="h-3 w-3" />
+      </Link>
+    </div>
+  );
+}
+
+function AppSidebar({
+  isAdmin,
+  balance,
+}: {
+  isAdmin: boolean;
+  balance: number;
+}) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -117,11 +158,6 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const anyChildActive = (children?: NavChild[]) =>
     !!children?.some((c) => isActive(c));
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
@@ -135,6 +171,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
       </SidebarHeader>
 
       <SidebarContent>
+        <BalanceWidget balance={balance} />
+
         {groups.map((group) => (
           <SidebarGroup key={group.label}>
             {!collapsed && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
@@ -188,28 +226,6 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-
-
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Home">
-                  <Link to="/" className="flex items-center gap-2">
-                    <UserCircle className="h-4 w-4" />
-                    {!collapsed && <span>Home</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={signOut} tooltip="Sign out">
-                  <LogOut className="h-4 w-4" />
-                  {!collapsed && <span>Sign out</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
@@ -218,23 +234,37 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [ready, setReady] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [balance, setBalance] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
-      const uid = sess.session?.user.id;
-      if (!uid) {
+      const user = sess.session?.user;
+      if (!user) {
         if (mounted) setReady(true);
         return;
       }
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", uid);
+      const [rolesRes, profileRes] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("full_name, balance_available")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
       if (mounted) {
-        setIsAdmin(!!roles?.some((r: any) => r.role === "admin" || r.role === "super_admin"));
+        setIsAdmin(
+          !!rolesRes.data?.some(
+            (r: any) => r.role === "admin" || r.role === "super_admin",
+          ),
+        );
+        setEmail(user.email ?? "");
+        setFullName((profileRes.data as any)?.full_name ?? "");
+        setBalance(Number((profileRes.data as any)?.balance_available ?? 0));
         setReady(true);
       }
     })();
@@ -250,12 +280,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider defaultOpen>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar isAdmin={isAdmin} />
+        <AppSidebar isAdmin={isAdmin} balance={balance} />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3 py-2">
-            <SidebarTrigger />
-            <span className="text-sm font-medium tracking-tight lg:hidden">AdsPx</span>
-          </header>
+          <TopBar email={email} fullName={fullName} isAdmin={isAdmin} />
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
