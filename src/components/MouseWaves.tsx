@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Abstract flowing wave lines background — parallel smooth curves across the
- * whole viewport (Alamy-style). Mouse gently distorts the flow.
+ * Modern flowing wave lines built from dotted particles with blur/depth.
+ * Inspired by abstract energy-wave editorial art. Mouse gently distorts flow.
  */
 export function MouseWaves() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,8 +53,8 @@ export function MouseWaves() {
     window.addEventListener("mouseleave", onLeave);
     window.addEventListener("touchmove", onTouch, { passive: true });
 
-    const LINES = 60;   // dense parallel streaks
-    const STEP = 6;
+    const LINES = 26;         // number of stacked streams
+    const DOT_STEP = 10;      // spacing between dots along each stream
 
     const draw = () => {
       t += 0.006;
@@ -63,52 +63,63 @@ export function MouseWaves() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // extend beyond viewport so tilted lines still cover corners
-      const overshoot = 200;
+      const overshoot = 160;
       const totalH = height + overshoot * 2;
       const spacing = totalH / (LINES - 1);
       const influence = 260;
 
       for (let i = 0; i < LINES; i++) {
         const baseY = -overshoot + i * spacing;
-        // gentle diagonal tilt so lines flow across the page
-        const tilt = (i / LINES - 0.5) * 40;
+        const streamPhase = i * 0.18;
+        // depth 0..1 across the stack — used for size/blur/opacity variation
+        const depthCurve = Math.sin(i * 0.42 + t * 0.3) * 0.5 + 0.5;
 
-        ctx.beginPath();
-        for (let x = -STEP; x <= width + STEP; x += STEP) {
-          const nx = x * 0.0018;
+        // per-line hue drift: indigo → magenta → cyan
+        const hue = 250 + Math.sin(i * 0.22 + t * 0.4) * 60;
 
-          // layered smooth sine flow — parallel curves
+        for (let x = -DOT_STEP; x <= width + DOT_STEP; x += DOT_STEP) {
+          const nx = x * 0.002;
+
           const flow =
-            Math.sin(nx * 2.1 + t * 1.2 + i * 0.06) * 38 +
-            Math.sin(nx * 1.1 - t * 0.8 + i * 0.10) * 24 +
-            Math.cos(nx * 0.6 + t * 0.5 + i * 0.03) * 18;
+            Math.sin(nx * 1.9 + t * 1.1 + streamPhase) * 34 +
+            Math.sin(nx * 0.9 - t * 0.7 + streamPhase * 1.4) * 22 +
+            Math.cos(nx * 0.4 + t * 0.5 + streamPhase * 0.6) * 14;
 
-          // linear tilt across width
-          const slant = (x / width) * tilt;
-
-          // soft mouse distortion — bends nearby lines
-          const dx = x - mouse.x;
-          const dy = baseY + flow - mouse.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          // mouse push — soft radial displacement
+          const dxm = x - mouse.x;
+          const dym = baseY + flow - mouse.y;
+          const dist = Math.sqrt(dxm * dxm + dym * dym);
           let push = 0;
           if (dist < influence) {
             const f = 1 - dist / influence;
-            push = Math.sign(dy || 1) * f * f * 55;
+            push = Math.sign(dym || 1) * f * f * 60;
           }
 
-          const y = baseY + flow + slant + push;
-          if (x === -STEP) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
+          const y = baseY + flow + push;
 
-        // hue drift across lines — indigo → magenta → cyan
-        const hue = 250 + Math.sin(i * 0.18 + t * 0.4) * 60;
-        const alpha = 0.14 + (Math.sin(i * 0.3 + t) * 0.5 + 0.5) * 0.18;
-        ctx.strokeStyle = `hsla(${hue}, 85%, 58%, ${alpha})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+          // twinkle along the stream so dots feel like moving particles
+          const twinkle =
+            0.35 + (Math.sin(x * 0.03 - t * 3 + i * 0.6) * 0.5 + 0.5) * 0.65;
+
+          // radius fades at the horizontal edges (soft mask)
+          const edge = Math.min(1, Math.min(x, width - x) / 120);
+          const edgeFade = Math.max(0, edge);
+
+          const size = (0.7 + depthCurve * 2.2) * (0.6 + twinkle * 0.6);
+          const alpha = (0.10 + depthCurve * 0.35) * twinkle * edgeFade;
+          const blur = 2 + depthCurve * 10;
+
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${hue}, 90%, 58%, ${alpha})`;
+          ctx.shadowColor = `hsla(${hue}, 95%, 62%, ${alpha * 1.4})`;
+          ctx.shadowBlur = blur;
+          ctx.fill();
+        }
       }
+
+      // reset shadow for perf hygiene
+      ctx.shadowBlur = 0;
 
       raf = requestAnimationFrame(draw);
     };
