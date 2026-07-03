@@ -125,9 +125,12 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
-        <Link to="/dashboard" className="flex items-center gap-2 px-2 py-1.5">
-          <AdspxMark className="h-6 w-6" glow={false} />
-          {!collapsed && <span className="font-semibold tracking-tight text-sm">AdsPx</span>}
+        <Link
+          to="/dashboard"
+          className="flex items-center justify-center px-2 py-2"
+          aria-label="AdsPx home"
+        >
+          <AdspxMark className={collapsed ? "h-7 w-7" : "h-9 w-9"} glow />
         </Link>
       </SidebarHeader>
 
