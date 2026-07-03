@@ -27,7 +27,7 @@ export const Route = createFileRoute("/withdraw")({
       {
         name: "description",
         content:
-          "Request a USDT crypto withdrawal. Minimum $25, paid via TRC20 or BEP20 within 24 hours.",
+          "Request a USDT crypto withdrawal. Minimum $10, paid via TRC20 or BEP20 within 24 hours.",
       },
     ],
   }),
@@ -52,7 +52,7 @@ type Withdrawal = {
   processed_at: string | null;
 };
 
-const MIN_AMOUNT = 25;
+const MIN_AMOUNT = 10;
 
 function WithdrawPage() {
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ function WithdrawPage() {
   const [history, setHistory] = useState<Withdrawal[]>([]);
 
   // form state
-  const [amount, setAmount] = useState<string>("25");
+  const [amount, setAmount] = useState<string>("10");
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
