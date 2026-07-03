@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Fixed full-viewport canvas that draws horizontal wave lines
- * distorted by the mouse position. Pure UI decoration.
+ * Sea-wave background — layered ocean waves at the bottom of the viewport.
+ * Mouse movement creates ripples on the water surface.
  */
 export function MouseWaves() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,7 +17,8 @@ export function MouseWaves() {
     let height = 0;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const mouse = { x: -9999, y: -9999, tx: -9999, ty: -9999 };
+    const mouse = { x: -9999, y: -9999, tx: -9999, ty: -9999, vx: 0, vy: 0 };
+    const ripples: { x: number; y: number; r: number; life: number }[] = [];
     let t = 0;
     let raf = 0;
 
@@ -36,6 +37,11 @@ export function MouseWaves() {
     const onMove = (e: MouseEvent) => {
       mouse.tx = e.clientX;
       mouse.ty = e.clientY;
+      // spawn ripple sparingly based on movement
+      if (Math.random() < 0.25) {
+        ripples.push({ x: e.clientX, y: e.clientY, r: 0, life: 1 });
+        if (ripples.length > 30) ripples.shift();
+      }
     };
     const onLeave = () => {
       mouse.tx = -9999;
@@ -53,48 +59,93 @@ export function MouseWaves() {
     window.addEventListener("mouseleave", onLeave);
     window.addEventListener("touchmove", onTouch, { passive: true });
 
-    const LINES = 22;
-    const STEP = 14; // px between sample points along X
+    // Ocean wave layers — back to front (far → near)
+    const layers = [
+      { amp: 22, len: 0.006, speed: 0.6, yFrac: 0.62, color: "hsla(220, 80%, 62%, 0.14)" },
+      { amp: 26, len: 0.008, speed: 0.9, yFrac: 0.72, color: "hsla(232, 78%, 58%, 0.18)" },
+      { amp: 30, len: 0.010, speed: 1.2, yFrac: 0.82, color: "hsla(258, 78%, 55%, 0.24)" },
+      { amp: 34, len: 0.013, speed: 1.6, yFrac: 0.92, color: "hsla(280, 78%, 52%, 0.32)" },
+    ];
+
+    const STEP = 8;
 
     const draw = () => {
-      t += 0.008;
-      // ease cursor
-      mouse.x += (mouse.tx - mouse.x) * 0.12;
-      mouse.y += (mouse.ty - mouse.y) * 0.12;
+      t += 0.012;
+      mouse.x += (mouse.tx - mouse.x) * 0.15;
+      mouse.y += (mouse.ty - mouse.y) * 0.15;
 
       ctx.clearRect(0, 0, width, height);
 
-      const spacing = height / (LINES - 1);
-      const influence = 140; // radius of mouse effect
+      // draw each wave layer as filled shape
+      for (let l = 0; l < layers.length; l++) {
+        const layer = layers[l];
+        const baseY = height * layer.yFrac;
+        const influence = 180 + l * 20;
 
-      for (let i = 0; i < LINES; i++) {
-        const baseY = i * spacing;
         ctx.beginPath();
+        ctx.moveTo(0, height);
         for (let x = 0; x <= width + STEP; x += STEP) {
-          // ambient wave
           const wave =
-            Math.sin(x * 0.006 + t + i * 0.35) * 6 +
-            Math.sin(x * 0.013 - t * 1.3 + i * 0.2) * 4;
+            Math.sin(x * layer.len + t * layer.speed) * layer.amp +
+            Math.sin(x * layer.len * 2.1 - t * layer.speed * 1.3) * (layer.amp * 0.35) +
+            Math.cos(x * layer.len * 0.6 + t * layer.speed * 0.7) * (layer.amp * 0.2);
 
-          // mouse distortion — push line away from cursor
+          // mouse distortion — lift the water toward cursor
           const dx = x - mouse.x;
           const dy = baseY - mouse.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           let push = 0;
           if (dist < influence) {
             const f = 1 - dist / influence;
-            push = Math.sign(dy || 1) * f * f * 60;
+            push = -f * f * 40 * (1 + l * 0.15);
           }
 
+          // ripple contributions
+          let rippleY = 0;
+          for (const r of ripples) {
+            const rd = Math.abs(x - r.x);
+            const falloff = Math.exp(-rd / 90);
+            rippleY += Math.sin(rd * 0.08 - r.r * 0.12) * 10 * falloff * r.life;
+          }
+
+          const y = baseY + wave + push + rippleY;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(width, height);
+        ctx.closePath();
+        ctx.fillStyle = layer.color;
+        ctx.fill();
+
+        // crest highlight line
+        ctx.beginPath();
+        for (let x = 0; x <= width + STEP; x += STEP) {
+          const wave =
+            Math.sin(x * layer.len + t * layer.speed) * layer.amp +
+            Math.sin(x * layer.len * 2.1 - t * layer.speed * 1.3) * (layer.amp * 0.35);
+          const dx = x - mouse.x;
+          const dy = baseY - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          let push = 0;
+          if (dist < influence) {
+            const f = 1 - dist / influence;
+            push = -f * f * 40 * (1 + l * 0.15);
+          }
           const y = baseY + wave + push;
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
-        // subtle gradient-ish alpha per line
-        const alpha = 0.18 + (i / LINES) * 0.22;
-        ctx.strokeStyle = `hsla(263, 70%, 45%, ${alpha})`;
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `hsla(${220 + l * 20}, 85%, ${70 - l * 6}%, ${0.28 + l * 0.06})`;
+        ctx.lineWidth = 1.1;
         ctx.stroke();
+      }
+
+      // age ripples
+      for (const r of ripples) {
+        r.r += 1;
+        r.life *= 0.97;
+      }
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        if (ripples[i].life < 0.05) ripples.splice(i, 1);
       }
 
       raf = requestAnimationFrame(draw);
