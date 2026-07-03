@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -11,7 +12,7 @@ import { AdspxMark } from "@/components/AdspxLogo";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/statistics")({
-  component: StatisticsPage,
+  component: () => (<AppShell><StatisticsPage /></AppShell>),
   head: () => ({
     meta: [
       { title: "Statistics — AdsPx" },

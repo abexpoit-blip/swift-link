@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/withdraw")({
-  component: WithdrawPage,
+  component: () => (<AppShell><WithdrawPage /></AppShell>),
   head: () => ({
     meta: [
       { title: "Withdraw earnings — AdsPx" },

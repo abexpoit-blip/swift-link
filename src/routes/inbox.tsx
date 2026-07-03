@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/inbox")({
-  component: InboxPage,
+  component: () => (<AppShell><InboxPage /></AppShell>),
   head: () => ({ meta: [{ title: "Messages — AdsPx" }] }),
 });
 

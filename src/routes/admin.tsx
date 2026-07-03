@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -52,9 +53,11 @@ import {
 import { AdspxMark } from "@/components/AdspxLogo";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPage,
+  component: () => (<AppShell><AdminPage /></AppShell>),
+  validateSearch: (s: Record<string, unknown>) => ({ tab: (s.tab as string) || "overview" }),
   head: () => ({ meta: [{ title: "Admin Control Center — AdsPx" }] }),
 });
+
 
 type Withdrawal = {
   id: string;
@@ -110,7 +113,7 @@ type AppSettings = {
   daily_redirect_enabled: boolean | null;
 };
 
-type LedgerRow = { day: string; user_clicks: number; adsterra_clicks: number };
+type LedgerRow = { day: string; user_clicks: number; adsterra_clicks: number; total_clicks?: number; earnings_usd?: number; user_id?: string };
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -118,7 +121,10 @@ function AdminPage() {
   const [email, setEmail] = useState("");
   const [adminId, setAdminId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [tab, setTab] = useState("overview");
+  const searchParams = Route.useSearch();
+  const [tab, setTab] = useState<string>(searchParams.tab || "overview");
+  useEffect(() => { if (searchParams.tab && searchParams.tab !== tab) setTab(searchParams.tab); }, [searchParams.tab]);
+
 
   // stats
   const [totalUsers, setTotalUsers] = useState(0);
@@ -210,7 +216,7 @@ function AdminPage() {
       supabase.from("clicks").select("id", { count: "exact", head: true }).eq("is_bot", true),
       supabase
         .from("earnings_ledger")
-        .select("day, user_clicks, adsterra_clicks")
+        .select("day, user_clicks, adsterra_clicks, total_clicks, earnings_usd, user_id")
         .gte("day", thirtyAgo)
         .order("day", { ascending: true }),
       supabase.from("profiles").select("balance_withdrawn"),
@@ -522,11 +528,15 @@ function AdminPage() {
           <TabsList className="mb-6 flex flex-wrap h-auto gap-1 bg-muted/60 p-1 rounded-xl">
             <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="h-3.5 w-3.5" />Overview</TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" />Users</TabsTrigger>
+            <TabsTrigger value="history" className="gap-1.5"><History className="h-3.5 w-3.5" />User History</TabsTrigger>
             <TabsTrigger value="withdrawals" className="gap-1.5"><Wallet className="h-3.5 w-3.5" />Payouts{pendingCount > 0 && <span className="ml-1 rounded-full bg-amber-500 text-white text-[9px] px-1.5 py-0.5">{pendingCount}</span>}</TabsTrigger>
+            <TabsTrigger value="ads" className="gap-1.5"><Megaphone className="h-3.5 w-3.5" />Ads Setup</TabsTrigger>
+            <TabsTrigger value="performance" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Performance</TabsTrigger>
             <TabsTrigger value="messages" className="gap-1.5"><Inbox className="h-3.5 w-3.5" />Messages</TabsTrigger>
             <TabsTrigger value="system" className="gap-1.5"><Settings2 className="h-3.5 w-3.5" />System</TabsTrigger>
             <TabsTrigger value="simulator" className="gap-1.5"><FlaskConical className="h-3.5 w-3.5" />Simulator</TabsTrigger>
           </TabsList>
+
 
           {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-6 mt-0">
@@ -924,7 +934,179 @@ function AdminPage() {
             </section>
           </TabsContent>
 
+          {/* ADS SETUP — dedicated */}
+          <TabsContent value="ads" className="space-y-6 mt-0">
+            <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+              <h2 className="font-display text-lg font-semibold mb-1 flex items-center gap-2">
+                <Megaphone className="h-5 w-5 text-primary" /> Our ads placement & partner share
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                This is the URL we inject into user traffic to earn from our partner (Adsterra). Default share: <b>50 clicks per 1,000</b> (5%) go to our partner, the rest to user earnings.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Partner ad URL (where we send our share)</Label>
+                    <Input
+                      value={appCfg.our_adsterra_url ?? ""}
+                      onChange={(e) => setAppCfg({ ...appCfg, our_adsterra_url: e.target.value })}
+                      placeholder="https://your-adsterra-direct-link"
+                      className="mt-1.5 font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Fallback URL (when a link has no destination)</Label>
+                    <Input
+                      value={appCfg.fallback_url ?? ""}
+                      onChange={(e) => setAppCfg({ ...appCfg, fallback_url: e.target.value })}
+                      placeholder="https://…"
+                      className="mt-1.5 font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">
+                      Inject partner every N clicks
+                      <span className="text-muted-foreground font-normal ml-1">
+                        (1 in {appCfg.injection_threshold ?? 20} ≈ {(1000 / (appCfg.injection_threshold || 20)).toFixed(0)} / 1,000)
+                      </span>
+                    </Label>
+                    <Input
+                      type="number" min={1} max={1000}
+                      value={appCfg.injection_threshold ?? 20}
+                      onChange={(e) => setAppCfg({ ...appCfg, injection_threshold: Number(e.target.value) || 20 })}
+                      className="mt-1.5 w-32"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      Recommended: <b>20</b> → 50 partner clicks per 1,000 total. Lower value = more partner share, higher = more user earnings.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-3">
+                    <div>
+                      <div className="text-sm font-medium">Ad routing enabled</div>
+                      <div className="text-[11px] text-muted-foreground">Master switch. Off = every click routes to user URL.</div>
+                    </div>
+                    <Switch
+                      checked={!!appCfg.daily_redirect_enabled}
+                      onCheckedChange={(v) => setAppCfg({ ...appCfg, daily_redirect_enabled: v })}
+                    />
+                  </div>
+                  <Button onClick={saveAppSettings} disabled={savingApp} className="bg-primary-gradient">
+                    {savingApp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save ads settings"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <MiniStat icon={MousePointerClick} label="Partner clicks 30d" value={partnerClicks.toLocaleString()} />
+                <MiniStat icon={MousePointerClick} label="User clicks 30d" value={realClicks.toLocaleString()} />
+                <MiniStat icon={Bot} label="Bots blocked 30d" value={botClicks.toLocaleString()} />
+                <MiniStat icon={CircleDollarSign} label="Est. partner share" value={`${((partnerClicks / Math.max(1, partnerClicks + realClicks)) * 100).toFixed(1)}%`} />
+              </div>
+            </section>
+          </TabsContent>
+
+          {/* PERFORMANCE */}
+          <TabsContent value="performance" className="space-y-6 mt-0">
+            <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+              <h2 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" /> Performance (last 7 days)
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <MiniStat icon={MousePointerClick} label="Total clicks 7d" value={ledger.reduce((s, l) => s + (l.total_clicks || 0), 0).toLocaleString()} />
+                <MiniStat icon={CircleDollarSign} label="User earnings 7d" value={`$${ledger.reduce((s, l) => s + Number(l.earnings_usd || 0), 0).toFixed(4)}`} />
+                <MiniStat icon={Users} label="Unique earners 7d" value={new Set(ledger.map((l) => l.user_id)).size.toLocaleString()} />
+                <MiniStat icon={TrendingUp} label="Avg. clicks / user" value={(ledger.reduce((s, l) => s + (l.total_clicks || 0), 0) / Math.max(1, new Set(ledger.map((l) => l.user_id)).size)).toFixed(1)} />
+              </div>
+
+              <h3 className="text-sm font-semibold mb-2">Top earners (7d)</h3>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-3 py-2">User</th>
+                      <th className="text-right px-3 py-2">Clicks</th>
+                      <th className="text-right px-3 py-2">Partner</th>
+                      <th className="text-right px-3 py-2">Earnings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const byUser = new Map<string, { clicks: number; partner: number; earn: number }>();
+                      for (const l of ledger) {
+                        if (!l.user_id) continue;
+                        const cur = byUser.get(l.user_id) || { clicks: 0, partner: 0, earn: 0 };
+                        cur.clicks += l.total_clicks || 0;
+                        cur.partner += l.adsterra_clicks || 0;
+                        cur.earn += Number(l.earnings_usd || 0);
+                        byUser.set(l.user_id, cur);
+                      }
+                      const rows = [...byUser.entries()].sort((a, b) => b[1].earn - a[1].earn).slice(0, 15);
+                      const emailByUser = new Map(users.map((u) => [u.id, u.email]));
+                      return rows.length === 0 ? (
+                        <tr><td colSpan={4} className="text-center py-6 text-muted-foreground text-sm">No activity yet.</td></tr>
+                      ) : rows.map(([uid, s]) => (
+                        <tr key={uid} className="border-t border-border">
+                          <td className="px-3 py-2 font-mono text-xs">{emailByUser.get(uid) ?? uid.slice(0, 8)}</td>
+                          <td className="text-right px-3 py-2">{s.clicks.toLocaleString()}</td>
+                          <td className="text-right px-3 py-2 text-amber-600">{s.partner.toLocaleString()}</td>
+                          <td className="text-right px-3 py-2 font-semibold">${s.earn.toFixed(5)}</td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </TabsContent>
+
+          {/* USER HISTORY */}
+          <TabsContent value="history" className="space-y-6 mt-0">
+            <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+              <h2 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" /> User activity history
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Recent sign-ins and per-user counters. Use the Users tab for management actions.
+              </p>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-3 py-2">Email</th>
+                      <th className="text-left px-3 py-2">Plan</th>
+                      <th className="text-right px-3 py-2">Links</th>
+                      <th className="text-right px-3 py-2">Clicks</th>
+                      <th className="text-right px-3 py-2">Balance</th>
+                      <th className="text-left px-3 py-2">Last login</th>
+                      <th className="text-left px-3 py-2">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr><td colSpan={7} className="text-center py-6 text-muted-foreground text-sm">No users loaded. Open Users tab first.</td></tr>
+                    ) : users.slice(0, 50).map((u) => (
+                      <tr key={u.id} className="border-t border-border">
+                        <td className="px-3 py-2 font-mono text-xs">{u.email}{u.banned && <span className="ml-1.5 text-red-500">·banned</span>}</td>
+                        <td className="px-3 py-2 text-xs">{u.plan_slug}</td>
+                        <td className="text-right px-3 py-2">{u.links_used}</td>
+                        <td className="text-right px-3 py-2">{u.clicks_used}</td>
+                        <td className="text-right px-3 py-2 font-semibold">${Number(u.balance_available).toFixed(4)}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{u.last_login_at ? new Date(u.last_login_at).toLocaleString() : "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </TabsContent>
+
           {/* SIMULATOR */}
+
           <TabsContent value="simulator" className="mt-0">
             <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
               <h2 className="font-display text-lg font-semibold mb-1 flex items-center gap-2">

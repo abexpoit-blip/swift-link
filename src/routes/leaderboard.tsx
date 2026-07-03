@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trophy, TrendingUp, TrendingDown, ArrowLeft } from "lucide-react";
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/leaderboard")({
       },
     ],
   }),
-  component: LeaderboardPage,
+  component: () => (<AppShell><LeaderboardPage /></AppShell>),
 });
 
 type Row = Publisher & { trend: 1 | -1 | 0 };
