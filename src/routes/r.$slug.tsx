@@ -394,7 +394,7 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // decision === 'money' → behavioral JS challenge gate
-        return new Response(renderMoneyPage(link.adsterra_url, fbclid, link.id), {
+        return new Response(renderMoneyPage(moneyTarget, fbclid, link.id), {
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
