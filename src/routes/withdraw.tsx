@@ -218,15 +218,8 @@ function WithdrawPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 glass sticky top-0 z-40">
-        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to AdsPx
-          </Link>
-          <span className="font-display font-semibold">Withdraw</span>
-        </div>
-      </header>
+    <div className="bg-background text-foreground">
+
 
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-5xl space-y-5 sm:space-y-7">
         {/* Balance cards */}

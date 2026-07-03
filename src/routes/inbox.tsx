@@ -180,33 +180,8 @@ function InboxPage() {
   const unread = messages.filter((m) => !readIds.has(m.id)).length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 glass sticky top-0 z-40">
-        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <AdspxMark className="h-8 w-8" />
-            <span className="font-display font-semibold tracking-tight">
-              Ads<span className="text-gradient">Px</span>
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
-            <Link to="/inbox" className="font-medium">Messages</Link>
-            <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
-            {isAdmin && (
-              <Link to="/admin" className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary font-semibold px-3 py-1 hover:bg-primary/20">
-                <ShieldCheck className="h-3.5 w-3.5" /> Admin Panel
-              </Link>
-            )}
-          </nav>
-          <div className="flex items-center gap-3">
-            <span className="hidden md:inline text-xs text-muted-foreground">{email}</span>
-            <Button size="sm" variant="ghost" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-1" /> Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="bg-background text-foreground">
+
 
       <main className="container mx-auto px-6 py-10 max-w-3xl">
         {!emailVerified && (

@@ -189,23 +189,8 @@ function StatisticsPage() {
   }
 
   return (
-    <div className="min-h-screen text-foreground">
-      <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <AdspxMark className="h-8 w-8" />
-            <span className="font-display font-bold text-lg tracking-tight">
-              Ads<span className="text-gradient">Px</span>
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-foreground">Home</Link>
-            <Link to="/leaderboard" className="hover:text-foreground">Leaderboard</Link>
-            <Link to="/statistics" className="text-primary font-medium">Statistics</Link>
-            <Link to="/dashboard" className="hover:text-foreground">Console</Link>
-          </nav>
-        </div>
-      </header>
+    <div className="text-foreground">
+
 
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl space-y-6 sm:space-y-8">
         <section className="text-center max-w-3xl mx-auto space-y-3">
