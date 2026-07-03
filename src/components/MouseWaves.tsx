@@ -114,8 +114,7 @@ export function MouseWaves() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0"
-      style={{ mixBlendMode: "screen" }}
+      className="pointer-events-none fixed inset-0 z-[1]"
     />
   );
 }
