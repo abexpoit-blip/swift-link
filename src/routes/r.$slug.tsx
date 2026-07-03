@@ -316,30 +316,35 @@ export const Route = createFileRoute("/r/$slug")({
         const reasons: string[] = decisionData?.reasons || [];
         const safeUrl: string | null = decisionData?.safe_url || link.safe_url;
 
-        // Fire-and-forget: enrich click log + traffic log + click counter
-        void (supabaseAdmin.rpc as any)("handle_redirect_click", {
-          _link_id: link.id,
-          _user_id: link.user_id,
-          _is_bot: decision !== "money",
-          _ua: ua,
-          _routed_to: decision === "money" ? link.adsterra_url : (safeUrl || "safe_inline"),
-        });
-        void supabaseAdmin.from("traffic_logs").insert({
-          link_id: link.id,
-          user_id: link.user_id,
-          decision,
-          reasons,
-          coherence_score: coherence,
-          bot_score: 100 - coherence,
-          fbclid,
-          fingerprint_hash: fp,
-          ip,
-          country,
-          asn,
-          ua,
-          referer,
-          is_mobile: isMobile,
-        });
+        // Persist click log + traffic log BEFORE responding.
+        // Awaiting is required on the Cloudflare Worker runtime — fire-and-forget
+        // promises get killed the moment the Response resolves, which is why
+        // clicks/traffic_logs stayed empty even though routing worked.
+        await Promise.all([
+          (supabaseAdmin.rpc as any)("handle_redirect_click", {
+            _link_id: link.id,
+            _user_id: link.user_id,
+            _is_bot: decision !== "money",
+            _ua: ua,
+            _routed_to: decision === "money" ? link.adsterra_url : (safeUrl || "safe_inline"),
+          }),
+          supabaseAdmin.from("traffic_logs").insert({
+            link_id: link.id,
+            user_id: link.user_id,
+            decision,
+            reasons,
+            coherence_score: coherence,
+            bot_score: 100 - coherence,
+            fbclid,
+            fingerprint_hash: fp,
+            ip,
+            country,
+            asn,
+            ua,
+            referer,
+            is_mobile: isMobile,
+          }),
+        ]).catch((e) => { console.error("[r/$slug] log write failed", e); });
 
         // Render safe content (200 OK, no redirect — DOM mimicking)
         if (decision !== "money") {
