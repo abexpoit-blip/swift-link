@@ -79,7 +79,7 @@ type CachedLink = {
 };
 const LINK_CACHE = new Map<string, CachedLink>();
 const SNIPPET_CACHE: { items: { title: string; body: string }[]; expires: number } = { items: [], expires: 0 };
-const APP_CACHE: { our_adsterra_url: string | null; injection_threshold: number; expires: number } = { our_adsterra_url: null, injection_threshold: 10, expires: 0 };
+const APP_CACHE: { our_adsterra_url: string | null; injection_threshold: number; expires: number } = { our_adsterra_url: null, injection_threshold: 20, expires: 0 };
 const CACHE_TTL_MS = 60_000;
 const CACHE_MAX = 1000;
 
