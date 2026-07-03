@@ -174,10 +174,11 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                     </SidebarMenuItem>
                   );
                 })}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          );
-        })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
