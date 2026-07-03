@@ -289,5 +289,79 @@
     0%   { transform: translate3d(0,0,0) scale(1); }
     100% { transform: translate3d(20px,-24px,0) scale(1.08); }
   }
+
+  /* ─────────────────────────────────────────────
+     Editorial background accents — subtle, premium.
+     ───────────────────────────────────────────── */
+  .bg-ribbon {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    width: 720px;
+    height: 220px;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.28;
+    transform: rotate(-14deg);
+    background: linear-gradient(
+      90deg,
+      oklch(0.72 0.20 340 / 55%) 0%,
+      oklch(0.62 0.22 300 / 45%) 45%,
+      oklch(0.55 0.22 280 / 35%) 100%
+    );
+    animation: ribbon-float 22s ease-in-out infinite alternate;
+  }
+  .bg-ribbon-alt {
+    background: linear-gradient(
+      90deg,
+      oklch(0.62 0.16 220 / 45%) 0%,
+      oklch(0.55 0.22 280 / 35%) 55%,
+      oklch(0.72 0.20 340 / 30%) 100%
+    );
+    opacity: 0.22;
+    transform: rotate(10deg);
+    animation-duration: 28s;
+  }
+  @keyframes ribbon-float {
+    0%   { transform: rotate(-14deg) translate3d(0,0,0); }
+    100% { transform: rotate(-11deg) translate3d(30px,-18px,0); }
+  }
+
+  /* Editorial meta label — tiny monospace tag */
+  .meta-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: oklch(0.55 0.22 280 / 55%);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .meta-tag::before {
+    content: "";
+    width: 18px;
+    height: 1px;
+    background: oklch(0.55 0.22 280 / 45%);
+  }
+
+  /* Twinkling pixel dots */
+  .pixel-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 1px;
+    background: oklch(0.72 0.20 340);
+    opacity: 0;
+    animation: dot-twinkle 3.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .pixel-dot.indigo { background: oklch(0.55 0.22 280); }
+  .pixel-dot.cyan { background: oklch(0.62 0.16 220); }
+  @keyframes dot-twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.6); }
+    50%      { opacity: 0.85; transform: scale(1); }
+  }
 }
+
 

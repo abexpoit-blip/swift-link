@@ -104,6 +104,10 @@ function SiteHeader() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
+      {/* Soft aurora ribbons — premium editorial accents */}
+      <div aria-hidden className="bg-ribbon" style={{ top: "-60px", left: "-180px" }} />
+      <div aria-hidden className="bg-ribbon bg-ribbon-alt" style={{ top: "260px", right: "-220px" }} />
+
       {/* Pixel-dot motif backgrounds */}
       <div
         aria-hidden
@@ -121,6 +125,18 @@ function Hero() {
           backgroundSize: "14px 14px",
         }}
       />
+
+      {/* Twinkling pixel accent dots */}
+      <span aria-hidden className="pixel-dot indigo" style={{ top: "18%", left: "48%", animationDelay: "0s" }} />
+      <span aria-hidden className="pixel-dot" style={{ top: "62%", left: "8%", animationDelay: "1.2s" }} />
+      <span aria-hidden className="pixel-dot cyan" style={{ top: "30%", right: "12%", animationDelay: "2.1s" }} />
+      <span aria-hidden className="pixel-dot" style={{ top: "78%", right: "28%", animationDelay: "0.6s" }} />
+
+      {/* Editorial meta tag */}
+      <div aria-hidden className="hidden lg:block absolute top-10 right-6 z-10">
+        <span className="meta-tag">ADSPX · 001 / 2026</span>
+      </div>
+
 
       <div className="container mx-auto px-4 sm:px-6 pt-10 pb-14 md:pt-20 md:pb-20 relative">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
