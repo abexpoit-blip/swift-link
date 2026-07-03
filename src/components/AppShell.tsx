@@ -36,6 +36,8 @@ import {
   Settings2,
   LogOut,
   UserCircle,
+  Link2,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -53,6 +55,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
       label: "Main",
       items: [
         { title: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+        { title: "Create Link", to: "/create-link", icon: Link2 },
         { title: "Statistics", to: "/statistics", icon: BarChart3 },
         { title: "Leaderboard", to: "/leaderboard", icon: Trophy },
       ],
@@ -74,6 +77,10 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
     {
       label: "Communication",
       items: [{ title: "Messages", to: "/inbox", icon: Inbox }],
+    },
+    {
+      label: "Account",
+      items: [{ title: "Settings", to: "/settings", icon: Settings }],
     },
   ];
 
@@ -119,8 +126,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <Link to="/dashboard" className="flex items-center gap-2 px-2 py-1.5">
-          <AdspxMark />
-          {!collapsed && <span className="font-semibold tracking-tight">AdsPx</span>}
+          <AdspxMark className="h-6 w-6" glow={false} />
+          {!collapsed && <span className="font-semibold tracking-tight text-sm">AdsPx</span>}
         </Link>
       </SidebarHeader>
 

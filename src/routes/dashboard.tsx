@@ -219,13 +219,14 @@ function DashboardPage() {
       <header className="glass sticky top-0 z-40 border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <AdspxMark className="h-8 w-8" />
+            <AdspxMark className="h-7 w-7" />
             <span className="font-display font-bold text-lg tracking-tight">
               Ads<span className="text-gradient">Px</span>
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/dashboard" className="font-medium text-primary">Console</Link>
+            <Link to="/create-link" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><Link2 className="h-3.5 w-3.5" />Create Link</Link>
             <Link to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</Link>
             <Link to="/inbox" className="text-muted-foreground hover:text-foreground flex items-center gap-1.5"><InboxIcon className="h-3.5 w-3.5" />Messages</Link>
             <Link to="/withdraw" className="text-muted-foreground hover:text-foreground">Withdraw</Link>
@@ -243,18 +244,48 @@ function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl space-y-5 sm:space-y-7">
-        {/* Hero metrics */}
+        {/* Verify email banner */}
+        {!emailVerified && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="text-sm">
+              <span className="font-semibold text-amber-900 dark:text-amber-200">Email not verified.</span>{" "}
+              <span className="text-amber-900/80 dark:text-amber-200/80">Confirm <span className="font-mono">{email}</span> to unlock link creation.</span>
+            </div>
+            <Button size="sm" onClick={resendVerify} disabled={resendingVerify} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+              {resendingVerify ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
+            </Button>
+          </div>
+        )}
+
+        {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
-          <MetricCard icon={Bot} label="Bots Neutralized" value={logs.length ? "100%" : "—"} sub={`${botsCount} blocked by AI`} accent="magenta" />
+          <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
           <MetricCard icon={MousePointerClick} label="Total Clicks" value={totalClicks.toLocaleString()} />
-          <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(4)}`} sub={`$${balance.toFixed(2)} available`} />
+          <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
+          <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
+        </section>
+
+        {/* Quick actions */}
+        <section className="grid sm:grid-cols-3 gap-3">
+          <Link to="/create-link" className="group rounded-2xl glass-card p-5 hover:shadow-glow transition-all">
+            <Link2 className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <div className="font-display font-semibold">Create Link</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Generate a new smart short link</div>
+          </Link>
+          <Link to="/statistics" className="group rounded-2xl glass-card p-5 hover:shadow-glow transition-all">
+            <TrendingUp className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <div className="font-display font-semibold">Full Analytics</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Deep dive: country, device, timeline</div>
+          </Link>
+          <Link to="/withdraw" className="group rounded-2xl glass-card p-5 hover:shadow-glow transition-all">
+            <Wallet className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <div className="font-display font-semibold">Withdraw</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Cash out via USDT (min $25)</div>
+          </Link>
         </section>
 
         {/* AI Protection showcase */}
         <AIProtectionPanel humans={humansCount} bots={botsCount} />
-
-
 
         {/* Withdraw CTA */}
         <section className="rounded-2xl glass-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ring-cyan">
@@ -265,98 +296,51 @@ function DashboardPage() {
           <Button asChild className="bg-primary-gradient shadow-glow text-primary-foreground"><Link to="/withdraw">Withdraw <Wallet className="h-4 w-4 ml-1" /></Link></Button>
         </section>
 
-        {/* Create + List grid */}
+        {/* Recent links summary + Live traffic feed */}
         <section className="grid lg:grid-cols-[1fr_360px] gap-6">
-          <div className="space-y-6">
-            <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create smart link</h2>
-              {!emailVerified && (
-                <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="text-sm">
-                    <span className="font-semibold text-amber-900 dark:text-amber-200">Email not verified.</span>{" "}
-                    <span className="text-amber-900/80 dark:text-amber-200/80">Confirm <span className="font-mono">{email}</span> before creating links.</span>
-                  </div>
-                  <Button size="sm" onClick={resendVerify} disabled={resendingVerify} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                    {resendingVerify ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
-                  </Button>
-                </div>
-              )}
-              <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
-                <div>
-                  <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (ad partner)</Label>
-                  <Input id="dest" type="url" required placeholder="https://offer.your-ad-network.com/..." value={destUrl} onChange={(e) => setDestUrl(e.target.value)} maxLength={2000} className="mt-1.5 bg-muted/40" />
-                </div>
-                <div>
-                  <Label htmlFor="title" className="text-xs uppercase tracking-wider text-muted-foreground">Label</Label>
-                  <Input id="title" placeholder="Campaign name" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 bg-muted/40" />
-                </div>
-                <div className="flex items-end">
-                  <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating || !emailVerified}>
-                    {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
-                  </Button>
-                </div>
-              </form>
+          <div className="rounded-2xl glass-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-semibold">Recent Links</h2>
+              <Button size="sm" variant="outline" asChild><Link to="/create-link"><Plus className="h-3.5 w-3.5 mr-1" />Manage</Link></Button>
             </div>
-
-            <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-5">Your smart links</h2>
-              {links.length === 0 ? (
-                <div className="text-center py-10 text-sm text-muted-foreground">No links yet.</div>
-              ) : (
-                <div className="space-y-3">
-                  {links.map((l) => {
-                    const e = earningsByLink[l.id];
-                    const total = e?.total_clicks ?? 0;
-                    const ads = e?.adsterra_clicks ?? 0;
-                    const usr = e?.user_clicks ?? 0;
-                    const earned = e?.earnings_usd ?? 0;
-                    const expanded = expandedLink === l.id;
-                    const cloak = cloakByLink[l.id];
-                    return (
-                      <div key={l.id} className="rounded-xl surface-soft p-4 hover:shadow-card">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-display font-semibold truncate">{l.title || l.short_code}</span>
-                              {!l.is_active && <span className="rounded-full bg-muted text-muted-foreground text-[10px] px-2 py-0.5">paused</span>}
-                            </div>
-                            <div className="font-mono text-xs text-primary truncate">/r/{l.short_code}</div>
-                            <div className="font-mono text-[11px] text-muted-foreground truncate">→ {l.adsterra_url}</div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <Button size="sm" variant="outline" onClick={() => copyShort(l.short_code)}><Copy className="h-3.5 w-3.5 mr-1" />Copy</Button>
-                            <Button size="sm" variant="outline" asChild><a href={`/r/${l.short_code}`} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
-                            <Button size="sm" variant="ghost" onClick={() => { const next = expanded ? null : l.id; setExpandedLink(next); if (next && !cloakByLink[l.id]) loadCloak(l.id); }}>
-                              <Settings2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => deleteLink(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          <Mini label="Clicks" value={total.toLocaleString()} />
-                          <Mini label="Partner 4%" value={ads.toLocaleString()} sub={`${total ? ((ads / total) * 100).toFixed(1) : "0"}%`} />
-                          <Mini label="Yours" value={usr.toLocaleString()} />
-                          <Mini label="Earned" value={`$${earned.toFixed(4)}`} highlight />
-                        </div>
-                        {expanded && cloak && (
-                          <CloakPanel cloak={cloak} onUpdate={(p) => updateCloak(l.id, p)} />
-                        )}
+            {links.length === 0 ? (
+              <div className="text-center py-10 text-sm text-muted-foreground">
+                No links yet. <Link to="/create-link" className="text-primary underline">Create your first link →</Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {links.slice(0, 5).map((l) => {
+                  const e = earningsByLink[l.id];
+                  return (
+                    <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
+                      <div className="min-w-0">
+                        <div className="font-display font-semibold text-sm truncate">{l.title || l.short_code}</div>
+                        <div className="font-mono text-[11px] text-primary truncate">/r/{l.short_code}</div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      <div className="flex items-center gap-3 shrink-0 text-xs">
+                        <span className="text-muted-foreground">{(e?.total_clicks ?? 0).toLocaleString()} clicks</span>
+                        <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {links.length > 5 && (
+                  <div className="text-center pt-2">
+                    <Link to="/create-link" className="text-xs text-primary hover:underline">View all {links.length} links →</Link>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Live traffic feed */}
           <aside className="rounded-2xl glass-card p-5 h-fit lg:sticky lg:top-24">
-            <h3 className="font-display text-sm font-semibold mb-3 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Live Traffic Log</h3>
+            <h3 className="font-display text-sm font-semibold mb-3 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Live Traffic</h3>
             {logs.length === 0 ? (
               <div className="text-xs text-muted-foreground py-6 text-center">Waiting for clicks…</div>
             ) : (
-              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {logs.slice(0, 30).map((row) => (
+              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                {logs.slice(0, 20).map((row) => (
                   <div key={row.id} className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.decision === "money" ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/30" : "bg-rose-500/15 text-rose-700 ring-1 ring-rose-500/30"}`}>
@@ -366,16 +350,15 @@ function DashboardPage() {
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-muted-foreground">
                       <Globe2 className="h-3 w-3" /><span>{row.country || "??"}</span>
-                      <span>· {row.is_mobile ? "📱 mobile" : "🖥️ desktop"}</span>
-                      {row.coherence_score != null && <span>· score {row.coherence_score}</span>}
+                      <span>· {row.is_mobile ? "📱" : "🖥️"}</span>
                     </div>
-                    {row.reasons.length > 0 && (
-                      <div className="mt-1 text-[10px] text-rose-700/80 font-mono truncate">{row.reasons.join(" · ")}</div>
-                    )}
                   </div>
                 ))}
               </div>
             )}
+            <div className="mt-3 pt-3 border-t border-border">
+              <Link to="/statistics" className="text-xs text-primary hover:underline">See full analytics →</Link>
+            </div>
           </aside>
         </section>
       </main>

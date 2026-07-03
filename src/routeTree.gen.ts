@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CreateLinkRouteImport } from './routes/create-link'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RSlugRouteImport } from './routes/r.$slug'
@@ -36,6 +38,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -54,6 +61,11 @@ const InboxRoute = InboxRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateLinkRoute = CreateLinkRouteImport.update({
+  id: '/create-link',
+  path: '/create-link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -80,10 +92,12 @@ const ApiPublicBehaviorCheckRoute = ApiPublicBehaviorCheckRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/create-link': typeof CreateLinkRoute
   '/dashboard': typeof DashboardRoute
   '/inbox': typeof InboxRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
@@ -93,10 +107,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/create-link': typeof CreateLinkRoute
   '/dashboard': typeof DashboardRoute
   '/inbox': typeof InboxRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
@@ -107,10 +123,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/create-link': typeof CreateLinkRoute
   '/dashboard': typeof DashboardRoute
   '/inbox': typeof InboxRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/statistics': typeof StatisticsRoute
   '/withdraw': typeof WithdrawRoute
@@ -122,10 +140,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/create-link'
     | '/dashboard'
     | '/inbox'
     | '/leaderboard'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/statistics'
     | '/withdraw'
@@ -135,10 +155,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/create-link'
     | '/dashboard'
     | '/inbox'
     | '/leaderboard'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/statistics'
     | '/withdraw'
@@ -148,10 +170,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/create-link'
     | '/dashboard'
     | '/inbox'
     | '/leaderboard'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/statistics'
     | '/withdraw'
@@ -162,10 +186,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  CreateLinkRoute: typeof CreateLinkRoute
   DashboardRoute: typeof DashboardRoute
   InboxRoute: typeof InboxRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   StatisticsRoute: typeof StatisticsRoute
   WithdrawRoute: typeof WithdrawRoute
@@ -196,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -222,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create-link': {
+      id: '/create-link'
+      path: '/create-link'
+      fullPath: '/create-link'
+      preLoaderRoute: typeof CreateLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -258,10 +298,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  CreateLinkRoute: CreateLinkRoute,
   DashboardRoute: DashboardRoute,
   InboxRoute: InboxRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   StatisticsRoute: StatisticsRoute,
   WithdrawRoute: WithdrawRoute,
