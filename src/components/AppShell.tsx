@@ -125,9 +125,12 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
-        <Link to="/dashboard" className="flex items-center gap-2 px-2 py-1.5">
-          <AdspxMark className="h-6 w-6" glow={false} />
-          {!collapsed && <span className="font-semibold tracking-tight text-sm">AdsPx</span>}
+        <Link
+          to="/dashboard"
+          className="flex items-center justify-center px-2 py-2"
+          aria-label="AdsPx home"
+        >
+          <AdspxMark className={collapsed ? "h-7 w-7" : "h-9 w-9"} glow />
         </Link>
       </SidebarHeader>
 
@@ -249,13 +252,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar isAdmin={isAdmin} />
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3 py-2">
+          <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/80 backdrop-blur px-3 py-2">
             <SidebarTrigger />
-            <span className="text-sm font-medium">AdsPx</span>
-          </div>
-          <div className="hidden lg:block absolute top-3 left-2 z-30">
-            <SidebarTrigger />
-          </div>
+            <span className="text-sm font-medium tracking-tight lg:hidden">AdsPx</span>
+          </header>
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
