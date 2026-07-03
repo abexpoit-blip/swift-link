@@ -472,31 +472,8 @@ function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 glass sticky top-0 z-40">
-        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <AdspxMark className="h-8 w-8" />
-            <span className="font-display font-bold text-lg tracking-tight">
-              Ads<span className="text-gradient">Px</span>
-            </span>
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5">
-              <ShieldCheck className="h-3 w-3" /> {isSuperAdmin ? "SUPER ADMIN" : "ADMIN"}
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
-            <Link to="/inbox" className="text-muted-foreground hover:text-foreground">Messages</Link>
-            <Link to="/admin" className="font-medium">Control Center</Link>
-          </nav>
-          <div className="flex items-center gap-3">
-            <span className="hidden md:inline text-xs text-muted-foreground">{email}</span>
-            <Button size="sm" variant="ghost" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-1" /> Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="bg-background text-foreground">
+
 
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
         {/* Page header */}

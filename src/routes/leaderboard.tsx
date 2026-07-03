@@ -69,23 +69,8 @@ function LeaderboardPage() {
   }, [rows]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/60 glass">
-        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <AdspxMark className="h-8 w-8" />
-            <span className="font-display font-bold text-lg tracking-tight">
-              Ads<span className="text-gradient">Px</span>
-            </span>
-          </Link>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to home
-          </Link>
-        </div>
-      </header>
+    <div className="bg-background text-foreground">
+
 
       <section className="container mx-auto px-6 py-16">
         <div className="text-center mb-10 max-w-2xl mx-auto space-y-3">

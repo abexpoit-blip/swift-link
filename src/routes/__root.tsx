@@ -2,6 +2,7 @@ import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
+  useRouteContext,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,6 +18,7 @@ const ogDefault = { url: "/og-default.jpg" };
 interface RouterCtx {
   queryClient: QueryClient;
 }
+
 
 export const Route = createRootRouteWithContext<RouterCtx>()({
   head: () => ({
@@ -79,13 +81,14 @@ export const Route = createRootRouteWithContext<RouterCtx>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { queryClient } = useRouteContext({ from: "__root__" });
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <QueryClientProvider client={new QueryClient()}>
+        <QueryClientProvider client={queryClient}>
           {children}
           <Toaster richColors position="top-right" />
         </QueryClientProvider>
@@ -94,3 +97,4 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
