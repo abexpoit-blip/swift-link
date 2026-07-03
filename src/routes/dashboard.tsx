@@ -412,7 +412,7 @@ function CloakPanel({ cloak, onUpdate }: { cloak: CloakSettings; onUpdate: (p: P
 
   return (
     <div className="mt-4 border-t border-border pt-4 space-y-4">
-      <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Cloaking Rules</div>
+      <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Traffic Rules</div>
 
       <div className="grid md:grid-cols-2 gap-3">
         <label className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5 cursor-pointer">
