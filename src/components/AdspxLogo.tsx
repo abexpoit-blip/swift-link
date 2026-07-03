@@ -165,10 +165,10 @@ export function AdspxMark({ className, glow = true }: LogoMarkProps) {
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="AdsPx"
-      className={`block ${className ?? ""}`}
+      className={`block h-8 w-8 shrink-0 ${className ?? ""}`}
       style={
         glow
-          ? { filter: "drop-shadow(0 10px 24px oklch(0.55 0.22 280 / 38%))" }
+          ? { filter: "drop-shadow(0 8px 18px oklch(0.55 0.22 280 / 32%))" }
           : undefined
       }
     >
