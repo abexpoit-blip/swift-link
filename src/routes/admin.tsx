@@ -113,7 +113,7 @@ type AppSettings = {
   daily_redirect_enabled: boolean | null;
 };
 
-type LedgerRow = { day: string; user_clicks: number; adsterra_clicks: number };
+type LedgerRow = { day: string; user_clicks: number; adsterra_clicks: number; total_clicks?: number; earnings_usd?: number; user_id?: string };
 
 function AdminPage() {
   const navigate = useNavigate();
