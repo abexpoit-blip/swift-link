@@ -269,7 +269,7 @@ function DashboardPage() {
         <section className="grid lg:grid-cols-[1fr_360px] gap-6">
           <div className="space-y-6">
             <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create cloaked link</h2>
+              <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Create smart link</h2>
               {!emailVerified && (
                 <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="text-sm">
