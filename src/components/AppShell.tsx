@@ -1,5 +1,7 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { type ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+
 import {
   Sidebar,
   SidebarContent,
@@ -232,21 +234,16 @@ function AppSidebar({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [balance, setBalance] = useState(0);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["app-shell-session"],
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
       const { data: sess } = await supabase.auth.getSession();
       const user = sess.session?.user;
       if (!user) {
-        if (mounted) setReady(true);
-        return;
+        return { isAdmin: false, email: "", fullName: "", balance: 0, hasUser: false };
       }
       const [rolesRes, profileRes] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", user.id),
@@ -256,26 +253,23 @@ export function AppShell({ children }: { children: ReactNode }) {
           .eq("id", user.id)
           .maybeSingle(),
       ]);
-      if (mounted) {
-        setIsAdmin(
-          !!rolesRes.data?.some(
-            (r: any) => r.role === "admin" || r.role === "super_admin",
-          ),
-        );
-        setEmail(user.email ?? "");
-        setFullName((profileRes.data as any)?.full_name ?? "");
-        setBalance(Number((profileRes.data as any)?.balance_available ?? 0));
-        setReady(true);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+      return {
+        hasUser: true,
+        isAdmin: !!rolesRes.data?.some(
+          (r: any) => r.role === "admin" || r.role === "super_admin",
+        ),
+        email: user.email ?? "",
+        fullName: (profileRes.data as any)?.full_name ?? "",
+        balance: Number((profileRes.data as any)?.balance_available ?? 0),
+      };
+    },
+  });
 
-  if (!ready) {
+  if (isLoading && !data) {
     return <div className="min-h-screen">{children}</div>;
   }
+
+  const { isAdmin = false, email = "", fullName = "", balance = 0 } = data ?? {};
 
   return (
     <SidebarProvider defaultOpen>
@@ -291,3 +285,4 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 export default AppShell;
+
