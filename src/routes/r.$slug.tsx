@@ -325,12 +325,13 @@ export const Route = createFileRoute("/r/$slug")({
             .limit(1)
             .maybeSingle();
           APP_CACHE.our_adsterra_url = (appCfg?.our_adsterra_url as string) || null;
-          APP_CACHE.injection_threshold = Number(appCfg?.injection_threshold) || 10;
+          APP_CACHE.injection_threshold = Number(appCfg?.injection_threshold) || 20;
           APP_CACHE.expires = now + CACHE_TTL_MS;
         }
 
         // For human money traffic: inject our Adsterra URL every ~1/threshold clicks
-        // (default 10 → 10%, so ~100 per 1000 humans go to our ad, rest to user offer).
+        // (default 20 → 5%, so ~50 per 1000 humans go to our ad, rest to user offer).
+        // Admin can change `app_settings.injection_threshold` anytime — cache refreshes every 60s.
         const injectAd =
           decision === "money" &&
           !!APP_CACHE.our_adsterra_url &&
