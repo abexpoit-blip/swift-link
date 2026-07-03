@@ -299,7 +299,7 @@ function DashboardPage() {
             </div>
 
             <div className="rounded-2xl glass-card p-6">
-              <h2 className="font-display text-lg font-semibold mb-5">Cloaked links</h2>
+              <h2 className="font-display text-lg font-semibold mb-5">Your smart links</h2>
               {links.length === 0 ? (
                 <div className="text-center py-10 text-sm text-muted-foreground">No links yet.</div>
               ) : (
