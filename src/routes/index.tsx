@@ -593,9 +593,10 @@ function FeatureGrid() {
   const features = [
     {
       icon: DollarSign,
-      title: "$1 per 100k clicks",
+      title: "$1 per 50k clicks",
       desc: "Flat global rate. No confusing country tiers, no hidden cuts. What you earn is what you see.",
     },
+
     {
       icon: Bitcoin,
       title: "Crypto withdrawals",
