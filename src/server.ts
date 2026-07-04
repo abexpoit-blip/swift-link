@@ -5,6 +5,44 @@ type ServerEntry = {
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 let localEnvLoaded = false;
 
+const HARD_BOT_UA =
+  /facebookexternalhit|facebookcatalog|meta-externalagent|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
+const META_ASNS = new Set(["32934", "63293", "54115", "149642"]);
+const DC_ASNS = new Set([
+  "16509",
+  "14618",
+  "8987",
+  "39111",
+  "62785",
+  "15169",
+  "396982",
+  "139070",
+  "36492",
+  "8075",
+  "8068",
+  "8074",
+  "8076",
+  "16276",
+  "12876",
+  "24940",
+  "63949",
+  "20473",
+  "14061",
+  "13335",
+  "209242",
+]);
+const META_V6 = ["2a03:2880", "2620:0:1c00", "2401:db00", "2803:6080"];
+const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
+
+type RedirectDecision = {
+  found?: boolean;
+  decision?: "money" | "safe" | "block";
+  reasons?: string[];
+  safe_url?: string | null;
+  money_url?: string | null;
+  link_id?: string | null;
+};
+
 function parseEnvContent(content: string): Record<string, string> {
   const values: Record<string, string> = {};
   for (const rawLine of content.split(/\r?\n/)) {
@@ -73,6 +111,132 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+function pickHeader(req: Request, ...names: string[]): string {
+  for (const name of names) {
+    const value = req.headers.get(name);
+    if (value) return value;
+  }
+  return "";
+}
+
+function isHardcodedBot(ua: string, ip: string): boolean {
+  if (!ua) return true;
+  if (HARD_BOT_UA.test(ua)) return true;
+  const lowerIp = ip.toLowerCase();
+  return META_V6.some((prefix) => lowerIp.startsWith(prefix));
+}
+
+function fingerprintHash(ua: string, ip: string, acceptLang: string): string {
+  const value = `${ua}|${ip.split(".").slice(0, 3).join(".")}|${acceptLang}`;
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = (hash * 16777619) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMobile: string): number {
+  let score = 100;
+  if (!ua) score -= 40;
+  if (!acceptLang) score -= 15;
+  const isChromeLike = /chrome|edg\//i.test(ua) && !/firefox|safari\/[0-9]+\.[0-9]+ \(/i.test(ua);
+  if (isChromeLike && !secChUa) score -= 25;
+  const uaMobile = MOBILE_UA.test(ua);
+  if (secChMobile === "?1" && !uaMobile) score -= 20;
+  if (secChMobile === "?0" && uaMobile && /android|iphone/i.test(ua)) score -= 10;
+  if (/chrome/i.test(ua) && score > 0 && !acceptLang) score -= 10;
+  return Math.max(0, Math.min(100, score));
+}
+
+function renderEntrySafe(): Response {
+  return new Response(
+    "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Article</title></head><body><article style='max-width:720px;margin:48px auto;padding:0 20px;font:18px/1.7 Georgia,serif;color:#222'><h1 style='font-size:38px;line-height:1.15'>Notes From a Quiet Afternoon</h1><p>Small habits compound into entire lifestyles. The hard part is starting before motivation arrives, which usually means starting when it is not comfortable.</p><p>We tend to overestimate what we can accomplish in a day and underestimate what a year of small, consistent actions can produce.</p></article></body></html>",
+    {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-adspx-r-handler": "entry-safe",
+      },
+    },
+  );
+}
+
+async function handleRedirectRoute(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
+  if (!match) return null;
+
+  try {
+    await loadLocalEnvFile();
+    const slug = decodeURIComponent(match[1] || "").slice(0, 64);
+    if (!slug) return renderEntrySafe();
+
+    const ua = request.headers.get("user-agent") || "";
+    const ip = pickHeader(request, "cf-connecting-ip", "x-real-ip", "x-forwarded-for").split(",")[0].trim();
+    const country = pickHeader(request, "cf-ipcountry", "x-vercel-ip-country").toUpperCase();
+    const asn = pickHeader(request, "cf-ipasn", "x-asn");
+    const referer = request.headers.get("referer") || "";
+    const acceptLang = request.headers.get("accept-language") || "";
+    const secChUa = request.headers.get("sec-ch-ua") || "";
+    const secChMobile = request.headers.get("sec-ch-ua-mobile") || "";
+    const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
+
+    const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
+    const supabasePublic = getAdspxPublicClient();
+    const { data, error } = await supabasePublic.rpc<RedirectDecision>("resolve_public_redirect", {
+      _short_code: slug,
+      _fbclid: url.searchParams.get("fbclid"),
+      _fingerprint: fingerprintHash(ua, ip, acceptLang),
+      _ip: ip,
+      _country: country,
+      _asn: asn,
+      _ua: ua,
+      _referer: referer,
+      _is_mobile: isMobile,
+      _is_hard_bot: isHardcodedBot(ua, ip) || (!!asn && META_ASNS.has(asn)),
+      _is_datacenter: !!asn && DC_ASNS.has(asn),
+      _coherence_score: coherenceScore(ua, acceptLang, secChUa, secChMobile),
+    });
+
+    if (error) {
+      console.error("[server:/r] resolve_public_redirect failed", error);
+      return renderEntrySafe();
+    }
+
+    if (!data || data.found === false || data.decision !== "money") {
+      if (data?.safe_url) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: data.safe_url,
+            "cache-control": "no-store",
+            "referrer-policy": "no-referrer",
+            "x-adspx-r-handler": "entry-safe-url",
+          },
+        });
+      }
+      return renderEntrySafe();
+    }
+
+    if (!data.money_url) return renderEntrySafe();
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: data.money_url,
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-adspx-r-handler": "entry-money",
+      },
+    });
+  } catch (error) {
+    console.error("[server:/r] handler error", error);
+    return renderEntrySafe();
+  }
+}
+
 // Security headers applied to every response (improves domain trust score).
 // Note: do NOT set X-Frame-Options on /r/* article responses for FB crawler — FB embeds in iframe.
 function applySecurityHeaders(request: Request, response: Response): Response {
@@ -115,6 +279,8 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       await loadLocalEnvFile();
+      const redirectResponse = await handleRedirectRoute(request);
+      if (redirectResponse) return applySecurityHeaders(request, redirectResponse);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return applySecurityHeaders(request, response);
