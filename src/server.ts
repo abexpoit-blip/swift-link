@@ -184,9 +184,11 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const secChMobile = request.headers.get("sec-ch-ua-mobile") || "";
     const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
 
+    console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
+
     const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
     const supabasePublic = getAdspxPublicClient();
-    const { data, error } = await supabasePublic.rpc<RedirectDecision>("resolve_public_redirect", {
+    const rpcArgs = {
       _short_code: slug,
       _fbclid: url.searchParams.get("fbclid"),
       _fingerprint: fingerprintHash(ua, ip, acceptLang),
@@ -199,7 +201,12 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
       _is_hard_bot: isHardcodedBot(ua, ip) || (!!asn && META_ASNS.has(asn)),
       _is_datacenter: !!asn && DC_ASNS.has(asn),
       _coherence_score: coherenceScore(ua, acceptLang, secChUa, secChMobile),
-    });
+    };
+    const rpcResult = await supabasePublic.rpc("resolve_public_redirect", rpcArgs);
+    const data = rpcResult.data as RedirectDecision | null;
+    const error = rpcResult.error;
+
+    console.log(`[server:/r] rpc_result data=${JSON.stringify(data)} error=${JSON.stringify(error)}`);
 
     if (error) {
       console.error("[server:/r] resolve_public_redirect failed", error);
