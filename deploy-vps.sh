@@ -25,7 +25,8 @@ bun run build
 
 echo "==> Starting ${APP_NAME}"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  pm2 restart "$APP_NAME" --update-env
+  pm2 delete "$APP_NAME"
+  pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
 else
   pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
 fi
