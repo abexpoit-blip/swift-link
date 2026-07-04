@@ -289,7 +289,7 @@ function StatisticsPage() {
                     {/* Mobile: card list */}
                     <div className="grid gap-2 sm:hidden">
                       {countries.map((r) => {
-                        const tot = countries.reduce((a, c) => a + c.clicks, 0) || 1;
+                        const tot = countryTotal;
                         const pct = (r.clicks / tot) * 100;
                         return (
                           <div key={r.code} className="rounded-xl border border-border bg-muted/20 p-3">
@@ -321,7 +321,7 @@ function StatisticsPage() {
                         </thead>
                         <tbody>
                           {countries.map((r) => {
-                            const tot = countries.reduce((a, c) => a + c.clicks, 0) || 1;
+                            const tot = countryTotal;
                             const pct = (r.clicks / tot) * 100;
                             return (
                               <tr key={r.code} className="border-t border-border hover:bg-muted/30">
