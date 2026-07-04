@@ -33,8 +33,8 @@ function SignupPage() {
       toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
     setLoading(true);
@@ -48,7 +48,14 @@ function SignupPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("weak") || msg.includes("pwned")) {
+        toast.error("This password is too common or has been leaked online. Use a stronger one (mix letters, numbers & symbols).");
+      } else if (msg.includes("already") || msg.includes("registered")) {
+        toast.error("This email is already registered. Please sign in instead.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
     if (data.session) {
