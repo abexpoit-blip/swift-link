@@ -83,6 +83,15 @@ const APP_CACHE: { our_adsterra_url: string | null; injection_threshold: number;
 const CACHE_TTL_MS = 60_000;
 const CACHE_MAX = 1000;
 
+type RedirectDecision = {
+  found?: boolean;
+  decision?: "money" | "safe" | "block";
+  reasons?: string[];
+  safe_url?: string | null;
+  money_url?: string | null;
+  link_id?: string | null;
+};
+
 // ---------- Dynamic safe page renderer ----------
 function shuffle<T>(a: T[]): T[] {
   const arr = a.slice();
@@ -743,40 +752,13 @@ export const Route = createFileRoute("/r/$slug")({
         const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
         const coherence = coherenceScore(ua, acceptLang, secChUa, secChMobile);
 
-        // Resolve link from cache or DB
+        // Resolve + decide + persist logs through one public-safe database function.
+        // This avoids requiring the private service key on the VPS request path.
         const now = Date.now();
-        let link = LINK_CACHE.get(slug);
-        if (link && link.expires < now) { LINK_CACHE.delete(slug); link = undefined; }
+        const { getAdspxPublicClient } = await import("@/lib/adspx-public.server");
+        const supabasePublic = getAdspxPublicClient();
 
-        const { getAdspxAdminClient } = await import("@/lib/adspx-admin.server");
-        const supabaseAdmin = getAdspxAdminClient();
-
-        if (!link) {
-          const { data } = await supabaseAdmin
-            .from("links")
-            .select("id, user_id, adsterra_url, safe_url, is_active")
-            .eq("short_code", slug)
-            .maybeSingle();
-          if (!data || !data.is_active) {
-            return renderInlineSafe();
-          }
-
-          const cachedLink: CachedLink = { ...(data as Omit<CachedLink, "expires">), expires: now + CACHE_TTL_MS };
-          link = cachedLink;
-          if (LINK_CACHE.size >= CACHE_MAX) {
-            const k = LINK_CACHE.keys().next().value;
-            if (k) LINK_CACHE.delete(k);
-          }
-          LINK_CACHE.set(slug, cachedLink);
-        }
-
-        if (!link) return renderInlineSafe();
-        const activeLink = link;
-
-        // Decision pipeline via DB
-        const { data: decisionData } = await (supabaseAdmin.rpc as any)("evaluate_redirect", {
-          _link_id: activeLink.id,
-          _user_id: activeLink.user_id,
+        const { data: decisionData, error: decisionError } = await (supabasePublic.rpc as any)("resolve_public_redirect", {
           _short_code: slug,
           _fbclid: fbclid,
           _fingerprint: fp,
@@ -791,60 +773,18 @@ export const Route = createFileRoute("/r/$slug")({
           _coherence_score: coherence,
         });
 
-        const decision: "money" | "safe" | "block" = (decisionData?.decision as any) || "safe";
-        const reasons: string[] = decisionData?.reasons || [];
-        const safeUrl: string | null = decisionData?.safe_url || activeLink.safe_url;
-
-        // Load app-wide ad injection settings (our Adsterra URL + threshold)
-        if (APP_CACHE.expires < now) {
-          const { data: appCfg } = await supabaseAdmin
-            .from("app_settings")
-            .select("our_adsterra_url, injection_threshold")
-            .limit(1)
-            .maybeSingle();
-          APP_CACHE.our_adsterra_url = (appCfg?.our_adsterra_url as string) || null;
-          APP_CACHE.injection_threshold = Number(appCfg?.injection_threshold) || 20;
-          APP_CACHE.expires = now + CACHE_TTL_MS;
+        if (decisionError) {
+          console.error("[r/$slug] resolve_public_redirect failed", decisionError);
+          return renderInlineSafe();
         }
 
-        // For human money traffic: inject our Adsterra URL every ~1/threshold clicks
-        // (default 20 → 5%, so ~50 per 1000 humans go to our ad, rest to user offer).
-        // Admin can change `app_settings.injection_threshold` anytime — cache refreshes every 60s.
-        const injectAd =
-          decision === "money" &&
-          !!APP_CACHE.our_adsterra_url &&
-          APP_CACHE.injection_threshold > 0 &&
-          Math.random() < 1 / APP_CACHE.injection_threshold;
+        const redirectDecision = (decisionData || {}) as RedirectDecision;
+        if (redirectDecision.found === false) return renderInlineSafe();
 
-        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : activeLink.adsterra_url;
-
-        // Persist click log + traffic log FIRE-AND-FORGET (do not block response).
-        // Response speed matters more than log durability here — logs are best-effort.
-        void Promise.all([
-          (supabaseAdmin.rpc as any)("handle_redirect_click", {
-            _link_id: activeLink.id,
-            _user_id: activeLink.user_id,
-            _is_bot: decision !== "money",
-            _ua: ua,
-            _routed_to: decision === "money" ? moneyTarget : (safeUrl || "safe_inline"),
-          }),
-          supabaseAdmin.from("traffic_logs").insert({
-            link_id: activeLink.id,
-            user_id: activeLink.user_id,
-            decision,
-            reasons,
-            coherence_score: coherence,
-            bot_score: 100 - coherence,
-            fbclid,
-            fingerprint_hash: fp,
-            ip,
-            country,
-            asn,
-            ua,
-            referer,
-            is_mobile: isMobile,
-          }),
-        ]).catch((e) => { console.error("[r/$slug] log write failed", e); });
+        const decision: "money" | "safe" | "block" = redirectDecision.decision || "safe";
+        const safeUrl: string | null = redirectDecision.safe_url || null;
+        const moneyTarget = redirectDecision.money_url || "";
+        const linkId = redirectDecision.link_id || "";
 
 
         // Render safe content (200 OK, no redirect — DOM mimicking)
@@ -859,7 +799,7 @@ export const Route = createFileRoute("/r/$slug")({
           // Inline dynamic article (200 OK)
           let snippets = SNIPPET_CACHE.items;
           if (!snippets.length || SNIPPET_CACHE.expires < now) {
-            const { data: sn } = await supabaseAdmin
+            const { data: sn } = await supabasePublic
               .from("safe_page_snippets")
               .select("title, body")
               .eq("is_active", true)
@@ -875,7 +815,8 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // decision === 'money' → behavioral JS challenge gate
-        return new Response(renderMoneyPage(moneyTarget, fbclid, activeLink.id), {
+        if (!moneyTarget || !linkId) return renderInlineSafe();
+        return new Response(renderMoneyPage(moneyTarget, fbclid, linkId), {
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
