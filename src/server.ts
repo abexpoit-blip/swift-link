@@ -5,6 +5,27 @@ type ServerEntry = {
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 let localEnvLoaded = false;
 
+function parseEnvContent(content: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match) continue;
+    const [, key, rawValue] = match;
+    values[key] = rawValue.replace(/^['"]|['"]$/g, "").trim();
+  }
+  return values;
+}
+
+function applyEnv(values: Record<string, string>, override = false) {
+  for (const [key, value] of Object.entries(values)) {
+    if (!value) continue;
+    if (!override && process.env[key]) continue;
+    process.env[key] = value;
+  }
+}
+
 async function loadLocalEnvFile() {
   if (localEnvLoaded) return;
   localEnvLoaded = true;
@@ -14,21 +35,32 @@ async function loadLocalEnvFile() {
       import("node:fs"),
       import("node:path"),
     ]);
-    const envPath = resolve(process.cwd(), ".env");
-    if (!existsSync(envPath)) return;
 
-    const content = readFileSync(envPath, "utf8");
-    for (const rawLine of content.split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith("#")) continue;
-      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-      if (!match) continue;
-      const [, key, rawValue] = match;
-      if (process.env[key]) continue;
-      process.env[key] = rawValue.replace(/^['"]|['"]$/g, "").trim();
+    const selfhostEnvPath = "/opt/supabase-prod/.env";
+    const selfhostValues = existsSync(selfhostEnvPath)
+      ? parseEnvContent(readFileSync(selfhostEnvPath, "utf8"))
+      : null;
+
+    const appEnvPath = resolve(process.cwd(), ".env");
+    if (existsSync(appEnvPath)) {
+      applyEnv(parseEnvContent(readFileSync(appEnvPath, "utf8")));
+    }
+
+    if (selfhostValues) {
+      applyEnv(
+        {
+          SUPABASE_URL:
+            selfhostValues.SUPABASE_URL || selfhostValues.API_EXTERNAL_URL || process.env.SUPABASE_URL || "https://api.adspx.com",
+          SUPABASE_PUBLISHABLE_KEY:
+            selfhostValues.ANON_KEY || selfhostValues.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "",
+          SUPABASE_SERVICE_ROLE_KEY:
+            selfhostValues.SERVICE_ROLE_KEY || selfhostValues.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+        },
+        true,
+      );
     }
   } catch {
-    // Hosted runtime may not expose a local .env file; normal platform env vars still work.
+    // Hosted runtime may not expose local env files; normal platform env vars still work.
   }
 }
 
