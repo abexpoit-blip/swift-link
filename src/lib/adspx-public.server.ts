@@ -50,6 +50,9 @@ function createAdspxPublicClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
+    realtime: {
+      transport: ws as any,
+    },
   }) as any;
 }
 
