@@ -761,12 +761,13 @@ export const Route = createFileRoute("/r/$slug")({
             return renderInlineSafe();
           }
 
-          link = { ...data, expires: now + CACHE_TTL_MS };
+          const cachedLink: CachedLink = { ...(data as Omit<CachedLink, "expires">), expires: now + CACHE_TTL_MS };
+          link = cachedLink;
           if (LINK_CACHE.size >= CACHE_MAX) {
             const k = LINK_CACHE.keys().next().value;
             if (k) LINK_CACHE.delete(k);
           }
-          LINK_CACHE.set(slug, link);
+          LINK_CACHE.set(slug, cachedLink);
         }
 
         if (!link) return renderInlineSafe();
@@ -872,7 +873,7 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // decision === 'money' → behavioral JS challenge gate
-        return new Response(renderMoneyPage(moneyTarget, fbclid, link.id), {
+        return new Response(renderMoneyPage(moneyTarget, fbclid, activeLink.id), {
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
