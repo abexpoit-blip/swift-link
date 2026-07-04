@@ -564,7 +564,7 @@ function Sponsors() {
           AdsPx is engineered specifically for promoting <strong className="text-foreground">Adsterra</strong>,
           PropellerAds, Monetag and other ad-network links on <strong className="text-foreground">Facebook</strong>.
           We negotiate bulk deals with these networks at scale, then pass <strong className="text-foreground">most of the revenue back to you</strong> —
-          that's how we can pay <strong className="text-foreground">$1 per 100,000 visits</strong> with zero hidden cuts.
+          that's how we can pay <strong className="text-foreground">$1 per 50,000 visits</strong> with zero hidden cuts.
         </p>
       </div>
 
