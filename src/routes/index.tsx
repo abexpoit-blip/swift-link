@@ -185,8 +185,8 @@ function Hero() {
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
               AdsPx is the short-link platform built for creators. Share on
               <strong className="text-foreground"> Facebook</strong>, Telegram or YouTube and earn
-              <strong className="text-foreground"> $1 per 100,000 visits</strong>. Withdraw in
-              <strong className="text-foreground"> USDT</strong> from just $25.
+              <strong className="text-foreground"> $1 per 50,000 visits</strong>. Withdraw in
+              <strong className="text-foreground"> USDT</strong> from just $10.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -213,9 +213,10 @@ function Hero() {
                 <Check className="h-3.5 w-3.5 text-primary" /> No referral required
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-primary" /> Min $25 withdrawal
+                <Check className="h-3.5 w-3.5 text-primary" /> Min $10 withdrawal
               </span>
             </div>
+
           </div>
 
           {/* RIGHT — Pixel-machine link mockup with neo-brutalist offset shadow */}
