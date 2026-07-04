@@ -96,13 +96,16 @@ function shuffle<T>(a: T[]): T[] {
 type Snip = { title: string; body: string };
 
 const FALLBACK_SNIPPETS: Snip[] = [
-  { title: "Notes From a Quiet Afternoon", body: "Small habits compound into entire lifestyles. The hard part is starting before motivation arrives." },
-  { title: "What the Kitchen Taught Me", body: "A good recipe is mostly patience disguised as instructions. Heat does the work; we just stay out of the way." },
-  { title: "Three Things I Stopped Doing", body: "Scrolling before sunrise, saying yes by default, and confusing motion with progress. Small subtractions, big returns." },
-  { title: "A Walk Without a Phone", body: "Twenty minutes outside, no headphones, no destination. The thoughts that show up are usually the ones worth keeping." },
-  { title: "Why Cheap Tools Often Win", body: "Expensive gear promises focus; cheap gear forces it. Constraints, not features, made the work better." },
-  { title: "On Reading the Same Book Twice", body: "The book did not change. You did. That is the entire point of returning to it." },
-  { title: "Notes on a Slow Morning", body: "Tea, sunlight on the wall, no agenda for the next hour. This is the part of the day no app can sell back to you." },
+  { title: "Notes From a Quiet Afternoon", body: "Small habits compound into entire lifestyles. The hard part is starting before motivation arrives, which usually means starting when it is not comfortable. Nobody feels ready — you just begin, and readiness catches up in the doing." },
+  { title: "What the Kitchen Taught Me", body: "A good recipe is mostly patience disguised as instructions. Heat does the work, salt does the flavor, and time does everything else. The cook's job is to stay out of the way long enough for the ingredients to become what they already wanted to be." },
+  { title: "Three Things I Stopped Doing", body: "Scrolling before sunrise, saying yes by default, and confusing motion with progress. Removing those three habits opened up more attention than any productivity app ever added. Small subtractions, big returns — that is the honest math of a calmer week." },
+  { title: "A Walk Without a Phone", body: "Twenty minutes outside, no headphones, no destination. The thoughts that show up are usually the ones you have been avoiding, and they turn out to be gentler than you expected. Boredom is not the enemy; it is the doorway you keep slamming shut." },
+  { title: "Why Cheap Tools Often Win", body: "Expensive gear promises focus; cheap gear forces it. When the notebook cost two dollars, you stop worrying about ruining a page and start using it. Constraints, not features, are what quietly made the work better every year I kept at it." },
+  { title: "On Reading the Same Book Twice", body: "The book did not change. You did. The sentences that meant nothing at twenty-two suddenly ambush you at thirty, and the ones you underlined then now feel like someone else's diary. That is the entire point of returning to it — you get to meet an older stranger who was you." },
+  { title: "Notes on a Slow Morning", body: "Tea, sunlight on the wall, no agenda for the next hour. This is the part of the day no app can sell back to you, and it is also the part most likely to be traded away by 8 a.m. Guarding it is not laziness. It is maintenance for the person doing everything later." },
+  { title: "The Cost of Always Optimizing", body: "When every hour is a metric, resting becomes a policy violation. But rest is not the opposite of work — it is the raw material work is made from. A calendar that has no white space in it is not a productive calendar; it is a warning sign wearing a nice font." },
+  { title: "Letters I Never Sent", body: "There is a folder on my desk of letters written and not sent. Most of them were never meant to be read by anyone else — the point was to say the thing out loud on paper, and then find that saying it was already the answer. Sometimes the reader you needed was you." },
+  { title: "Learning to Sit With It", body: "The hardest skill of the last decade was doing nothing when doing something would have felt better and been worse. Sitting with a hard feeling is not weakness; it is the only way it stops running the household from behind the wall." },
 ];
 
 function pickSnippets(snippets: Snip[]): Snip[] {
@@ -110,92 +113,242 @@ function pickSnippets(snippets: Snip[]): Snip[] {
   return shuffle(pool).slice(0, 5);
 }
 
+/* ---------- shared head / author / date builders ---------- */
+const AUTHORS = [
+  "Emma Whitfield", "Daniel Marsh", "Sophie Aldridge", "Michael Hartley",
+  "Olivia Bennett", "James Callahan", "Grace Delaney", "Nathan Ford",
+  "Priya Ramanathan", "Lucas Fernandez", "Ava Sinclair", "Noah Redwood",
+];
+const READ_MINS = () => 4 + Math.floor(Math.random() * 5);
+
+function pickAuthor(): string { return AUTHORS[Math.floor(Math.random() * AUTHORS.length)]; }
+
+function recentIsoDate(): string {
+  // 1-14 days ago
+  const d = new Date(Date.now() - (1 + Math.floor(Math.random() * 14)) * 86_400_000);
+  return d.toISOString();
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+/**
+ * Renders a full, professional <head> block with OG, Twitter, canonical
+ * and JSON-LD Article schema — everything a link scraper (Facebook,
+ * WhatsApp, Twitter, Slack, iMessage) needs to build a real preview.
+ */
+function siteHead(opts: {
+  siteName: string;
+  siteHost: string;      // e.g. "dailyreader.co"
+  section: string;       // e.g. "Essays", "Cooking"
+  title: string;
+  description: string;
+  author: string;
+  publishedIso: string;
+  themeColor: string;
+  faviconEmoji: string;  // used to build inline favicon
+}): string {
+  const t = escapeHtml(opts.title);
+  const d = escapeHtml(opts.description);
+  const site = escapeHtml(opts.siteName);
+  const host = opts.siteHost;
+  const author = escapeHtml(opts.author);
+  const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: opts.title,
+    description: opts.description,
+    articleSection: opts.section,
+    inLanguage: "en-US",
+    author: { "@type": "Person", name: opts.author },
+    publisher: {
+      "@type": "Organization",
+      name: opts.siteName,
+      logo: { "@type": "ImageObject", url: `https://${host}/logo.png` },
+    },
+    datePublished: opts.publishedIso,
+    dateModified: opts.publishedIso,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+  };
+  const favicon =
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
+
+  return `<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="${opts.themeColor}"/>
+<title>${t} — ${site}</title>
+<meta name="description" content="${d}"/>
+<meta name="author" content="${author}"/>
+<meta name="robots" content="index,follow,max-image-preview:large"/>
+<link rel="canonical" href="${url}"/>
+<link rel="icon" type="image/svg+xml" href="${favicon}"/>
+<meta property="og:type" content="article"/>
+<meta property="og:site_name" content="${site}"/>
+<meta property="og:title" content="${t}"/>
+<meta property="og:description" content="${d}"/>
+<meta property="og:url" content="${url}"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="article:author" content="${author}"/>
+<meta property="article:published_time" content="${opts.publishedIso}"/>
+<meta property="article:section" content="${escapeHtml(opts.section)}"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@${host.split(".")[0]}"/>
+<meta name="twitter:title" content="${t}"/>
+<meta name="twitter:description" content="${d}"/>
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+}
+
 function tmplDailyReader(p: Snip[], year: number): string {
   const [lead, a, b, c, d] = p;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(lead.title)} — Daily Reader</title><meta name="description" content="${escapeHtml(lead.body.slice(0,150))}"/>
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({
+    siteName: "Daily Reader", siteHost: "dailyreader.co", section: "Essays",
+    title: lead.title, description: lead.body.slice(0, 155), author, publishedIso: iso,
+    themeColor: "#1a1a1a", faviconEmoji: "📖",
+  })}
 <style>:root{--bg:#fafaf7;--ink:#1a1a1a;--muted:#666;--rule:#e6e6e0}*{box-sizing:border-box}body{margin:0;font:17px/1.7 Georgia,serif;background:var(--bg);color:var(--ink)}
-header{padding:24px 20px;border-bottom:1px solid var(--rule)}header h1{margin:0;font-size:22px}main{max-width:680px;margin:0 auto;padding:36px 20px 80px}
-article h2{font-size:32px;line-height:1.2;margin:0 0 16px}article .meta{color:var(--muted);font-size:14px;margin-bottom:28px}article p{margin:0 0 18px}
-hr{border:0;border-top:1px solid var(--rule);margin:36px 0}.related h3{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.related a{display:block;color:var(--ink);text-decoration:none;padding:14px 0;border-bottom:1px solid var(--rule)}footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 20px;border-top:1px solid var(--rule)}</style></head>
-<body><header><h1>Daily Reader</h1><span style="color:var(--muted);font-size:13px">Stories worth your time · ${year}</span></header>
-<main><article><h2>${escapeHtml(lead.title)}</h2><div class="meta">By Editorial Staff</div>
+header{padding:24px 20px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}header h1{margin:0;font-size:22px;letter-spacing:-.01em}
+header nav{font-size:13px;color:var(--muted)}header nav a{color:var(--muted);text-decoration:none;margin-left:18px}
+main{max-width:680px;margin:0 auto;padding:36px 20px 80px}
+article h2{font-size:34px;line-height:1.2;margin:0 0 14px;letter-spacing:-.01em}article .meta{color:var(--muted);font-size:14px;margin-bottom:28px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+article .meta .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c4a374,#8b6f47);display:inline-block}
+article p{margin:0 0 18px}article p:first-of-type::first-letter{font-size:3em;float:left;line-height:.9;padding:4px 8px 0 0;font-weight:600}
+hr{border:0;border-top:1px solid var(--rule);margin:36px 0}.related h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.related a{display:block;color:var(--ink);text-decoration:none;padding:14px 0;border-bottom:1px solid var(--rule);font-weight:500}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 20px;border-top:1px solid var(--rule)}footer a{color:var(--muted);margin:0 8px}</style></head>
+<body><header><h1>Daily Reader</h1><nav><a href="#">Essays</a><a href="#">Notes</a><a href="#">About</a></nav></header>
+<main><article><h2>${escapeHtml(lead.title)}</h2>
+<div class="meta"><span class="avatar"></span><span>By <strong>${escapeHtml(author)}</strong></span><span>·</span><span>${formatDate(iso)}</span><span>·</span><span>${readMin} min read</span></div>
 <p>${escapeHtml(lead.body)}</p><p>${escapeHtml(a.body)}</p><p>${escapeHtml(b.body)}</p><p>${escapeHtml(c.body)}</p></article>
-<hr/><section class="related"><h3>More reading</h3><a href="#">${escapeHtml(d.title)}</a><a href="#">${escapeHtml(b.title)}</a></section></main>
-<footer>© ${year} Daily Reader</footer></body></html>`;
+<hr/><section class="related"><h3>Continue reading</h3><a href="#">${escapeHtml(d.title)}</a><a href="#">${escapeHtml(b.title)}</a></section></main>
+<footer><a href="#">About</a>·<a href="#">Archive</a>·<a href="#">Contact</a>·<a href="#">Privacy</a><br/>© ${year} Daily Reader</footer></body></html>`;
 }
 
 function tmplKitchenJournal(p: Snip[], year: number): string {
   const [lead, a, b, c] = p;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(lead.title)} | The Kitchen Journal</title><meta name="description" content="${escapeHtml(lead.body.slice(0,150))}"/>
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({
+    siteName: "The Kitchen Journal", siteHost: "thekitchenjournal.com", section: "Cooking",
+    title: lead.title, description: lead.body.slice(0, 155), author, publishedIso: iso,
+    themeColor: "#c0392b", faviconEmoji: "🍳",
+  })}
 <style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff8f0;color:#3a2a1a;line-height:1.65}
-.nav{background:#c0392b;color:#fff;padding:14px 20px;font-weight:600;letter-spacing:.04em}.wrap{max-width:720px;margin:0 auto;padding:30px 20px 80px}
-h1{font-size:30px;color:#a8341f;margin:0 0 8px}.byline{color:#8a7560;font-size:13px;margin-bottom:24px}
-.tag{display:inline-block;background:#f4e1c7;color:#8b5e30;padding:3px 10px;border-radius:99px;font-size:12px;margin-right:6px}
-p{margin:0 0 16px}.box{background:#fff;border-left:4px solid #c0392b;padding:14px 18px;margin:24px 0;border-radius:0 8px 8px 0}
-.foot{margin-top:40px;padding-top:20px;border-top:1px solid #e8d8c0;font-size:13px;color:#8a7560}</style></head>
-<body><div class="nav">THE KITCHEN JOURNAL</div><div class="wrap">
-<span class="tag">cooking</span><span class="tag">slow living</span>
-<h1>${escapeHtml(lead.title)}</h1><div class="byline">Posted ${new Date().toLocaleDateString()}</div>
+.nav{background:#c0392b;color:#fff;padding:14px 20px;font-weight:600;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
+.nav .links a{color:#fde9d9;text-decoration:none;margin-left:16px;font-weight:400;font-size:14px}
+.wrap{max-width:720px;margin:0 auto;padding:30px 20px 80px}
+h1{font-size:32px;color:#a8341f;margin:0 0 8px;letter-spacing:-.01em}.byline{color:#8a7560;font-size:13px;margin-bottom:24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.byline .dot{width:4px;height:4px;background:#c8a982;border-radius:50%;display:inline-block}
+.tag{display:inline-block;background:#f4e1c7;color:#8b5e30;padding:3px 10px;border-radius:99px;font-size:12px;margin-right:6px;margin-bottom:12px}
+p{margin:0 0 16px}.box{background:#fff;border-left:4px solid #c0392b;padding:14px 18px;margin:24px 0;border-radius:0 8px 8px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.foot{margin-top:40px;padding-top:20px;border-top:1px solid #e8d8c0;font-size:13px;color:#8a7560;text-align:center}</style></head>
+<body><div class="nav"><span>THE KITCHEN JOURNAL</span><span class="links"><a href="#">Recipes</a><a href="#">Techniques</a><a href="#">Newsletter</a></span></div>
+<div class="wrap">
+<span class="tag">cooking</span><span class="tag">slow living</span><span class="tag">seasonal</span>
+<h1>${escapeHtml(lead.title)}</h1>
+<div class="byline"><span>By <strong>${escapeHtml(author)}</strong></span><span class="dot"></span><span>${formatDate(iso)}</span><span class="dot"></span><span>${readMin} min read</span></div>
 <p>${escapeHtml(lead.body)}</p><div class="box"><strong>From the editor.</strong> ${escapeHtml(a.body)}</div>
 <p>${escapeHtml(b.body)}</p><p>${escapeHtml(c.body)}</p>
-<div class="foot">© ${year} The Kitchen Journal · weekly recipes</div></div></body></html>`;
+<div class="foot">© ${year} The Kitchen Journal · Weekly recipes and slow-cooking notes</div></div></body></html>`;
 }
 
 function tmplTechWeekly(p: Snip[], year: number): string {
   const [lead, a, b, c, d] = p;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(lead.title)} – Tech Weekly</title><meta name="description" content="${escapeHtml(lead.body.slice(0,150))}"/>
-<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0e1117;color:#e6edf3;line-height:1.6}
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({
+    siteName: "Tech Weekly", siteHost: "techweekly.io", section: "Technology",
+    title: lead.title, description: lead.body.slice(0, 155), author, publishedIso: iso,
+    themeColor: "#0e1117", faviconEmoji: "⚡",
+  })}
+<style>body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#0e1117;color:#e6edf3;line-height:1.6}
 header{padding:16px 24px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center}
-.logo{font-weight:800;letter-spacing:-.02em}.logo span{color:#58a6ff}main{max-width:760px;margin:0 auto;padding:40px 24px 80px}
-h1{font-size:34px;line-height:1.15;margin:0 0 12px}.meta{color:#8b949e;font-size:13px;margin-bottom:28px}p{margin:0 0 18px}
-.card{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:16px 20px;margin:24px 0}
-.card h3{margin:0 0 6px;font-size:15px;color:#58a6ff}footer{border-top:1px solid #21262d;padding:18px 24px;color:#8b949e;font-size:13px;text-align:center}</style></head>
-<body><header><div class="logo">Tech<span>Weekly</span></div><div style="font-size:13px;color:#8b949e">Issue · ${year}</div></header>
-<main><h1>${escapeHtml(lead.title)}</h1><div class="meta">By staff · ${new Date().toDateString()}</div>
+.logo{font-weight:800;letter-spacing:-.02em;font-size:18px}.logo span{color:#58a6ff}
+header nav a{color:#8b949e;text-decoration:none;margin-left:20px;font-size:14px}
+main{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:36px;line-height:1.15;margin:0 0 14px;letter-spacing:-.02em}
+.meta{color:#8b949e;font-size:13px;margin-bottom:28px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.meta .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#58a6ff,#7c3aed)}
+p{margin:0 0 18px}
+.card{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:18px 20px;margin:26px 0}
+.card h3{margin:0 0 6px;font-size:15px;color:#58a6ff}
+footer{border-top:1px solid #21262d;padding:20px 24px;color:#8b949e;font-size:13px;text-align:center}
+footer a{color:#8b949e;margin:0 10px}</style></head>
+<body><header><div class="logo">Tech<span>Weekly</span></div>
+<nav><a href="#">Issues</a><a href="#">Topics</a><a href="#">Subscribe</a></nav></header>
+<main><h1>${escapeHtml(lead.title)}</h1>
+<div class="meta"><span class="avatar"></span><span><strong style="color:#e6edf3">${escapeHtml(author)}</strong></span><span>·</span><span>${formatDate(iso)}</span><span>·</span><span>${readMin} min read</span></div>
 <p>${escapeHtml(lead.body)}</p><p>${escapeHtml(a.body)}</p>
 <div class="card"><h3>${escapeHtml(b.title)}</h3><p style="margin:0">${escapeHtml(b.body)}</p></div>
 <p>${escapeHtml(c.body)}</p><p>${escapeHtml(d.body)}</p></main>
-<footer>© ${year} TechWeekly</footer></body></html>`;
+<footer><a href="#">Archive</a><a href="#">RSS</a><a href="#">Privacy</a><a href="#">Contact</a><br/>© ${year} TechWeekly</footer></body></html>`;
 }
 
 function tmplWellnessMag(p: Snip[], year: number): string {
   const [lead, a, b, c] = p;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(lead.title)} — Bloom & Be</title><meta name="description" content="${escapeHtml(lead.body.slice(0,150))}"/>
-<style>body{margin:0;font-family:"Helvetica Neue",sans-serif;background:linear-gradient(180deg,#fef6f0,#fff);color:#2d2438;line-height:1.7}
-.brand{text-align:center;padding:28px 20px 8px;font-size:13px;letter-spacing:.4em;color:#a87b5c}
-h1{text-align:center;font-family:Georgia,serif;font-size:38px;font-weight:400;margin:6px 20px 8px;font-style:italic;color:#5c3a52}
-.line{width:60px;height:2px;background:#d4a373;margin:14px auto 28px}main{max-width:640px;margin:0 auto;padding:0 24px 80px}
-p{margin:0 0 18px;font-size:17px}p::first-letter{font-size:1em}.lead::first-letter{font-size:3em;float:left;line-height:.9;padding:4px 8px 0 0;color:#a87b5c;font-family:Georgia,serif}
-.quote{font-family:Georgia,serif;font-style:italic;color:#a87b5c;font-size:22px;text-align:center;margin:36px 0;padding:0 20px}
-footer{text-align:center;padding:24px 20px;color:#a87b5c;font-size:12px;letter-spacing:.2em}</style></head>
-<body><div class="brand">BLOOM & BE</div><h1>${escapeHtml(lead.title)}</h1><div class="line"></div>
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({
+    siteName: "Bloom & Be", siteHost: "bloomandbe.com", section: "Wellness",
+    title: lead.title, description: lead.body.slice(0, 155), author, publishedIso: iso,
+    themeColor: "#a87b5c", faviconEmoji: "🌿",
+  })}
+<style>body{margin:0;font-family:"Helvetica Neue",-apple-system,sans-serif;background:linear-gradient(180deg,#fef6f0,#fff);color:#2d2438;line-height:1.7}
+.brand{text-align:center;padding:28px 20px 8px;font-size:12px;letter-spacing:.5em;color:#a87b5c;font-weight:600}
+.nav{text-align:center;font-size:13px;color:#a87b5c;padding-bottom:12px}.nav a{color:#a87b5c;text-decoration:none;margin:0 12px}
+h1{text-align:center;font-family:Georgia,serif;font-size:40px;font-weight:400;margin:6px 20px 8px;font-style:italic;color:#5c3a52;line-height:1.15}
+.line{width:60px;height:2px;background:#d4a373;margin:14px auto 12px}
+.meta{text-align:center;font-size:12px;color:#a87b5c;letter-spacing:.05em;margin-bottom:30px}
+main{max-width:640px;margin:0 auto;padding:0 24px 80px}
+p{margin:0 0 18px;font-size:17px}
+.lead::first-letter{font-size:3em;float:left;line-height:.9;padding:4px 8px 0 0;color:#a87b5c;font-family:Georgia,serif}
+.quote{font-family:Georgia,serif;font-style:italic;color:#a87b5c;font-size:22px;text-align:center;margin:36px 0;padding:0 20px;line-height:1.5}
+footer{text-align:center;padding:24px 20px;color:#a87b5c;font-size:11px;letter-spacing:.25em}</style></head>
+<body><div class="brand">BLOOM & BE</div>
+<div class="nav"><a href="#">Wellness</a>·<a href="#">Ritual</a>·<a href="#">Home</a>·<a href="#">Journal</a></div>
+<h1>${escapeHtml(lead.title)}</h1><div class="line"></div>
+<div class="meta">By ${escapeHtml(author)} · ${formatDate(iso)} · ${readMin} min read</div>
 <main><p class="lead">${escapeHtml(lead.body)}</p><p>${escapeHtml(a.body)}</p>
-<div class="quote">“${escapeHtml(b.body)}”</div><p>${escapeHtml(c.body)}</p></main>
-<footer>BLOOM & BE · ${year}</footer></body></html>`;
+<div class="quote">"${escapeHtml(b.body)}"</div><p>${escapeHtml(c.body)}</p></main>
+<footer>BLOOM & BE · ${year} · A JOURNAL OF SLOW WELLNESS</footer></body></html>`;
 }
 
 function tmplTravelLog(p: Snip[], year: number): string {
   const [lead, a, b, c, d] = p;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(lead.title)} · Wanderlines</title><meta name="description" content="${escapeHtml(lead.body.slice(0,150))}"/>
-<style>body{margin:0;font-family:Georgia,serif;background:#f5f1ea;color:#2a2a2a;line-height:1.7}
-.top{background:#1f3a3d;color:#f5f1ea;padding:20px 24px;letter-spacing:.3em;font-size:13px}
-.hero{padding:60px 24px 40px;text-align:center;background:#e8e0d2}.hero h1{margin:0 0 8px;font-size:40px;line-height:1.1;font-weight:400}
-.hero .sub{color:#7a6a52;font-style:italic}main{max-width:680px;margin:0 auto;padding:40px 24px 80px}
-.dateline{font-variant:small-caps;letter-spacing:.1em;color:#7a6a52;font-size:13px;margin-bottom:20px}p{margin:0 0 18px}
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({
+    siteName: "Wanderlines", siteHost: "wanderlines.travel", section: "Travel",
+    title: lead.title, description: lead.body.slice(0, 155), author, publishedIso: iso,
+    themeColor: "#1f3a3d", faviconEmoji: "✈️",
+  })}
+<style>body{margin:0;font-family:Georgia,serif;background:#f5f1ea;color:#2a2a2a;line-height:1.75}
+.top{background:#1f3a3d;color:#f5f1ea;padding:18px 24px;letter-spacing:.3em;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.top .links a{color:#bca978;text-decoration:none;margin-left:18px;letter-spacing:.15em;font-size:11px}
+.hero{padding:60px 24px 40px;text-align:center;background:#e8e0d2}
+.hero h1{margin:0 0 8px;font-size:42px;line-height:1.1;font-weight:400;letter-spacing:-.01em}
+.hero .sub{color:#7a6a52;font-style:italic;font-size:15px}
+main{max-width:680px;margin:0 auto;padding:40px 24px 80px}
+.dateline{font-variant:small-caps;letter-spacing:.12em;color:#7a6a52;font-size:13px;margin-bottom:20px;text-align:center}
+p{margin:0 0 18px}
 .divider{text-align:center;margin:32px 0;color:#bca978;letter-spacing:1em}
-.foot{text-align:center;padding:24px;background:#1f3a3d;color:#bca978;font-size:13px;letter-spacing:.2em}</style></head>
-<body><div class="top">WANDERLINES — TRAVEL JOURNAL</div>
+.foot{text-align:center;padding:24px;background:#1f3a3d;color:#bca978;font-size:12px;letter-spacing:.2em}</style></head>
+<body><div class="top"><span>WANDERLINES</span><span class="links"><a href="#">FIELD NOTES</a><a href="#">ROUTES</a><a href="#">ABOUT</a></span></div>
 <div class="hero"><h1>${escapeHtml(lead.title)}</h1><div class="sub">Dispatches from the slow road</div></div>
-<main><div class="dateline">Entry · ${new Date().toLocaleDateString()}</div>
+<main><div class="dateline">Entry · ${formatDate(iso)} · By ${escapeHtml(author)} · ${readMin} min read</div>
 <p>${escapeHtml(lead.body)}</p><p>${escapeHtml(a.body)}</p>
 <div class="divider">· · ·</div><p>${escapeHtml(b.body)}</p><p>${escapeHtml(c.body)}</p><p>${escapeHtml(d.body)}</p></main>
-<div class="foot">© ${year} WANDERLINES</div></body></html>`;
+<div class="foot">© ${year} WANDERLINES · TRAVEL JOURNAL</div></body></html>`;
 }
 
 function renderSafeArticle(snippets: Snip[]): string {
@@ -209,6 +362,7 @@ function renderSafeArticle(snippets: Snip[]): string {
 function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
+
 
 // ---------- Money page with JS behavior challenge ----------
 function renderMoneyPage(moneyUrl: string, fbclid: string | null, linkId: string): string {
