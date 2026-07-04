@@ -184,7 +184,7 @@ function CreateLinkPage() {
               <Input id="title" placeholder="Campaign name" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 bg-muted/40" />
             </div>
             <div className="flex items-end">
-              <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating || !emailVerified}>
+              <Button type="submit" className="bg-primary-gradient shadow-glow text-primary-foreground" disabled={creating}>
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
               </Button>
             </div>
