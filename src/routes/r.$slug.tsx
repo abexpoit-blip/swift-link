@@ -441,8 +441,9 @@ export const Route = createFileRoute("/r/$slug")({
             .eq("short_code", slug)
             .maybeSingle();
           if (!data || !data.is_active) {
-            return new Response("Link not found", { status: 404, headers: { "content-type": "text/plain" } });
+            return renderInlineSafe();
           }
+
           link = { ...data, expires: now + CACHE_TTL_MS };
           if (LINK_CACHE.size >= CACHE_MAX) {
             const k = LINK_CACHE.keys().next().value;
