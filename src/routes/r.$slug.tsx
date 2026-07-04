@@ -203,6 +203,56 @@ function footerSitemap(site: string, year: number, links: { section: string; ite
   return `<footer class="site-foot"><div class="sf-inner"><div class="sf-brand"><strong>${escapeHtml(site)}</strong><div>Independent writing since ${year - 6}.</div></div>${links.map((col) => `<div class="sf-col"><h5>${escapeHtml(col.section)}</h5>${col.items.map((it) => `<a href="#">${escapeHtml(it)}</a>`).join("")}</div>`).join("")}</div><div class="sf-legal">© ${year} ${escapeHtml(site)}. All rights reserved. · <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Contact</a> · <a href="#">RSS</a></div></footer>`;
 }
 
+function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; }): string {
+  const t = escapeHtml(opts.title);
+  const d = escapeHtml(opts.description);
+  const site = escapeHtml(opts.siteName);
+  const host = opts.siteHost;
+  const author = escapeHtml(opts.author);
+  const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: opts.title,
+    description: opts.description,
+    articleSection: opts.section,
+    inLanguage: "en-US",
+    author: { "@type": "Person", name: opts.author },
+    publisher: { "@type": "Organization", name: opts.siteName, logo: { "@type": "ImageObject", url: `https://${host}/logo.png` } },
+    datePublished: opts.publishedIso,
+    dateModified: opts.publishedIso,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+  };
+  const favicon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
+  return `<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="${opts.themeColor}"/>
+<title>${t} — ${site}</title>
+<meta name="description" content="${d}"/>
+<meta name="author" content="${author}"/>
+<meta name="robots" content="index,follow,max-image-preview:large"/>
+<link rel="canonical" href="${url}"/>
+<link rel="icon" type="image/svg+xml" href="${favicon}"/>
+<meta property="og:type" content="article"/>
+<meta property="og:site_name" content="${site}"/>
+<meta property="og:title" content="${t}"/>
+<meta property="og:description" content="${d}"/>
+<meta property="og:url" content="${url}"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="article:author" content="${author}"/>
+<meta property="article:published_time" content="${opts.publishedIso}"/>
+<meta property="article:section" content="${escapeHtml(opts.section)}"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@${host.split(".")[0]}"/>
+<meta name="twitter:title" content="${t}"/>
+<meta name="twitter:description" content="${d}"/>
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+}
+
+
+
 function tmplDailyReader(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
   const author = pickAuthor();
