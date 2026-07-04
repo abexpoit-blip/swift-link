@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   DollarSign,
@@ -31,8 +31,9 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Shorten links, share them anywhere, and earn real money for every click. $1 per 100k clicks. Withdraw in USDT crypto from just $25.",
+          "Shorten links, share them anywhere, and earn real money for every click. $1 per 50,000 clicks. Withdraw in USDT crypto from just $10.",
       },
+
     ],
   }),
 });
@@ -184,8 +185,8 @@ function Hero() {
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
               AdsPx is the short-link platform built for creators. Share on
               <strong className="text-foreground"> Facebook</strong>, Telegram or YouTube and earn
-              <strong className="text-foreground"> $1 per 100,000 visits</strong>. Withdraw in
-              <strong className="text-foreground"> USDT</strong> from just $25.
+              <strong className="text-foreground"> $1 per 50,000 visits</strong>. Withdraw in
+              <strong className="text-foreground"> USDT</strong> from just $10.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -212,9 +213,10 @@ function Hero() {
                 <Check className="h-3.5 w-3.5 text-primary" /> No referral required
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-primary" /> Min $25 withdrawal
+                <Check className="h-3.5 w-3.5 text-primary" /> Min $10 withdrawal
               </span>
             </div>
+
           </div>
 
           {/* RIGHT — Pixel-machine link mockup with neo-brutalist offset shadow */}
@@ -333,7 +335,7 @@ function PayoutBar() {
     { label: "Active publishers", value: "42,180+" },
     { label: "Clicks served", value: "2.4B+" },
     { label: "Paid in 2026", value: "$284K+" },
-    { label: "Min payout", value: "$25" },
+    { label: "Min payout", value: "$10" },
   ];
   return (
     <section className="border-y border-border/60 bg-card/40">
@@ -442,8 +444,9 @@ function HowItWorks() {
         <div className="md:col-span-5 rounded-3xl bg-card border-2 border-foreground p-7 flex flex-col justify-center items-center text-center">
           <div className="font-display text-5xl md:text-6xl font-black text-gradient">$1.00</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Per 100,000 clicks
+            Per 50,000 clicks
           </div>
+
           <div className="mt-5 grid grid-cols-8 gap-1" aria-hidden>
             {Array.from({ length: 8 }).map((_, i) => (
               <span
@@ -468,8 +471,9 @@ function HowItWorks() {
 /* ─────────────────────────────────────────────── EARNINGS CALCULATOR */
 function EarningsCalculator() {
   const [daily, setDaily] = useState(5000);
-  // $1 per 100,000 clicks
-  const rate = 1 / 100000;
+  // $1 per 50,000 clicks
+  const rate = 1 / 50000;
+
   const dailyEarn = daily * rate;
   const monthlyEarn = dailyEarn * 30;
   const yearlyEarn = dailyEarn * 365;
@@ -536,9 +540,10 @@ function EarningsCalculator() {
         </div>
 
         <p className="text-xs text-center text-muted-foreground mt-6 leading-relaxed">
-          Flat rate: <strong className="text-foreground">$1 per 100,000 real visits</strong> · Minimum withdrawal:{" "}
-          <strong className="text-foreground">$25 USDT (TRC20 / BEP20)</strong> · Bot traffic auto-filtered.
+          Flat rate: <strong className="text-foreground">$1 per 50,000 real visits</strong> · Minimum withdrawal:{" "}
+          <strong className="text-foreground">$10 USDT (TRC20 / BEP20)</strong> · Bot traffic auto-filtered.
         </p>
+
       </div>
     </section>
   );
@@ -559,7 +564,7 @@ function Sponsors() {
           AdsPx is engineered specifically for promoting <strong className="text-foreground">Adsterra</strong>,
           PropellerAds, Monetag and other ad-network links on <strong className="text-foreground">Facebook</strong>.
           We negotiate bulk deals with these networks at scale, then pass <strong className="text-foreground">most of the revenue back to you</strong> —
-          that's how we can pay <strong className="text-foreground">$1 per 100,000 visits</strong> with zero hidden cuts.
+          that's how we can pay <strong className="text-foreground">$1 per 50,000 visits</strong> with zero hidden cuts.
         </p>
       </div>
 
@@ -588,9 +593,10 @@ function FeatureGrid() {
   const features = [
     {
       icon: DollarSign,
-      title: "$1 per 100k clicks",
+      title: "$1 per 50k clicks",
       desc: "Flat global rate. No confusing country tiers, no hidden cuts. What you earn is what you see.",
     },
+
     {
       icon: Bitcoin,
       title: "Crypto withdrawals",
@@ -647,8 +653,8 @@ function FeatureGrid() {
 }
 
 /* ─────────────────────────────────────────────── RECENT PAYOUTS */
-type Country = "all" | "us" | "in";
 type Payout = import("@/lib/publishers").RecentPayout;
+type CC = import("@/lib/publishers").CountryCode;
 
 function formatWhen(min: number): string {
   if (min < 1) return "just now";
@@ -660,27 +666,34 @@ function formatWhen(min: number): string {
   return `${d} days ago`;
 }
 
+// Weighted country picker — mostly India & Pakistan, sometimes Bangladesh,
+// occasionally other countries drawn from the full publisher pool.
+const OTHER_CCS: CC[] = ["us", "id", "ng", "br", "mx", "eg", "tr", "ph", "ma", "gb", "de", "sa", "ae", "ir"];
+function pickCountry(): CC | undefined {
+  const r = Math.random();
+  if (r < 0.42) return "in";
+  if (r < 0.72) return "pk";
+  if (r < 0.85) return "bd";
+  return OTHER_CCS[Math.floor(Math.random() * OTHER_CCS.length)];
+}
+
 function buildInitial(): Payout[] {
-  // 8 entries, mixed countries, spread across time
   const list: Payout[] = [];
   const minutes = [3, 11, 24, 47, 82, 130, 210, 340];
   for (let i = 0; i < minutes.length; i++) {
-    list.push(makeRecentPayout(minutes[i] + Math.floor(Math.random() * 6)));
+    list.push(makeRecentPayout(minutes[i] + Math.floor(Math.random() * 6), pickCountry()));
   }
   return list;
 }
 
 function RecentPayouts() {
-  const [filter, setFilter] = useState<Country>("all");
   const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
 
-  // Age existing entries + occasionally inject a new one (every 60s)
   useEffect(() => {
     const id = setInterval(() => {
       setPayouts((prev) => {
         const aged = prev.map((p) => ({ ...p, minutesAgo: p.minutesAgo + 1 }));
-        // every tick, replace the oldest with a fresh "just now" entry
-        const fresh = makeRecentPayout(0);
+        const fresh = makeRecentPayout(0, pickCountry());
         const trimmed = aged.slice(0, aged.length - 1);
         return [fresh, ...trimmed];
       });
@@ -688,16 +701,7 @@ function RecentPayouts() {
     return () => clearInterval(id);
   }, []);
 
-  const visible = useMemo(
-    () => (filter === "all" ? payouts : payouts.filter((p) => p.country === filter)),
-    [payouts, filter],
-  );
-
-  const tabs: { id: Country; label: string }[] = [
-    { id: "all", label: "All countries" },
-    { id: "us", label: "USA" },
-    { id: "in", label: "India" },
-  ];
+  const visible = payouts;
 
   return (
     <section id="payouts" className="container mx-auto px-6 py-12 md:py-20">
@@ -708,25 +712,10 @@ function RecentPayouts() {
         <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
           Real publishers. <span className="text-gradient">Real withdrawals.</span>
         </h2>
+        <p className="text-muted-foreground text-sm">Publishers withdrawing from all around the world.</p>
       </div>
 
-      <div className="flex justify-center mb-6">
-        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-card">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setFilter(t.id)}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filter === t.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card overflow-hidden shadow-card">
         <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border/60 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
