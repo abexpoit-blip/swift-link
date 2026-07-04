@@ -135,7 +135,7 @@ function StatisticsPage() {
   }, []);
 
 
-  /* ── aggregations ── */
+  /* ── aggregations (traffic_logs primary, clicks fallback) ── */
   const trafficSeries = useMemo<DayPoint[]>(() => {
     const days = lastNDays(30);
     const idx = new Map(days.map((d, i) => [d.key, i]));
@@ -145,23 +145,34 @@ function StatisticsPage() {
       const i = idx.get(k); if (i === undefined) continue;
       if (t.decision === "money") out[i].humans++; else out[i].bots++;
     }
-    return out;
-  }, [tlogs]);
-
-  const countries = useMemo<CountryRow[]>(() => {
-    const m = new Map<string, { humans: number; bots: number }>();
-    for (const t of tlogs) {
-      const c = (t.country || "").toUpperCase();
-      if (!c) continue;
-      const row = m.get(c) ?? { humans: 0, bots: 0 };
-      if (t.decision === "money") row.humans++; else row.bots++;
-      m.set(c, row);
+    if (tlogs.length === 0) {
+      for (const c of clicks) {
+        const k = c.created_at.slice(0, 10);
+        const i = idx.get(k); if (i === undefined) continue;
+        if (c.is_bot) out[i].bots++; else out[i].humans++;
+      }
     }
+    return out;
+  }, [tlogs, clicks]);
+
+  const countriesAll = useMemo<CountryRow[]>(() => {
+    const m = new Map<string, { humans: number; bots: number }>();
+    const add = (code: string | null, isBot: boolean) => {
+      const c = (code || "").toUpperCase();
+      if (!c) return;
+      const row = m.get(c) ?? { humans: 0, bots: 0 };
+      if (isBot) row.bots++; else row.humans++;
+      m.set(c, row);
+    };
+    for (const t of tlogs) add(t.country, t.decision !== "money");
+    if (tlogs.length === 0) for (const c of clicks) add(c.country, c.is_bot);
     return [...m.entries()]
       .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + v.bots, humans: v.humans, bots: v.bots }))
-      .sort((a, b) => b.clicks - a.clicks)
-      .slice(0, 20);
-  }, [tlogs]);
+      .sort((a, b) => b.clicks - a.clicks);
+  }, [tlogs, clicks]);
+
+  const countries = useMemo(() => countriesAll.slice(0, 20), [countriesAll]);
+  const countryTotal = useMemo(() => countriesAll.reduce((a, c) => a + c.clicks, 0) || 1, [countriesAll]);
 
   const sources = useMemo<SourceRow[]>(() => {
     const m = new Map<string, number>();
