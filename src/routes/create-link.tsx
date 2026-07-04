@@ -43,9 +43,6 @@ function CreateLinkPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [emailVerified, setEmailVerified] = useState(true);
-  const [resendingVerify, setResendingVerify] = useState(false);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [linkLimit, setLinkLimit] = useState<number | null>(FREE_LINK_LIMIT);
   const [earningsByLink, setEarningsByLink] = useState<Record<string, EarningRow>>({});
@@ -81,8 +78,6 @@ function CreateLinkPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate({ to: "/login" }); return; }
       setUserId(session.user.id);
-      setEmail(session.user.email ?? "");
-      setEmailVerified(!!session.user.email_confirmed_at);
       await loadAll(session.user.id);
       setLoading(false);
     })();
@@ -138,18 +133,6 @@ function CreateLinkPage() {
     toast.success("Short link created");
     setDestUrl(""); setTitle("");
     await loadAll(userId);
-  }
-
-  async function resendVerify() {
-    if (!email) return;
-    setResendingVerify(true);
-    const { error } = await supabase.auth.resend({
-      type: "signup", email,
-      options: { emailRedirectTo: `${window.location.origin}/create-link` },
-    });
-    setResendingVerify(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Verification email sent. Check your Gmail inbox.");
   }
 
   async function deleteLink(id: string) {
