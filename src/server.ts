@@ -3,6 +3,34 @@ type ServerEntry = {
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
+let localEnvLoaded = false;
+
+async function loadLocalEnvFile() {
+  if (localEnvLoaded) return;
+  localEnvLoaded = true;
+
+  try {
+    const [{ existsSync, readFileSync }, { resolve }] = await Promise.all([
+      import("node:fs"),
+      import("node:path"),
+    ]);
+    const envPath = resolve(process.cwd(), ".env");
+    if (!existsSync(envPath)) return;
+
+    const content = readFileSync(envPath, "utf8");
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+      if (!match) continue;
+      const [, key, rawValue] = match;
+      if (process.env[key]) continue;
+      process.env[key] = rawValue.replace(/^['"]|['"]$/g, "").trim();
+    }
+  } catch {
+    // Hosted runtime may not expose a local .env file; normal platform env vars still work.
+  }
+}
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
@@ -54,6 +82,7 @@ function applySecurityHeaders(request: Request, response: Response): Response {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      await loadLocalEnvFile();
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return applySecurityHeaders(request, response);
