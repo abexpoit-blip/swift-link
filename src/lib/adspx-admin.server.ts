@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
-import type { Database } from "@/integrations/supabase/types";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -37,7 +36,7 @@ function createAdspxAdminClient() {
     throw new Error(`Missing database environment variable(s): ${missing.join(", ")}.`);
   }
 
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     global: {
       fetch: createSupabaseFetch(serviceRoleKey),
     },
@@ -47,12 +46,12 @@ function createAdspxAdminClient() {
       autoRefreshToken: false,
     },
     realtime: {
-      transport: ws,
+      transport: ws as any,
     },
-  });
+  }) as any;
 }
 
-let cachedAdmin: ReturnType<typeof createAdspxAdminClient> | undefined;
+let cachedAdmin: any;
 
 export function getAdspxAdminClient() {
   cachedAdmin ??= createAdspxAdminClient();
