@@ -33,8 +33,8 @@ function SignupPage() {
       toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
     setLoading(true);
@@ -48,7 +48,14 @@ function SignupPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("weak") || msg.includes("pwned")) {
+        toast.error("This password is too common or has been leaked online. Use a stronger one (mix letters, numbers & symbols).");
+      } else if (msg.includes("already") || msg.includes("registered")) {
+        toast.error("This email is already registered. Please sign in instead.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
     if (data.session) {
@@ -107,13 +114,13 @@ function SignupPage() {
                 id="password"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 maxLength={72}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5"
               />
-              <p className="text-xs text-muted-foreground mt-1">At least 6 characters.</p>
+              <p className="text-xs text-muted-foreground mt-1">At least 8 characters. Avoid common passwords like "12345678" or "password".</p>
             </div>
             <Button type="submit" className="w-full bg-primary-gradient shadow-glow" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
