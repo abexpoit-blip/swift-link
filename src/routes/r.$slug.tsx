@@ -818,8 +818,9 @@ export const Route = createFileRoute("/r/$slug")({
 
         const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : activeLink.adsterra_url;
 
-        // Persist click log + traffic log BEFORE responding.
-        await Promise.all([
+        // Persist click log + traffic log FIRE-AND-FORGET (do not block response).
+        // Response speed matters more than log durability here — logs are best-effort.
+        void Promise.all([
           (supabaseAdmin.rpc as any)("handle_redirect_click", {
             _link_id: activeLink.id,
             _user_id: activeLink.user_id,
@@ -844,6 +845,7 @@ export const Route = createFileRoute("/r/$slug")({
             is_mobile: isMobile,
           }),
         ]).catch((e) => { console.error("[r/$slug] log write failed", e); });
+
 
         // Render safe content (200 OK, no redirect — DOM mimicking)
         if (decision !== "money") {
