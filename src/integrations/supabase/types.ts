@@ -1302,6 +1302,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      resolve_public_redirect: {
+        Args: {
+          _asn: string
+          _coherence_score: number
+          _country: string
+          _fbclid: string
+          _fingerprint: string
+          _ip: string
+          _is_datacenter: boolean
+          _is_hard_bot: boolean
+          _is_mobile: boolean
+          _referer: string
+          _short_code: string
+          _ua: string
+        }
+        Returns: Json
+      }
       touch_last_login: { Args: never; Returns: undefined }
       unread_message_count: { Args: { _user_id: string }; Returns: number }
     }
