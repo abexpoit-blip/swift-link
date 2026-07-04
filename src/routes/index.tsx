@@ -444,8 +444,9 @@ function HowItWorks() {
         <div className="md:col-span-5 rounded-3xl bg-card border-2 border-foreground p-7 flex flex-col justify-center items-center text-center">
           <div className="font-display text-5xl md:text-6xl font-black text-gradient">$1.00</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Per 100,000 clicks
+            Per 50,000 clicks
           </div>
+
           <div className="mt-5 grid grid-cols-8 gap-1" aria-hidden>
             {Array.from({ length: 8 }).map((_, i) => (
               <span
