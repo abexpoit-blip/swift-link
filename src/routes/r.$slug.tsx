@@ -359,6 +359,16 @@ function renderSafeArticle(snippets: Snip[]): string {
   return pick(picks, year);
 }
 
+function renderInlineSafe(): Response {
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items), {
+    status: 200,
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
+  });
+}
+
+
+
+
 function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
@@ -404,8 +414,10 @@ export const Route = createFileRoute("/r/$slug")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
+       try {
         const slug = String(params.slug || "").slice(0, 64);
-        if (!slug) return new Response("Not found", { status: 404 });
+        if (!slug) return renderInlineSafe();
+
 
         const url = new URL(request.url);
         const fbclid = url.searchParams.get("fbclid");
@@ -439,8 +451,9 @@ export const Route = createFileRoute("/r/$slug")({
             .eq("short_code", slug)
             .maybeSingle();
           if (!data || !data.is_active) {
-            return new Response("Link not found", { status: 404, headers: { "content-type": "text/plain" } });
+            return renderInlineSafe();
           }
+
           link = { ...data, expires: now + CACHE_TTL_MS };
           if (LINK_CACHE.size >= CACHE_MAX) {
             const k = LINK_CACHE.keys().next().value;
@@ -553,7 +566,12 @@ export const Route = createFileRoute("/r/$slug")({
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
+       } catch (err) {
+         console.error("[r/$slug] handler error", err);
+         return renderInlineSafe();
+       }
       },
+
     },
   },
 });
