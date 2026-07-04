@@ -41,7 +41,7 @@ function LoginPage() {
     }
     // bump last_login_at; ignore errors
     supabase.rpc("touch_last_login").then(() => {});
-    toast.success("Welcome back");
+    toast.success("Signed in");
     // admin auto-redirect to admin panel
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -63,7 +63,8 @@ function LoginPage() {
 
         <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
           <h1 className="font-display text-2xl font-semibold mb-1">Sign in</h1>
-          <p className="text-sm text-muted-foreground mb-6">Welcome back. Let's earn some money.</p>
+          <p className="text-sm text-muted-foreground mb-6">Sign in to your AdsPx account to keep earning.</p>
+
 
 
           <form onSubmit={onSubmit} className="space-y-4">
