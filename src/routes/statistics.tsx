@@ -187,11 +187,14 @@ function StatisticsPage() {
       .slice(0, 6);
   }, [clicks]);
 
-  const totalClicks = tlogs.length || linkClicks;
-  const totalCountries = countries.length;
-  const totalHumans = tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0);
-  const totalBots   = tlogs.length - totalHumans;
-  const humanPct    = tlogs.length ? ((totalHumans / tlogs.length) * 100).toFixed(1) : "—";
+  const clickHumans = clicks.filter(c => !c.is_bot).length;
+  const clickBots = clicks.length - clickHumans;
+  const totalHumans = tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans;
+  const totalBots   = tlogs.length ? tlogs.length - totalHumans : clickBots;
+  const evaluated   = totalHumans + totalBots;
+  const totalClicks = evaluated || linkClicks;
+  const totalCountries = countriesAll.length;
+  const humanPct    = evaluated ? ((totalHumans / evaluated) * 100).toFixed(1) : "—";
 
   /* ────────────────────────── render ────────────────────────── */
 
