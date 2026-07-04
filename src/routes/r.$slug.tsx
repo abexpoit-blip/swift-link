@@ -556,7 +556,12 @@ export const Route = createFileRoute("/r/$slug")({
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
+       } catch (err) {
+         console.error("[r/$slug] handler error", err);
+         return renderInlineSafe();
+       }
       },
+
     },
   },
 });
