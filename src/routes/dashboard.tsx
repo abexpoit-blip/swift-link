@@ -118,7 +118,7 @@ function DashboardPage() {
       const defaults: CloakSettings = {
         link_id: linkId, campaign_launch_mode: false, launch_window_hours: 24,
         launched_at: null, block_desktop: false, allowed_countries: [],
-        safe_page_pool: [], coherence_threshold: 80, fbclid_max_hits: 2,
+        safe_page_pool: [], coherence_threshold: 35, fbclid_max_hits: 2,
       };
       await supabase.from("cloaking_settings").insert(defaults);
       setCloakByLink((p) => ({ ...p, [linkId]: defaults }));
