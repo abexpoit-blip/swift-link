@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,10 +48,7 @@ function DashboardPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>("");
-  const [emailVerified, setEmailVerified] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [resendingVerify, setResendingVerify] = useState(false);
   const [balance, setBalance] = useState(0);
   const [withdrawn, setWithdrawn] = useState(0);
   const [links, setLinks] = useState<LinkRow[]>([]);
@@ -60,21 +56,15 @@ function DashboardPage() {
   const [logs, setLogs] = useState<TrafficLog[]>([]);
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
-
-  const [destUrl, setDestUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [creating, setCreating] = useState(false);
-
   async function loadAll(uid: string) {
     const [profileRes, linksRes, earningsRes, logsRes] = await Promise.all([
-      supabase.from("profiles").select("balance_available, balance_withdrawn, email").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("balance_available, balance_withdrawn").eq("id", uid).maybeSingle(),
       supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("earnings_ledger").select("link_id, total_clicks, adsterra_clicks, user_clicks, earnings_usd").eq("user_id", uid),
       supabase.from("traffic_logs").select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid").eq("user_id", uid).order("created_at", { ascending: false }).limit(50),
     ]);
     setBalance(Number(profileRes.data?.balance_available ?? 0));
     setWithdrawn(Number(profileRes.data?.balance_withdrawn ?? 0));
-    if (profileRes.data?.email) setEmail(profileRes.data.email);
     const lks = (linksRes.data as LinkRow[] | null) ?? [];
     setLinks(lks);
     const agg: Record<string, EarningRow> = {};
@@ -96,8 +86,6 @@ function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate({ to: "/login" }); return; }
       setUserId(session.user.id);
-      setEmail(session.user.email ?? "");
-      setEmailVerified(!!session.user.email_confirmed_at);
       // fire-and-forget: record activity for inactive-user purge
       supabase.rpc("touch_last_login").then(() => {});
       // check ban status
@@ -144,48 +132,6 @@ function DashboardPage() {
     if (error) toast.error(error.message);
   }
 
-  function genCode(len = 7) {
-    const chars = "abcdefghijkmnpqrstuvwxyz23456789";
-    let out = ""; for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
-    return out;
-  }
-
-  async function createLink(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userId) return;
-    if (!emailVerified) {
-      toast.error("Please verify your email first to create links.");
-      return;
-    }
-    try {
-      const u = new URL(destUrl.trim());
-      if (!["http:", "https:"].includes(u.protocol)) throw new Error();
-    } catch { toast.error("Enter a valid https URL"); return; }
-    setCreating(true);
-    const { error } = await supabase.from("links").insert({
-      user_id: userId, short_code: genCode(),
-      title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
-    });
-    setCreating(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Short link created");
-    setDestUrl(""); setTitle("");
-    await loadAll(userId);
-  }
-
-  async function resendVerify() {
-    if (!email) return;
-    setResendingVerify(true);
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
-    });
-    setResendingVerify(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Verification email sent. Check your Gmail inbox.");
-  }
-
   async function deleteLink(id: string) {
     if (!userId || !confirm("Delete this link?")) return;
     const { error } = await supabase.from("links").delete().eq("id", id);
@@ -219,19 +165,6 @@ function DashboardPage() {
 
 
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl space-y-5 sm:space-y-7">
-        {/* Verify email banner */}
-        {!emailVerified && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="text-sm">
-              <span className="font-semibold text-amber-900 dark:text-amber-200">Email not verified.</span>{" "}
-              <span className="text-amber-900/80 dark:text-amber-200/80">Confirm <span className="font-mono">{email}</span> to unlock link creation.</span>
-            </div>
-            <Button size="sm" onClick={resendVerify} disabled={resendingVerify} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-              {resendingVerify ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
-            </Button>
-          </div>
-        )}
-
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
