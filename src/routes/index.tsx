@@ -471,8 +471,9 @@ function HowItWorks() {
 /* ─────────────────────────────────────────────── EARNINGS CALCULATOR */
 function EarningsCalculator() {
   const [daily, setDaily] = useState(5000);
-  // $1 per 100,000 clicks
-  const rate = 1 / 100000;
+  // $1 per 50,000 clicks
+  const rate = 1 / 50000;
+
   const dailyEarn = daily * rate;
   const monthlyEarn = dailyEarn * 30;
   const yearlyEarn = dailyEarn * 365;
