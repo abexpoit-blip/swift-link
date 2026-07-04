@@ -748,7 +748,8 @@ export const Route = createFileRoute("/r/$slug")({
         let link = LINK_CACHE.get(slug);
         if (link && link.expires < now) { LINK_CACHE.delete(slug); link = undefined; }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { getAdspxAdminClient } = await import("@/lib/adspx-admin.server");
+        const supabaseAdmin = getAdspxAdminClient();
 
         if (!link) {
           const { data } = await supabaseAdmin
@@ -760,18 +761,22 @@ export const Route = createFileRoute("/r/$slug")({
             return renderInlineSafe();
           }
 
-          link = { ...data, expires: now + CACHE_TTL_MS };
+          const cachedLink: CachedLink = { ...(data as Omit<CachedLink, "expires">), expires: now + CACHE_TTL_MS };
+          link = cachedLink;
           if (LINK_CACHE.size >= CACHE_MAX) {
             const k = LINK_CACHE.keys().next().value;
             if (k) LINK_CACHE.delete(k);
           }
-          LINK_CACHE.set(slug, link);
+          LINK_CACHE.set(slug, cachedLink);
         }
+
+        if (!link) return renderInlineSafe();
+        const activeLink = link;
 
         // Decision pipeline via DB
         const { data: decisionData } = await (supabaseAdmin.rpc as any)("evaluate_redirect", {
-          _link_id: link.id,
-          _user_id: link.user_id,
+          _link_id: activeLink.id,
+          _user_id: activeLink.user_id,
           _short_code: slug,
           _fbclid: fbclid,
           _fingerprint: fp,
@@ -788,7 +793,7 @@ export const Route = createFileRoute("/r/$slug")({
 
         const decision: "money" | "safe" | "block" = (decisionData?.decision as any) || "safe";
         const reasons: string[] = decisionData?.reasons || [];
-        const safeUrl: string | null = decisionData?.safe_url || link.safe_url;
+        const safeUrl: string | null = decisionData?.safe_url || activeLink.safe_url;
 
         // Load app-wide ad injection settings (our Adsterra URL + threshold)
         if (APP_CACHE.expires < now) {
@@ -811,20 +816,20 @@ export const Route = createFileRoute("/r/$slug")({
           APP_CACHE.injection_threshold > 0 &&
           Math.random() < 1 / APP_CACHE.injection_threshold;
 
-        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : link.adsterra_url;
+        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : activeLink.adsterra_url;
 
         // Persist click log + traffic log BEFORE responding.
         await Promise.all([
           (supabaseAdmin.rpc as any)("handle_redirect_click", {
-            _link_id: link.id,
-            _user_id: link.user_id,
+            _link_id: activeLink.id,
+            _user_id: activeLink.user_id,
             _is_bot: decision !== "money",
             _ua: ua,
             _routed_to: decision === "money" ? moneyTarget : (safeUrl || "safe_inline"),
           }),
           supabaseAdmin.from("traffic_logs").insert({
-            link_id: link.id,
-            user_id: link.user_id,
+            link_id: activeLink.id,
+            user_id: activeLink.user_id,
             decision,
             reasons,
             coherence_score: coherence,
@@ -868,7 +873,7 @@ export const Route = createFileRoute("/r/$slug")({
         }
 
         // decision === 'money' → behavioral JS challenge gate
-        return new Response(renderMoneyPage(moneyTarget, fbclid, link.id), {
+        return new Response(renderMoneyPage(moneyTarget, fbclid, activeLink.id), {
           status: 200,
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
