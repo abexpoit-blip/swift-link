@@ -486,3 +486,123 @@ function AIProtectionPanel({ humans, bots }: { humans: number; bots: number }) {
   );
 }
 
+/* ---------------- Performance Meters (gauges) ---------------- */
+function Gauge({
+  label,
+  value,
+  display,
+  sub,
+  color = "#6366f1",
+}: {
+  label: string;
+  value: number; // 0..100
+  display: string;
+  sub?: string;
+  color?: string;
+}) {
+  const pct = Math.max(0, Math.min(100, value));
+  const size = 140;
+  const stroke = 12;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
+  const gid = `g-${label.replace(/\s+/g, "-")}`;
+
+  return (
+    <div className="rounded-2xl glass-card p-5 flex flex-col items-center text-center
+      shadow-[0_10px_30px_-12px_rgba(15,23,42,0.15)]">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90 drop-shadow-[0_4px_8px_rgba(99,102,241,0.15)]">
+          <defs>
+            <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={color} />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            stroke="rgba(148,163,184,0.20)" strokeWidth={stroke} fill="none"
+          />
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            stroke={`url(#${gid})`} strokeWidth={stroke} fill="none"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 800ms ease" }}
+          />
+        </svg>
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="text-center">
+            <div className="font-display text-2xl font-bold tracking-tight">{display}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
+              {pct.toFixed(0)}%
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 font-display font-semibold text-sm">{label}</div>
+      {sub && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function MetersPanel({
+  humanPct,
+  balance,
+  totalClicks,
+  totalEarned,
+  withdrawn,
+}: {
+  humanPct: number;
+  balance: number;
+  totalClicks: number;
+  totalEarned: number;
+  withdrawn: number;
+}) {
+  const MIN_PAYOUT = 10;
+  const payoutPct = Math.min(100, (balance / MIN_PAYOUT) * 100);
+  // Next earning tier — $1 per 50k. Progress toward the next full dollar.
+  const perDollarClicks = 50_000;
+  const nextTierPct = ((totalClicks % perDollarClicks) / perDollarClicks) * 100;
+  const lifetime = totalEarned + withdrawn;
+
+  return (
+    <section className="rounded-2xl glass-card p-5 sm:p-6">
+      <div className="flex items-end justify-between mb-4 gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold">Performance Meters</h2>
+          <p className="text-xs text-muted-foreground">Live gauges — traffic quality, payout progress & earning velocity.</p>
+        </div>
+        <div className="hidden sm:block text-[11px] text-muted-foreground font-mono">
+          lifetime ${lifetime.toFixed(2)}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Gauge
+          label="Traffic Quality"
+          value={humanPct}
+          display={`${humanPct.toFixed(0)}%`}
+          sub="Verified human share"
+          color="#06b6d4"
+        />
+        <Gauge
+          label="Payout Progress"
+          value={payoutPct}
+          display={`$${balance.toFixed(2)}`}
+          sub={`of $${MIN_PAYOUT} min withdrawal`}
+          color="#6366f1"
+        />
+        <Gauge
+          label="Next $1 Tier"
+          value={nextTierPct}
+          display={`${(totalClicks % perDollarClicks).toLocaleString()}`}
+          sub={`clicks toward next $1 (per ${perDollarClicks.toLocaleString()})`}
+          color="#ec4899"
+        />
+      </div>
+    </section>
+  );
+}
+
+
