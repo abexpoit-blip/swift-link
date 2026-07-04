@@ -54,12 +54,18 @@ function BalanceWidget({ balance }: { balance: number }) {
       <Link
         to="/withdraw"
         title={`Available: ${formatted}`}
-        className="mx-auto my-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition"
+        className="mx-auto my-2 flex h-9 w-9 items-center justify-center rounded-xl text-primary
+          bg-gradient-to-b from-white to-slate-100
+          shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.06),0_2px_6px_rgba(15,23,42,0.10)]
+          hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_14px_rgba(99,102,241,0.25)]
+          active:translate-y-0 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]
+          transition-all duration-150"
       >
-        <Wallet className="h-4 w-4" />
+        <Wallet className="h-4 w-4 drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]" />
       </Link>
     );
   }
+
 
   return (
     <div className="mx-2 my-2 rounded-lg border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3">
