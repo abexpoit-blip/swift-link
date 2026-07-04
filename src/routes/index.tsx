@@ -31,8 +31,9 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Shorten links, share them anywhere, and earn real money for every click. $1 per 100k clicks. Withdraw in USDT crypto from just $25.",
+          "Shorten links, share them anywhere, and earn real money for every click. $1 per 50,000 clicks. Withdraw in USDT crypto from just $10.",
       },
+
     ],
   }),
 });
