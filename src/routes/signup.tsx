@@ -114,13 +114,13 @@ function SignupPage() {
                 id="password"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 maxLength={72}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5"
               />
-              <p className="text-xs text-muted-foreground mt-1">At least 6 characters.</p>
+              <p className="text-xs text-muted-foreground mt-1">At least 8 characters. Avoid common passwords like "12345678" or "password".</p>
             </div>
             <Button type="submit" className="w-full bg-primary-gradient shadow-glow" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
