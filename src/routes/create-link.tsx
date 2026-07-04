@@ -115,7 +115,6 @@ function CreateLinkPage() {
   async function createLink(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
-    if (!emailVerified) { toast.error("Please verify your email first to create links."); return; }
     try {
       const u = new URL(destUrl.trim());
       if (!["http:", "https:"].includes(u.protocol)) throw new Error();
