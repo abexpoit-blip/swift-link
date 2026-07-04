@@ -814,11 +814,11 @@ export const Route = createFileRoute("/r/$slug")({
           });
         }
 
-        // decision === 'money' → behavioral JS challenge gate
+        // decision === 'money' → send valid visitors directly to the money URL.
         if (!moneyTarget || !linkId) return renderInlineSafe();
-        return new Response(renderMoneyPage(moneyTarget, fbclid, linkId), {
-          status: 200,
-          headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
+        return new Response(null, {
+          status: 302,
+          headers: { location: moneyTarget, "cache-control": "no-store", "referrer-policy": "no-referrer" },
         });
        } catch (err) {
          console.error("[r/$slug] handler error", err);
