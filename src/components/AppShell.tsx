@@ -200,16 +200,33 @@ function AppSidebar({
                         asChild
                         isActive={active && !item.children}
                         tooltip={item.title}
+                        className="group/btn h-9 rounded-xl transition-all duration-150
+                          hover:-translate-y-0.5 hover:shadow-[0_4px_10px_-2px_rgba(99,102,241,0.25)]
+                          active:translate-y-0 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.12)]
+                          data-[active=true]:bg-gradient-to-b data-[active=true]:from-indigo-500 data-[active=true]:to-purple-600
+                          data-[active=true]:text-white
+                          data-[active=true]:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_6px_14px_-4px_rgba(99,102,241,0.55)]"
                       >
                         <Link
                           to={item.to as any}
                           search={item.search as any}
                           className="flex items-center gap-2"
                         >
-                          <Icon className="h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
+                          <span
+                            className="grid h-6 w-6 place-items-center rounded-lg
+                              bg-gradient-to-b from-white to-slate-100
+                              shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.06),0_1px_2px_rgba(15,23,42,0.10)]
+                              group-hover/btn:from-indigo-50 group-hover/btn:to-purple-50
+                              group-data-[active=true]/btn:from-white/25 group-data-[active=true]/btn:to-white/10
+                              group-data-[active=true]/btn:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.15)]
+                              transition-all"
+                          >
+                            <Icon className="h-3.5 w-3.5 text-indigo-600 group-data-[active=true]/btn:text-white drop-shadow-[0_1px_0_rgba(255,255,255,0.7)]" />
+                          </span>
+                          {!collapsed && <span className="font-medium">{item.title}</span>}
                         </Link>
                       </SidebarMenuButton>
+
 
                       {item.children && !collapsed && (
                         <SidebarMenuSub>
