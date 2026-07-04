@@ -90,7 +90,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <QueryClientProvider client={queryClient}>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="top-right" offset="72px" />
         </QueryClientProvider>
         <Scripts />
       </body>

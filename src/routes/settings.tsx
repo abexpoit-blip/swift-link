@@ -143,7 +143,7 @@ function SettingsPage() {
               <h2 className="font-display text-lg font-semibold">Verify email</h2>
             </div>
             <p className="text-sm text-amber-900/90 dark:text-amber-200/90">
-              Confirm your email to unlock link creation and withdrawals.
+              Confirm your email to keep account recovery and payout notices secure.
             </p>
             <Button onClick={resendVerify} disabled={resending} className="bg-amber-600 hover:bg-amber-700 text-white">
               {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resend verification email"}

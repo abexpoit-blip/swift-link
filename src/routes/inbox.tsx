@@ -189,9 +189,9 @@ function InboxPage() {
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
               <div>
-                <div className="font-semibold text-amber-900 dark:text-amber-200">Verify your email to unlock link creation</div>
+                <div className="font-semibold text-amber-900 dark:text-amber-200">Verify your email for account security</div>
                 <p className="text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
-                  You can browse and read messages without verifying. To create short links you must confirm <span className="font-mono">{email}</span> from your Gmail inbox.
+                  You can browse and read messages without verifying. Confirm <span className="font-mono">{email}</span> from your Gmail inbox to secure account notices.
                 </p>
               </div>
             </div>
