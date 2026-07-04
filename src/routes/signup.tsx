@@ -29,7 +29,7 @@ function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail.endsWith("@gmail.com") && trimmedEmail !== "admin@sleepox.com") {
+    if (!trimmedEmail.endsWith("@gmail.com") && trimmedEmail !== "admin@adspx.com") {
       toast.error("Only Gmail accounts are allowed. Please use a @gmail.com email.");
       return;
     }
