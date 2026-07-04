@@ -255,9 +255,18 @@ function DashboardPage() {
           <Link to="/withdraw" className="group rounded-2xl glass-card p-5 hover:shadow-glow transition-all">
             <Wallet className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
             <div className="font-display font-semibold">Withdraw</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Cash out via USDT (min $25)</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Cash out via USDT (min $10)</div>
           </Link>
         </section>
+
+        {/* Performance Meters */}
+        <MetersPanel
+          humanPct={humanPct}
+          balance={balance}
+          totalClicks={totalClicks}
+          totalEarned={totalEarned}
+          withdrawn={withdrawn}
+        />
 
         {/* AI Protection showcase */}
         <AIProtectionPanel humans={humansCount} bots={botsCount} />
@@ -266,10 +275,11 @@ function DashboardPage() {
         <section className="rounded-2xl glass-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ring-cyan">
           <div>
             <div className="font-display text-lg font-semibold">Ready to cash out?</div>
-            <p className="text-sm text-muted-foreground">Minimum $25 · USDT TRC20 / BEP20 · 24h payout</p>
+            <p className="text-sm text-muted-foreground">Minimum $10 · USDT TRC20 / BEP20 · 24h payout</p>
           </div>
           <Button asChild className="bg-primary-gradient shadow-glow text-primary-foreground"><Link to="/withdraw">Withdraw <Wallet className="h-4 w-4 ml-1" /></Link></Button>
         </section>
+
 
         {/* Recent links summary + Live traffic feed */}
         <section className="grid lg:grid-cols-[1fr_360px] gap-6">
