@@ -364,6 +364,9 @@ function renderInlineSafe(): Response {
     status: 200,
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
   });
+}
+
+
 
 
 function escapeHtml(s: string): string {
