@@ -1,30 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
-import ws from "ws";
+// Public server-side Supabase RPC client using plain fetch — avoids
+// supabase-js realtime WebSocket dependency (breaks on Node.js < 22).
 
-function isNewSupabaseApiKey(value: string): boolean {
-  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
-}
-
-function createSupabaseFetch(supabaseKey: string): typeof fetch {
-  return (input, init) => {
-    const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
-    );
-
-    if (init?.headers) {
-      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
-    }
-
-    if (isNewSupabaseApiKey(supabaseKey) && headers.get("Authorization") === `Bearer ${supabaseKey}`) {
-      headers.delete("Authorization");
-    }
-
-    headers.set("apikey", supabaseKey);
-    return fetch(input, { ...init, headers });
-  };
-}
-
-function createAdspxPublicClient() {
+function getPublicConfig() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const publishableKey =
     process.env.SUPABASE_PUBLISHABLE_KEY ||
@@ -35,30 +12,64 @@ function createAdspxPublicClient() {
 
   if (!supabaseUrl || !publishableKey) {
     const missing = [
-      ...(!supabaseUrl ? ["SUPABASE_URL (or VITE_SUPABASE_URL)"] : []),
-      ...(!publishableKey ? ["SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY / ANON_KEY)"] : []),
+      ...(!supabaseUrl ? ["SUPABASE_URL"] : []),
+      ...(!publishableKey ? ["SUPABASE_PUBLISHABLE_KEY / ANON_KEY"] : []),
     ];
-    throw new Error(`Missing public database environment variable(s): ${missing.join(", ")}.`);
+    throw new Error(`Missing public database env: ${missing.join(", ")}`);
   }
-
-  return createClient(supabaseUrl, publishableKey, {
-    global: {
-      fetch: createSupabaseFetch(publishableKey),
-    },
-    auth: {
-      storage: undefined,
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-    realtime: {
-      transport: ws as any,
-    },
-  }) as any;
+  return { supabaseUrl, publishableKey };
 }
 
-let cachedPublic: any;
+type RpcResult<T> = { data: T | null; error: { message: string } | null };
 
 export function getAdspxPublicClient() {
-  cachedPublic ??= createAdspxPublicClient();
-  return cachedPublic;
+  const { supabaseUrl, publishableKey } = getPublicConfig();
+  const headers = {
+    apikey: publishableKey,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  return {
+    rpc: async <T = any>(fn: string, args: Record<string, any>): Promise<RpcResult<T>> => {
+      try {
+        const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${fn}`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(args),
+        });
+        const text = await res.text();
+        if (!res.ok) return { data: null, error: { message: `${res.status} ${text}` } };
+        const data = text ? (JSON.parse(text) as T) : (null as any);
+        return { data, error: null };
+      } catch (e: any) {
+        return { data: null, error: { message: e?.message ?? String(e) } };
+      }
+    },
+    from: (table: string) => {
+      const filters: string[] = [];
+      let selectCols = "*";
+      let limitVal: number | undefined;
+      const runner = {
+        select(cols: string) { selectCols = cols; return runner; },
+        eq(col: string, val: any) { filters.push(`${col}=eq.${encodeURIComponent(String(val))}`); return runner; },
+        limit(n: number) { limitVal = n; return runner; },
+        then(resolve: (r: RpcResult<any[]>) => void, reject?: (e: any) => void) {
+          const qs = [
+            `select=${encodeURIComponent(selectCols)}`,
+            ...filters,
+            ...(limitVal !== undefined ? [`limit=${limitVal}`] : []),
+          ].join("&");
+          fetch(`${supabaseUrl}/rest/v1/${table}?${qs}`, { headers })
+            .then(async (res) => {
+              const text = await res.text();
+              if (!res.ok) return resolve({ data: null, error: { message: `${res.status} ${text}` } });
+              resolve({ data: text ? JSON.parse(text) : [], error: null });
+            })
+            .catch((e) => (reject ? reject(e) : resolve({ data: null, error: { message: e?.message ?? String(e) } })));
+        },
+      };
+      return runner;
+    },
+  };
 }
