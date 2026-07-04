@@ -9,6 +9,9 @@ cd "$APP_DIR"
 echo "==> Updating source"
 git pull origin main
 
+echo "==> Ensuring self-hosted backend env has all required keys"
+bash scripts/ensure-selfhost-env.sh
+
 echo "==> Stopping ${APP_NAME} before replacing build files"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
   pm2 stop "$APP_NAME"
