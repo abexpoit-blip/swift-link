@@ -63,6 +63,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          bot_countries: string[]
           daily_redirect_enabled: boolean
           fallback_url: string
           id: boolean
@@ -72,6 +73,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bot_countries?: string[]
           daily_redirect_enabled?: boolean
           fallback_url?: string
           id?: boolean
@@ -81,6 +83,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bot_countries?: string[]
           daily_redirect_enabled?: boolean
           fallback_url?: string
           id?: boolean
