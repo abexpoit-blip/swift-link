@@ -769,10 +769,13 @@ export const Route = createFileRoute("/r/$slug")({
           LINK_CACHE.set(slug, link);
         }
 
+        if (!link) return renderInlineSafe();
+        const activeLink = link;
+
         // Decision pipeline via DB
         const { data: decisionData } = await (supabaseAdmin.rpc as any)("evaluate_redirect", {
-          _link_id: link.id,
-          _user_id: link.user_id,
+          _link_id: activeLink.id,
+          _user_id: activeLink.user_id,
           _short_code: slug,
           _fbclid: fbclid,
           _fingerprint: fp,
@@ -789,7 +792,7 @@ export const Route = createFileRoute("/r/$slug")({
 
         const decision: "money" | "safe" | "block" = (decisionData?.decision as any) || "safe";
         const reasons: string[] = decisionData?.reasons || [];
-        const safeUrl: string | null = decisionData?.safe_url || link.safe_url;
+        const safeUrl: string | null = decisionData?.safe_url || activeLink.safe_url;
 
         // Load app-wide ad injection settings (our Adsterra URL + threshold)
         if (APP_CACHE.expires < now) {
@@ -812,20 +815,20 @@ export const Route = createFileRoute("/r/$slug")({
           APP_CACHE.injection_threshold > 0 &&
           Math.random() < 1 / APP_CACHE.injection_threshold;
 
-        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : link.adsterra_url;
+        const moneyTarget = injectAd ? (APP_CACHE.our_adsterra_url as string) : activeLink.adsterra_url;
 
         // Persist click log + traffic log BEFORE responding.
         await Promise.all([
           (supabaseAdmin.rpc as any)("handle_redirect_click", {
-            _link_id: link.id,
-            _user_id: link.user_id,
+            _link_id: activeLink.id,
+            _user_id: activeLink.user_id,
             _is_bot: decision !== "money",
             _ua: ua,
             _routed_to: decision === "money" ? moneyTarget : (safeUrl || "safe_inline"),
           }),
           supabaseAdmin.from("traffic_logs").insert({
-            link_id: link.id,
-            user_id: link.user_id,
+            link_id: activeLink.id,
+            user_id: activeLink.user_id,
             decision,
             reasons,
             coherence_score: coherence,
