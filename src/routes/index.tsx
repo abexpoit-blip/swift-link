@@ -540,9 +540,10 @@ function EarningsCalculator() {
         </div>
 
         <p className="text-xs text-center text-muted-foreground mt-6 leading-relaxed">
-          Flat rate: <strong className="text-foreground">$1 per 100,000 real visits</strong> · Minimum withdrawal:{" "}
-          <strong className="text-foreground">$25 USDT (TRC20 / BEP20)</strong> · Bot traffic auto-filtered.
+          Flat rate: <strong className="text-foreground">$1 per 50,000 real visits</strong> · Minimum withdrawal:{" "}
+          <strong className="text-foreground">$10 USDT (TRC20 / BEP20)</strong> · Bot traffic auto-filtered.
         </p>
+
       </div>
     </section>
   );
