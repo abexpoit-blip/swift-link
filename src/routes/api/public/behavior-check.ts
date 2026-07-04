@@ -15,7 +15,8 @@ export const Route = createFileRoute("/api/public/behavior-check")({
           const ms = Number(body.ms) || 0;
           if (!fbclid || !linkId) return new Response("ok", { status: 200 });
           if (events < 1 || ms < 100) return new Response("ok", { status: 200 });
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { getAdspxAdminClient } = await import("@/lib/adspx-admin.server");
+          const supabaseAdmin = getAdspxAdminClient();
           await (supabaseAdmin.rpc as any)("confirm_human_fbclid", { _fbclid: fbclid, _link_id: linkId });
           return new Response("ok", { status: 200 });
         } catch {

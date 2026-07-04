@@ -748,7 +748,8 @@ export const Route = createFileRoute("/r/$slug")({
         let link = LINK_CACHE.get(slug);
         if (link && link.expires < now) { LINK_CACHE.delete(slug); link = undefined; }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { getAdspxAdminClient } = await import("@/lib/adspx-admin.server");
+        const supabaseAdmin = getAdspxAdminClient();
 
         if (!link) {
           const { data } = await supabaseAdmin
