@@ -174,17 +174,6 @@ function CreateLinkPage() {
         {/* Create form */}
         <div className="rounded-2xl glass-card p-6">
           <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> New smart link</h2>
-          {!emailVerified && (
-            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="text-sm">
-                <span className="font-semibold text-amber-900 dark:text-amber-200">Email not verified.</span>{" "}
-                <span className="text-amber-900/80 dark:text-amber-200/80">Confirm <span className="font-mono">{email}</span> before creating links.</span>
-              </div>
-              <Button size="sm" onClick={resendVerify} disabled={resendingVerify} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                {resendingVerify ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
-              </Button>
-            </div>
-          )}
           <form onSubmit={createLink} className="grid md:grid-cols-[1fr_200px_auto] gap-3">
             <div>
               <Label htmlFor="dest" className="text-xs uppercase tracking-wider text-muted-foreground">Money URL (ad partner)</Label>
