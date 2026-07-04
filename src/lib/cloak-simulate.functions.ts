@@ -90,7 +90,8 @@ export const simulateRedirect = createServerFn({ method: "POST" })
     const p = PROFILES[data.profile];
     if (!p) throw new Error("Unknown profile");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getAdspxAdminClient } = await import("@/lib/adspx-admin.server");
+    const supabaseAdmin = getAdspxAdminClient();
 
     const { data: link } = await supabaseAdmin
       .from("links")

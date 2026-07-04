@@ -26,12 +26,12 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 function createAdspxAdminClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     const missing = [
       ...(!supabaseUrl ? ["SUPABASE_URL"] : []),
-      ...(!serviceRoleKey ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
+      ...(!serviceRoleKey ? ["SUPABASE_SERVICE_ROLE_KEY (or SERVICE_ROLE_KEY)"] : []),
     ];
     throw new Error(`Missing database environment variable(s): ${missing.join(", ")}.`);
   }
