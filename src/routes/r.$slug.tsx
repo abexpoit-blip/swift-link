@@ -359,6 +359,13 @@ function renderSafeArticle(snippets: Snip[]): string {
   return pick(picks, year);
 }
 
+function renderInlineSafe(): Response {
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items), {
+    status: 200,
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer" },
+  });
+
+
 function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
