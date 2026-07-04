@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,8 @@ type CloakSettings = {
   fbclid_max_hits: number;
 };
 
+const FREE_LINK_LIMIT = 100;
+
 function CreateLinkPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,7 @@ function CreateLinkPage() {
   const [emailVerified, setEmailVerified] = useState(true);
   const [resendingVerify, setResendingVerify] = useState(false);
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [linkLimit, setLinkLimit] = useState<number | null>(FREE_LINK_LIMIT);
   const [earningsByLink, setEarningsByLink] = useState<Record<string, EarningRow>>({});
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
@@ -53,10 +56,13 @@ function CreateLinkPage() {
   const [creating, setCreating] = useState(false);
 
   async function loadAll(uid: string) {
-    const [linksRes, earningsRes] = await Promise.all([
+    const [profileRes, linksRes, earningsRes] = await Promise.all([
+      supabase.from("profiles").select("link_limit, plan_slug").eq("id", uid).maybeSingle(),
       supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("earnings_ledger").select("link_id, total_clicks, adsterra_clicks, user_clicks, earnings_usd").eq("user_id", uid),
     ]);
+    const profile = profileRes.data as { link_limit: number | null; plan_slug: string | null } | null;
+    setLinkLimit(profile?.plan_slug === "free" ? Math.max(Number(profile?.link_limit ?? FREE_LINK_LIMIT), FREE_LINK_LIMIT) : profile?.link_limit ?? null);
     setLinks((linksRes.data as LinkRow[] | null) ?? []);
     const agg: Record<string, EarningRow> = {};
     for (const e of (earningsRes.data as EarningRow[] | null) ?? []) {
@@ -125,7 +131,10 @@ function CreateLinkPage() {
       title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
     });
     setCreating(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message.replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
+      return;
+    }
     toast.success("Short link created");
     setDestUrl(""); setTitle("");
     await loadAll(userId);
@@ -156,6 +165,11 @@ function CreateLinkPage() {
     toast.success("Copied");
   }
 
+  const linksUsedText = useMemo(() => {
+    if (linkLimit === null) return `${links.length} / Unlimited`;
+    return `${links.length} / ${linkLimit}`;
+  }, [linkLimit, links.length]);
+
   if (loading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
@@ -163,11 +177,16 @@ function CreateLinkPage() {
   return (
     <div className="min-h-screen text-foreground">
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl space-y-6">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
           <Link2 className="h-6 w-6 text-primary" />
-          <div>
+          <div className="min-w-0">
             <h1 className="font-display text-2xl font-bold tracking-tight">Create Smart Link</h1>
             <p className="text-sm text-muted-foreground">Generate protected short links and manage traffic rules</p>
+          </div>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-xs font-medium text-primary shrink-0">
+            Link usage: <span className="font-mono">{linksUsedText}</span>
           </div>
         </div>
 
