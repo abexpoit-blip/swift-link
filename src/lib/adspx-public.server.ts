@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -48,6 +49,9 @@ function createAdspxPublicClient() {
       storage: undefined,
       persistSession: false,
       autoRefreshToken: false,
+    },
+    realtime: {
+      transport: ws as any,
     },
   }) as any;
 }
