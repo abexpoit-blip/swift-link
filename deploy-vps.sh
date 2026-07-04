@@ -12,6 +12,19 @@ git pull origin main
 echo "==> Ensuring self-hosted backend env has all required keys"
 bash scripts/ensure-selfhost-env.sh
 
+echo "==> Loading self-hosted backend env for the browser build"
+set -a
+# shellcheck disable=SC1091
+source /opt/supabase-prod/.env
+set +a
+export VITE_SUPABASE_URL="${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}"
+export VITE_SUPABASE_PUBLISHABLE_KEY="${ANON_KEY:-${SUPABASE_PUBLISHABLE_KEY:-}}"
+export VITE_SUPABASE_PROJECT_ID="${VITE_SUPABASE_PROJECT_ID:-selfhost}"
+export SUPABASE_URL="${VITE_SUPABASE_URL}"
+export SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY}"
+export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
+echo "Build env: VITE_SUPABASE_URL=$([[ -n "${VITE_SUPABASE_URL:-}" ]] && echo set || echo missing) VITE_SUPABASE_PUBLISHABLE_KEY=$([[ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]] && echo set || echo missing)"
+
 echo "==> Stopping ${APP_NAME} before replacing build files"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
   pm2 stop "$APP_NAME"
