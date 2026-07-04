@@ -404,8 +404,10 @@ export const Route = createFileRoute("/r/$slug")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
+       try {
         const slug = String(params.slug || "").slice(0, 64);
-        if (!slug) return new Response("Not found", { status: 404 });
+        if (!slug) return renderInlineSafe();
+
 
         const url = new URL(request.url);
         const fbclid = url.searchParams.get("fbclid");
