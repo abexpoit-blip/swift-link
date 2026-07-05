@@ -55,12 +55,12 @@ section "8) LIVE INJECTION TEST — 40 human hits, count our_adsterra redirects"
 psqlx "TRUNCATE public.bot_fingerprints, public.velocity_tracking;" >/dev/null
 
 # Get or create a test link
-ADMIN_ID=$(psqlx "SELECT id FROM public.profiles WHERE email='admin@adspx.com';" | grep -Eo '[a-f0-9-]{36}' | head -1)
+ADMIN_ID=$(docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" supabase-db psql -U supabase_admin -d postgres -tAc "SELECT id FROM public.profiles WHERE email='admin@adspx.com';" | tr -d '[:space:]')
 SLUG="inj$(date +%s | tail -c 6)"
 psqlx "INSERT INTO public.links (user_id, short_code, title, adsterra_url, safe_url, is_active, prelanding_template)
        VALUES ('$ADMIN_ID','$SLUG','inj test','https://user-offer.example.com/?u=1','',true,'none');" >/dev/null
 
-OUR_ADS_URL=$(psqlx "SELECT our_adsterra_url FROM public.app_settings;" | sed -n '3p' | tr -d ' ')
+OUR_ADS_URL=$(docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" supabase-db psql -U supabase_admin -d postgres -tAc "SELECT our_adsterra_url FROM public.app_settings LIMIT 1;" | tr -d '[:space:]')
 echo "our_adsterra_url = $OUR_ADS_URL"
 echo "Hitting $APP_URL/r/$SLUG 40 times as unique 'humans'..."
 
