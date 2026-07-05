@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /media/
 Disallow: /admin/
+Disallow: /admin-login
 Disallow: /control-panel
 Disallow: /dashboard
 Disallow: /analytics
@@ -8,8 +10,37 @@ Disallow: /funnel
 Disallow: /domains
 Disallow: /links/
 Disallow: /r/
+Disallow: /inbox
+Disallow: /settings
+Disallow: /withdraw
+Disallow: /create-link
 
-# Sitemap is generated dynamically per host — sleepox.com/sitemap.xml lists
-# sleepox.com URLs, breezysocial.com/sitemap.xml lists breezysocial.com URLs.
-Sitemap: https://sleepox.com/sitemap.xml
-Sitemap: https://breezysocial.com/sitemap.xml
+# Explicit allow for Facebook / Meta crawlers so og:image previews always resolve
+User-agent: facebookexternalhit
+Allow: /
+Allow: /media/
+Allow: /r/
+
+User-agent: Facebot
+Allow: /
+Allow: /media/
+Allow: /r/
+
+User-agent: Twitterbot
+Allow: /
+Allow: /media/
+Allow: /r/
+
+User-agent: LinkedInBot
+Allow: /
+Allow: /media/
+Allow: /r/
+
+# Preferred crawl delay for aggressive scrapers
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+Sitemap: https://adspx.com/sitemap.xml
