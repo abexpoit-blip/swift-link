@@ -376,8 +376,11 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       await loadLocalEnvFile();
+      const mediaResponse = handleMediaCover(request);
+      if (mediaResponse) return applySecurityHeaders(request, mediaResponse);
       const redirectResponse = await handleRedirectRoute(request);
       if (redirectResponse) return applySecurityHeaders(request, redirectResponse);
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return applySecurityHeaders(request, response);
