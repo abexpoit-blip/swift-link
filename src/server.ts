@@ -1,9 +1,15 @@
+import { renderSafeArticle, type Snip } from "./lib/safe-article";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 let localEnvLoaded = false;
+
+// In-memory cache for DB snippets used by the safe article renderer.
+const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 0 };
+const SNIPPET_TTL_MS = 120_000;
 
 const HARD_BOT_UA =
   /facebookexternalhit|facebookcatalog|meta-externalagent|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
@@ -149,19 +155,33 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
-function renderEntrySafe(): Response {
-  return new Response(
-    "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Article</title></head><body><article style='max-width:720px;margin:48px auto;padding:0 20px;font:18px/1.7 Georgia,serif;color:#222'><h1 style='font-size:38px;line-height:1.15'>Notes From a Quiet Afternoon</h1><p>Small habits compound into entire lifestyles. The hard part is starting before motivation arrives, which usually means starting when it is not comfortable.</p><p>We tend to overestimate what we can accomplish in a day and underestimate what a year of small, consistent actions can produce.</p></article></body></html>",
-    {
-      status: 200,
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
-        "x-adspx-r-handler": "entry-safe",
-      },
+async function renderEntrySafe(): Promise<Response> {
+  // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
+  const now = Date.now();
+  if (!SNIPPET_CACHE.items.length || SNIPPET_CACHE.expires < now) {
+    try {
+      const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
+      const supabasePublic = getAdspxPublicClient();
+      const { data } = await supabasePublic
+        .from("safe_page_snippets")
+        .select("title, body")
+        .eq("is_active", true)
+        .limit(50);
+      SNIPPET_CACHE.items = (data as Snip[] | null) || [];
+      SNIPPET_CACHE.expires = now + SNIPPET_TTL_MS;
+    } catch (error) {
+      console.error("[server:/r] safe snippet fetch failed", error);
+    }
+  }
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items), {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-adspx-r-handler": "entry-safe",
     },
-  );
+  });
 }
 
 async function handleRedirectRoute(request: Request): Promise<Response | null> {
