@@ -921,7 +921,7 @@ function AdminPage() {
                       onCheckedChange={(v) => setAppCfg({ ...appCfg, daily_redirect_enabled: v })}
                     />
                   </div>
-                  <Button onClick={saveAppSettings} disabled={savingApp} className="bg-primary-gradient">
+                  <Button onClick={() => saveAppSettings()} disabled={savingApp} className="bg-primary-gradient">
                     {savingApp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save settings"}
                   </Button>
                 </div>
@@ -1049,7 +1049,7 @@ function AdminPage() {
                       onCheckedChange={(v) => setAppCfg({ ...appCfg, daily_redirect_enabled: v })}
                     />
                   </div>
-                  <Button onClick={saveAppSettings} disabled={savingApp} className="bg-primary-gradient">
+                  <Button onClick={() => saveAppSettings()} disabled={savingApp} className="bg-primary-gradient">
                     {savingApp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save ads settings"}
                   </Button>
                 </div>
