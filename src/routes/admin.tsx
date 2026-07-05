@@ -290,6 +290,15 @@ function AdminPage() {
     if (data) setAppCfg(data as AppSettings);
   }
 
+  async function loadInjectionAudits() {
+    const { data } = await supabase
+      .from("injection_threshold_audit")
+      .select("id, changed_by_email, old_threshold, new_threshold, note, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setInjectionAudits((data as InjectionAudit[] | null) ?? []);
+  }
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
