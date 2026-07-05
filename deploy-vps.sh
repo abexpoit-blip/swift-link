@@ -12,6 +12,9 @@ git pull origin main
 echo "==> Ensuring self-hosted backend env has all required keys"
 bash scripts/ensure-selfhost-env.sh
 
+echo "==> Repairing self-hosted auth data before deploy"
+bash scripts/repair-selfhost-auth-data.sh
+
 echo "==> Loading self-hosted backend env for the browser build"
 set -a
 # shellcheck disable=SC1091
