@@ -155,7 +155,7 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
-async function renderEntrySafe(): Promise<Response> {
+async function renderEntrySafe(request?: Request): Promise<Response> {
   // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
   const now = Date.now();
   if (!SNIPPET_CACHE.items.length || SNIPPET_CACHE.expires < now) {
@@ -173,7 +173,10 @@ async function renderEntrySafe(): Promise<Response> {
       console.error("[server:/r] safe snippet fetch failed", error);
     }
   }
-  return new Response(renderSafeArticle(SNIPPET_CACHE.items), {
+  // og:image must resolve on the actual serving host (adspx.com) — the /media/*-cover.jpg
+  // handler lives here. Persona domains (dailyreader.co etc.) are only for branding text.
+  const imageHost = request ? new URL(request.url).host : undefined;
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -262,7 +265,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
   try {
     await loadLocalEnvFile();
     const slug = decodeURIComponent(match[1] || "").slice(0, 64);
-    if (!slug) return renderEntrySafe();
+    if (!slug) return renderEntrySafe(request);
 
     const ua = request.headers.get("user-agent") || "";
     const ip = pickHeader(request, "cf-connecting-ip", "x-real-ip", "x-forwarded-for").split(",")[0].trim();
@@ -300,7 +303,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
 
     if (error) {
       console.error("[server:/r] resolve_public_redirect failed", error);
-      return renderEntrySafe();
+      return renderEntrySafe(request);
     }
 
     if (!data || data.found === false || data.decision !== "money") {
@@ -315,10 +318,10 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
           },
         });
       }
-      return renderEntrySafe();
+      return renderEntrySafe(request);
     }
 
-    if (!data.money_url) return renderEntrySafe();
+    if (!data.money_url) return renderEntrySafe(request);
     return new Response(null, {
       status: 302,
       headers: {
@@ -330,7 +333,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     });
   } catch (error) {
     console.error("[server:/r] handler error", error);
-    return renderEntrySafe();
+    return renderEntrySafe(request);
   }
 }
 

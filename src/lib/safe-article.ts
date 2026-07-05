@@ -118,11 +118,18 @@ function footerSitemap(site: string, year: number, links: { section: string; ite
   return `<footer class="site-foot"><div class="sf-inner"><div class="sf-brand"><strong>${escapeHtml(site)}</strong><div>Independent writing since ${year - 6}.</div></div>${links.map((col) => `<div class="sf-col"><h5>${escapeHtml(col.section)}</h5>${col.items.map((it) => `<a href="#">${escapeHtml(it)}</a>`).join("")}</div>`).join("")}</div><div class="sf-legal">© ${year} ${escapeHtml(site)}. All rights reserved. · <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Contact</a> · <a href="#">RSS</a></div></footer>`;
 }
 
+// Actual host serving the request — used ONLY for og:image so Facebook
+// fetches the cover from the same origin (which has the /media/*-cover.jpg handler).
+// All other URLs (canonical, JSON-LD, feeds) stay on the persona's siteHost.
+let CURRENT_IMAGE_HOST: string | null = null;
+export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMAGE_HOST = host; }
+
 function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; wordCount?: number; keywords?: string[] }): string {
   const t = escapeHtml(opts.title);
   const d = escapeHtml(opts.description);
   const site = escapeHtml(opts.siteName);
   const host = opts.siteHost;
+  const imageHost = CURRENT_IMAGE_HOST || opts.siteHost;
   const author = escapeHtml(opts.author);
   const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
   const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
@@ -133,7 +140,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   // Realistic CMS generator strings — rotates so fingerprint doesn't lock
   const generators = ["WordPress 6.5.2", "Ghost 5.82", "WordPress 6.4.3", "Ghost 5.75", "WordPress 6.5.5"];
   const generator = generators[Math.floor(Math.random() * generators.length)];
-  const coverUrl = `https://${host}/media/${slug}-cover.jpg`;
+  const coverUrl = `https://${imageHost}/media/${slug}-cover.jpg`;
   const authorSlug = opts.author.toLowerCase().replace(/\s+/g, "-");
   const readMin = 5 + Math.floor(Math.random() * 6);
   const jsonLd = {
@@ -644,10 +651,15 @@ ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", 
 </body></html>`;
 }
 
-export function renderSafeArticle(snippets: Snip[] = []): string {
-  const picks = pickSnippets(snippets);
-  const year = new Date().getFullYear();
-  const templates = [tmplDailyReader, tmplKitchenJournal, tmplTechWeekly, tmplWellnessMag, tmplTravelLog];
-  const pick = templates[Math.floor(Math.random() * templates.length)];
-  return pick(picks, year);
+export function renderSafeArticle(snippets: Snip[] = [], imageHost?: string): string {
+  setSafeArticleImageHost(imageHost ?? null);
+  try {
+    const picks = pickSnippets(snippets);
+    const year = new Date().getFullYear();
+    const templates = [tmplDailyReader, tmplKitchenJournal, tmplTechWeekly, tmplWellnessMag, tmplTravelLog];
+    const pick = templates[Math.floor(Math.random() * templates.length)];
+    return pick(picks, year);
+  } finally {
+    setSafeArticleImageHost(null);
+  }
 }
