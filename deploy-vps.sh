@@ -25,6 +25,18 @@ export SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY}"
 export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
 echo "Build env: VITE_SUPABASE_URL=$([[ -n "${VITE_SUPABASE_URL:-}" ]] && echo set || echo missing) VITE_SUPABASE_PUBLISHABLE_KEY=$([[ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]] && echo set || echo missing)"
 
+echo "==> Checking self-hosted auth accepts the anon key"
+auth_status="$(curl -sS -o /tmp/adspx-auth-settings.json -w "%{http_code}" \
+  "${VITE_SUPABASE_URL%/}/auth/v1/settings" \
+  -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+  -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" || true)"
+if [[ "$auth_status" == "401" || "$auth_status" == "403" ]]; then
+  echo "!! Auth API rejected the anon key with HTTP ${auth_status}."
+  echo "!! Restart the self-hosted backend containers so /opt/supabase-prod/.env is loaded, then rerun this deploy."
+  exit 1
+fi
+echo "Auth API check: HTTP ${auth_status}"
+
 echo "==> Stopping ${APP_NAME} before replacing build files"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
   pm2 stop "$APP_NAME"
