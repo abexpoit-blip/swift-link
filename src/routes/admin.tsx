@@ -311,6 +311,40 @@ function AdminPage() {
     setInjectionAudits((data as InjectionAudit[] | null) ?? []);
   }
 
+  async function loadBotDetectionStats() {
+    setBotStatsLoading(true);
+    const sevenAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [fpRes, velRes, fbRes, trafRes] = await Promise.all([
+      supabase
+        .from("bot_fingerprints")
+        .select("fingerprint_hash, hit_count, bot_hits, sample_country, sample_ua, sample_ip, auto_blocked, last_seen")
+        .order("last_seen", { ascending: false })
+        .limit(100),
+      supabase
+        .from("velocity_tracking")
+        .select("fingerprint_hash, short_codes, blocked, last_seen, window_start")
+        .eq("blocked", true)
+        .order("last_seen", { ascending: false })
+        .limit(50),
+      supabase
+        .from("fbclid_tracking")
+        .select("fbclid, link_id, hit_count, flagged_bot, human_confirmed, last_seen")
+        .order("last_seen", { ascending: false })
+        .limit(50),
+      supabase
+        .from("traffic_logs")
+        .select("decision, reasons, country, is_mobile, bot_score, created_at")
+        .gte("created_at", sevenAgo)
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+    setBotFps((fpRes.data as BotFp[] | null) ?? []);
+    setVelocityRows((velRes.data as VelocityRow[] | null) ?? []);
+    setFbclidRows((fbRes.data as FbclidRow[] | null) ?? []);
+    setTrafficRows((trafRes.data as TrafficRow[] | null) ?? []);
+    setBotStatsLoading(false);
+  }
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
