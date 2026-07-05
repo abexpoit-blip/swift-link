@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Ensures /opt/supabase-prod/.env has all keys the app needs.
-# Safe to run repeatedly — only adds keys that are missing, never overwrites existing ones.
+# Safe to run repeatedly — adds keys that are missing and repairs keys that exist but are empty.
 set -Eeuo pipefail
 
 ENV_FILE="${SELFHOST_ENV_FILE:-/opt/supabase-prod/.env}"
@@ -25,28 +25,49 @@ mkdir -p "$ENV_DIR"
 touch "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 
-added=0
-for key in "${!REQUIRED[@]}"; do
+set_env_if_missing_or_empty() {
+  local key="$1"
+  local value="$2"
+  local current=""
+
   if grep -qE "^${key}=" "$ENV_FILE"; then
-    continue
+    current="$(grep -E "^${key}=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | tr -d '"' | xargs || true)"
+    if [[ -n "$current" ]]; then
+      return 0
+    fi
+
+    local tmp
+    tmp="$(mktemp)"
+    awk -v key="$key" -v val="$value" '
+      BEGIN { replaced = 0 }
+      index($0, key "=") == 1 {
+        if (!replaced) { print key "=" val; replaced = 1 }
+        next
+      }
+      { print }
+      END { if (!replaced) print key "=" val }
+    ' "$ENV_FILE" > "$tmp"
+    cat "$tmp" > "$ENV_FILE"
+    rm -f "$tmp"
+    echo "  + repaired empty ${key}"
+    added=$((added+1))
+    return 0
   fi
-  echo "${key}=${REQUIRED[$key]}" >> "$ENV_FILE"
+
+  echo "${key}=${value}" >> "$ENV_FILE"
   echo "  + added ${key}"
   added=$((added+1))
+}
+
+added=0
+for key in "${!REQUIRED[@]}"; do
+  set_env_if_missing_or_empty "$key" "${REQUIRED[$key]}"
 done
 
 # Also mirror SERVICE_ROLE_KEY → SUPABASE_SERVICE_ROLE_KEY and ANON_KEY → SUPABASE_PUBLISHABLE_KEY
 # so the app runtime reads them regardless of naming.
-if ! grep -qE "^SUPABASE_SERVICE_ROLE_KEY=" "$ENV_FILE"; then
-  echo "SUPABASE_SERVICE_ROLE_KEY=${REQUIRED[SERVICE_ROLE_KEY]}" >> "$ENV_FILE"
-  echo "  + added SUPABASE_SERVICE_ROLE_KEY"
-  added=$((added+1))
-fi
-if ! grep -qE "^SUPABASE_PUBLISHABLE_KEY=" "$ENV_FILE"; then
-  echo "SUPABASE_PUBLISHABLE_KEY=${REQUIRED[ANON_KEY]}" >> "$ENV_FILE"
-  echo "  + added SUPABASE_PUBLISHABLE_KEY"
-  added=$((added+1))
-fi
+set_env_if_missing_or_empty "SUPABASE_SERVICE_ROLE_KEY" "${REQUIRED[SERVICE_ROLE_KEY]}"
+set_env_if_missing_or_empty "SUPABASE_PUBLISHABLE_KEY" "${REQUIRED[ANON_KEY]}"
 
 if [[ $added -eq 0 ]]; then
   echo "==> ${ENV_FILE}: all required keys already present"
@@ -57,7 +78,7 @@ fi
 # Final verification — fail loudly if anything is still missing.
 missing=()
 for key in SUPABASE_URL SERVICE_ROLE_KEY ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_PUBLISHABLE_KEY; do
-  if ! grep -qE "^${key}=" "$ENV_FILE"; then
+  if ! grep -qE "^${key}=.+" "$ENV_FILE"; then
     missing+=("$key")
   fi
 done
