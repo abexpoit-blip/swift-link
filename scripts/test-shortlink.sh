@@ -7,7 +7,7 @@ APP_URL="${APP_URL:-https://adspx.com}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@adspx.com}"
 SLUG="${SLUG:-test$(date +%s | tail -c 5)}"
 MONEY_URL="${MONEY_URL:-https://www.profitableratecpm.com/kfx1a4x8ff?key=test-offer}"
-SAFE_URL="${SAFE_URL:-https://en.wikipedia.org/wiki/Digital_marketing}"
+SAFE_URL="${SAFE_URL-https://en.wikipedia.org/wiki/Digital_marketing}"
 
 SUPA_ENV="/opt/supabase-prod/.env"
 if [[ ! -f "$SUPA_ENV" ]]; then
