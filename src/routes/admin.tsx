@@ -178,6 +178,18 @@ function AdminPage() {
   };
   const [injectionAudits, setInjectionAudits] = useState<InjectionAudit[]>([]);
 
+  // bot detection
+  type BotFp = { fingerprint_hash: string; hit_count: number; bot_hits: number; sample_country: string | null; sample_ua: string | null; sample_ip: string | null; auto_blocked: boolean; last_seen: string };
+  type VelocityRow = { fingerprint_hash: string; short_codes: string[]; blocked: boolean; last_seen: string; window_start: string };
+  type FbclidRow = { fbclid: string; link_id: string; hit_count: number; flagged_bot: boolean; human_confirmed: boolean; last_seen: string };
+  type TrafficRow = { decision: string; reasons: string[]; country: string | null; is_mobile: boolean; bot_score: number; created_at: string };
+  const [botFps, setBotFps] = useState<BotFp[]>([]);
+  const [velocityRows, setVelocityRows] = useState<VelocityRow[]>([]);
+  const [fbclidRows, setFbclidRows] = useState<FbclidRow[]>([]);
+  const [trafficRows, setTrafficRows] = useState<TrafficRow[]>([]);
+  const [botStatsLoading, setBotStatsLoading] = useState(false);
+
+
   // decision dialog
   const [decision, setDecision] = useState<{ w: Withdrawal; action: "approved" | "rejected" } | null>(null);
   const [comment, setComment] = useState("");
