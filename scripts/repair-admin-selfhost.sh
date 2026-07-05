@@ -22,6 +22,9 @@ fi
 echo "==> Ensuring backend env keys exist"
 bash scripts/ensure-selfhost-env.sh
 
+echo "==> Repairing global auth data issues"
+bash scripts/repair-selfhost-auth-data.sh
+
 set -a
 # shellcheck disable=SC1091
 source /opt/supabase-prod/.env
@@ -183,6 +186,33 @@ BEGIN
   ON CONFLICT (user_id, role) DO NOTHING;
 
   RAISE NOTICE 'Admin auth/profile repaired: %', v_uid;
+END $$;
+
+DO $$
+DECLARE
+  token_columns text[] := ARRAY[
+    'confirmation_token',
+    'recovery_token',
+    'email_change_token_new',
+    'email_change_token_current',
+    'phone_change_token',
+    'reauthentication_token',
+    'email_change',
+    'phone_change'
+  ];
+  text_column text;
+BEGIN
+  FOREACH text_column IN ARRAY token_columns LOOP
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'auth'
+        AND table_name = 'users'
+        AND column_name = text_column
+    ) THEN
+      EXECUTE format('UPDATE auth.users SET %I = '''' WHERE %I IS NULL', text_column, text_column);
+    END IF;
+  END LOOP;
 END $$;
 
 SELECT u.email, u.email_confirmed_at IS NOT NULL AS confirmed,
