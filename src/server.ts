@@ -155,7 +155,7 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
-async function renderEntrySafe(): Promise<Response> {
+async function renderEntrySafe(request?: Request): Promise<Response> {
   // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
   const now = Date.now();
   if (!SNIPPET_CACHE.items.length || SNIPPET_CACHE.expires < now) {
@@ -173,7 +173,10 @@ async function renderEntrySafe(): Promise<Response> {
       console.error("[server:/r] safe snippet fetch failed", error);
     }
   }
-  return new Response(renderSafeArticle(SNIPPET_CACHE.items), {
+  // og:image must resolve on the actual serving host (adspx.com) — the /media/*-cover.jpg
+  // handler lives here. Persona domains (dailyreader.co etc.) are only for branding text.
+  const imageHost = request ? new URL(request.url).host : undefined;
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
