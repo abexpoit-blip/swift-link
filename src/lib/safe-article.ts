@@ -128,16 +128,25 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
   const kw = (opts.keywords ?? pickTags(6));
   const wordCount = opts.wordCount ?? (900 + Math.floor(Math.random() * 600));
+  // Modified time: 2-72 hours after publish (real editorial workflow)
+  const modifiedIso = new Date(new Date(opts.publishedIso).getTime() + (2 + Math.floor(Math.random() * 70)) * 3_600_000).toISOString();
+  // Realistic CMS generator strings — rotates so fingerprint doesn't lock
+  const generators = ["WordPress 6.5.2", "Ghost 5.82", "WordPress 6.4.3", "Ghost 5.75", "WordPress 6.5.5"];
+  const generator = generators[Math.floor(Math.random() * generators.length)];
+  const coverUrl = `https://${host}/media/${slug}-cover.jpg`;
+  const authorSlug = opts.author.toLowerCase().replace(/\s+/g, "-");
+  const readMin = 5 + Math.floor(Math.random() * 6);
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "NewsArticle",
     headline: opts.title,
     description: opts.description,
     articleSection: opts.section,
     keywords: kw.join(", "),
     wordCount,
     inLanguage: "en-US",
-    author: { "@type": "Person", name: opts.author, url: `https://${host}/authors/${opts.author.toLowerCase().replace(/\s+/g, "-")}` },
+    image: [coverUrl],
+    author: { "@type": "Person", name: opts.author, url: `https://${host}/authors/${authorSlug}` },
     publisher: {
       "@type": "Organization",
       name: opts.siteName,
@@ -145,7 +154,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
       logo: { "@type": "ImageObject", url: `https://${host}/logo.png`, width: 200, height: 60 },
     },
     datePublished: opts.publishedIso,
-    dateModified: opts.publishedIso,
+    dateModified: modifiedIso,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
     isAccessibleForFree: true,
@@ -160,33 +169,61 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
       { "@type": "ListItem", position: 3, name: opts.title, item: url },
     ],
   };
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: opts.siteName,
+    url: `https://${host}`,
+    potentialAction: { "@type": "SearchAction", target: `https://${host}/?s={search_term_string}`, "query-input": "required name=search_term_string" },
+  };
   const favicon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
+  const fbPagesId = `10${Math.floor(1000000000 + Math.random() * 8999999999)}`;
   return `<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
+<meta name="color-scheme" content="light dark"/>
 <title>${t} — ${site}</title>
 <meta name="description" content="${d}"/>
 <meta name="author" content="${author}"/>
+<meta name="generator" content="${generator}"/>
 <meta name="keywords" content="${escapeHtml(kw.join(", "))}"/>
 <meta name="news_keywords" content="${escapeHtml(kw.slice(0, 3).join(", "))}"/>
-<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1"/>
-<meta name="googlebot" content="index,follow"/>
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"/>
+<meta name="googlebot" content="index,follow,max-image-preview:large"/>
+<meta name="bingbot" content="index,follow"/>
 <meta name="referrer" content="strict-origin-when-cross-origin"/>
 <meta name="format-detection" content="telephone=no"/>
+<meta http-equiv="content-language" content="en-US"/>
 <link rel="canonical" href="${url}"/>
 <link rel="icon" type="image/svg+xml" href="${favicon}"/>
+<link rel="apple-touch-icon" href="${favicon}"/>
 <link rel="alternate" type="application/rss+xml" title="${site} RSS Feed" href="https://${host}/feed.xml"/>
+<link rel="alternate" type="application/atom+xml" title="${site} Atom Feed" href="https://${host}/feed.atom"/>
+<link rel="alternate" type="application/json" title="${site} JSON Feed" href="https://${host}/feed.json"/>
 <link rel="sitemap" type="application/xml" href="https://${host}/sitemap.xml"/>
 <link rel="publisher" href="https://${host}"/>
+<link rel="author" href="https://${host}/authors/${authorSlug}"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="dns-prefetch" href="//${host}"/>
 <meta property="og:type" content="article"/>
 <meta property="og:site_name" content="${site}"/>
 <meta property="og:title" content="${t}"/>
 <meta property="og:description" content="${d}"/>
 <meta property="og:url" content="${url}"/>
 <meta property="og:locale" content="en_US"/>
-<meta property="article:author" content="${author}"/>
+<meta property="og:image" content="${coverUrl}"/>
+<meta property="og:image:secure_url" content="${coverUrl}"/>
+<meta property="og:image:type" content="image/jpeg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="${t}"/>
+<meta property="og:updated_time" content="${modifiedIso}"/>
+<meta property="fb:pages" content="${fbPagesId}"/>
+<meta property="article:author" content="https://${host}/authors/${authorSlug}"/>
+<meta property="article:publisher" content="https://${host}"/>
 <meta property="article:published_time" content="${opts.publishedIso}"/>
-<meta property="article:modified_time" content="${opts.publishedIso}"/>
+<meta property="article:modified_time" content="${modifiedIso}"/>
 <meta property="article:section" content="${escapeHtml(opts.section)}"/>
 ${kw.slice(0, 5).map((k) => `<meta property="article:tag" content="${escapeHtml(k)}"/>`).join("\n")}
 <meta name="twitter:card" content="summary_large_image"/>
@@ -194,8 +231,15 @@ ${kw.slice(0, 5).map((k) => `<meta property="article:tag" content="${escapeHtml(
 <meta name="twitter:creator" content="@${author.toLowerCase().replace(/\s+/g, "")}"/>
 <meta name="twitter:title" content="${t}"/>
 <meta name="twitter:description" content="${d}"/>
+<meta name="twitter:image" content="${coverUrl}"/>
+<meta name="twitter:image:alt" content="${t}"/>
+<meta name="twitter:label1" content="Written by"/>
+<meta name="twitter:data1" content="${author}"/>
+<meta name="twitter:label2" content="Reading time"/>
+<meta name="twitter:data2" content="${readMin} min read"/>
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>`;
+<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>
+<script type="application/ld+json">${JSON.stringify(websiteLd)}</script>`;
 }
 
 function tmplDailyReader(p: Snip[], year: number): string {
