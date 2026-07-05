@@ -184,6 +184,76 @@ async function renderEntrySafe(): Promise<Response> {
   });
 }
 
+// ─── On-the-fly OG cover images for safe pages ───
+// Facebook crawler fetches og:image URLs; we generate a 1200×630 SVG cover
+// derived from the slug so every article page has a real, cacheable share preview.
+// URL shape: /media/{slug}-cover.jpg  (served as image/svg+xml — modern crawlers accept it)
+function handleMediaCover(request: Request): Response | null {
+  const url = new URL(request.url);
+  const m = url.pathname.match(/^\/media\/([a-z0-9-]{1,80})-cover\.(jpg|jpeg|png|svg)$/i);
+  if (!m) return null;
+  const slug = m[1];
+  // Deterministic pseudo-random from slug so the same URL always yields the same image
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+  const palettes = [
+    ["#1a1a2e", "#16213e", "#e94560"],
+    ["#0e1117", "#1f2937", "#3b82f6"],
+    ["#2d1b0e", "#7c3a1d", "#f59e0b"],
+    ["#1a2f1f", "#2d5a3d", "#10b981"],
+    ["#2a1b3d", "#4a2f6b", "#a78bfa"],
+    ["#3d1a1a", "#7c2d2d", "#ef4444"],
+    ["#1e293b", "#334155", "#06b6d4"],
+    ["#292524", "#57534e", "#fbbf24"],
+  ];
+  const p = palettes[Math.abs(h) % palettes.length];
+  // Title from slug (dash → space, title-cased first letters)
+  const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 60);
+  // Word-wrap title across up to 3 lines (~22 chars/line for 1200px canvas)
+  const words = title.split(/\s+/);
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    if ((cur + " " + w).trim().length > 22) {
+      if (cur) lines.push(cur);
+      cur = w;
+    } else cur = (cur + " " + w).trim();
+    if (lines.length >= 2) break;
+  }
+  if (cur && lines.length < 3) lines.push(cur);
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  const tspans = lines.map((ln, i) => `<tspan x="80" dy="${i === 0 ? 0 : 88}">${esc(ln)}</tspan>`).join("");
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${p[0]}"/>
+      <stop offset="100%" stop-color="${p[1]}"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="15%" r="60%">
+      <stop offset="0%" stop-color="${p[2]}" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="${p[2]}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="60" y="60" width="6" height="60" fill="${p[2]}" rx="3"/>
+  <text x="80" y="105" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="400" fill="${p[2]}" letter-spacing="4">FEATURED ARTICLE</text>
+  <text x="80" y="240" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#ffffff">${tspans}</text>
+  <line x1="80" y1="530" x2="240" y2="530" stroke="${p[2]}" stroke-width="2"/>
+  <text x="80" y="570" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="22" fill="#e5e7eb" opacity="0.85">Editorial · ${new Date().getFullYear()}</text>
+</svg>`;
+  return new Response(svg, {
+    status: 200,
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": "public, max-age=86400, s-maxage=604800, immutable",
+      "x-adspx-r-handler": "media-cover",
+    },
+  });
+}
+
+
 async function handleRedirectRoute(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
   const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
@@ -306,8 +376,11 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       await loadLocalEnvFile();
+      const mediaResponse = handleMediaCover(request);
+      if (mediaResponse) return applySecurityHeaders(request, mediaResponse);
       const redirectResponse = await handleRedirectRoute(request);
       if (redirectResponse) return applySecurityHeaders(request, redirectResponse);
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return applySecurityHeaders(request, response);
