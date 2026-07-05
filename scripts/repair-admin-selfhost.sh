@@ -71,12 +71,24 @@ DO $$
 DECLARE
   v_uid uuid;
   v_email text := lower(:'admin_email');
+  v_identity_id_is_uuid boolean := false;
+  v_has_provider_id boolean := false;
 BEGIN
   SELECT id INTO v_uid
   FROM auth.users
   WHERE lower(email) = v_email
   ORDER BY created_at ASC
   LIMIT 1;
+
+  IF v_uid IS NOT NULL THEN
+    -- Duplicate auth rows for one email can make the Auth API fail with HTTP 500.
+    -- Keep the oldest admin account and move duplicate emails out of the login path.
+    UPDATE auth.users
+       SET email = 'duplicate-admin-' || id::text || '@adspx.local',
+           updated_at = now()
+     WHERE lower(email) = v_email
+       AND id <> v_uid;
+  END IF;
 
   IF v_uid IS NULL THEN
     v_uid := gen_random_uuid();
@@ -113,6 +125,49 @@ BEGIN
     WHERE id = v_uid;
   END IF;
 
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'auth'
+      AND table_name = 'identities'
+      AND column_name = 'id'
+      AND udt_name = 'uuid'
+  ) INTO v_identity_id_is_uuid;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'auth'
+      AND table_name = 'identities'
+      AND column_name = 'provider_id'
+  ) INTO v_has_provider_id;
+
+  DELETE FROM auth.identities
+   WHERE provider = 'email'
+     AND (
+       user_id = v_uid
+       OR lower(COALESCE(identity_data->>'email', '')) = v_email
+       OR (v_has_provider_id AND COALESCE(provider_id, '') IN (v_uid::text, v_email))
+     );
+
+  IF v_has_provider_id AND v_identity_id_is_uuid THEN
+    INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    VALUES (v_uid, v_uid, v_uid::text, jsonb_build_object('sub', v_uid::text, 'email', v_email, 'email_verified', true), 'email', now(), now(), now())
+    ON CONFLICT DO NOTHING;
+  ELSIF v_has_provider_id THEN
+    INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    VALUES (v_uid::text, v_uid, v_uid::text, jsonb_build_object('sub', v_uid::text, 'email', v_email, 'email_verified', true), 'email', now(), now(), now())
+    ON CONFLICT DO NOTHING;
+  ELSIF v_identity_id_is_uuid THEN
+    INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    VALUES (v_uid, v_uid, jsonb_build_object('sub', v_uid::text, 'email', v_email, 'email_verified', true), 'email', now(), now(), now())
+    ON CONFLICT DO NOTHING;
+  ELSE
+    INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    VALUES (v_uid::text, v_uid, jsonb_build_object('sub', v_uid::text, 'email', v_email, 'email_verified', true), 'email', now(), now(), now())
+    ON CONFLICT DO NOTHING;
+  END IF;
+
   INSERT INTO public.profiles (id, email, full_name, plan_slug, click_quota, link_limit, created_at, updated_at)
   VALUES (v_uid, v_email, 'Admin', 'lifetime', NULL, NULL, now(), now())
   ON CONFLICT (id) DO UPDATE
@@ -131,7 +186,8 @@ BEGIN
 END $$;
 
 SELECT u.email, u.email_confirmed_at IS NOT NULL AS confirmed,
-       EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = u.id AND r.role = 'admin') AS is_admin
+       EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = u.id AND r.role = 'admin') AS is_admin,
+       EXISTS (SELECT 1 FROM auth.identities i WHERE i.user_id = u.id AND i.provider = 'email') AS has_email_identity
 FROM auth.users u
 WHERE lower(u.email) = lower(:'admin_email')
 ORDER BY u.created_at ASC
@@ -246,6 +302,7 @@ login_file="/tmp/adspx-admin-login.json"
 login_status="$(curl -sS -o "$login_file" -w "%{http_code}" \
   "${SUPABASE_URL%/}/auth/v1/token?grant_type=password" \
   -H "apikey: ${ANON_KEY}" \
+  -H "Authorization: Bearer ${ANON_KEY}" \
   -H "Content-Type: application/json" \
   --data "$login_body")"
 
