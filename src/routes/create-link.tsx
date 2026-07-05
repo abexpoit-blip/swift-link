@@ -203,9 +203,9 @@ function CreateLinkPage() {
               {links.map((l) => {
                 const e = earningsByLink[l.id];
                 const total = e?.total_clicks ?? 0;
-                const ads = e?.adsterra_clicks ?? 0;
                 const usr = e?.user_clicks ?? 0;
                 const earned = e?.earnings_usd ?? 0;
+
                 const expanded = expandedLink === l.id;
                 const cloak = cloakByLink[l.id];
                 return (
