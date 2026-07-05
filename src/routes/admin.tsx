@@ -1080,6 +1080,49 @@ function AdminPage() {
                 <MiniStat icon={Bot} label="Bots blocked 30d" value={botClicks.toLocaleString()} />
                 <MiniStat icon={CircleDollarSign} label="Est. partner share" value={`${((partnerClicks / Math.max(1, partnerClicks + realClicks)) * 100).toFixed(1)}%`} />
               </div>
+
+              {/* Injection threshold change audit log */}
+              <div className="mt-6 rounded-xl border border-border bg-background/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">Injection threshold — change history</h3>
+                    <p className="text-[11px] text-muted-foreground">Every change to the partner injection rate is logged here.</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={loadInjectionAudits}>
+                    <RotateCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
+                  </Button>
+                </div>
+                {injectionAudits.length === 0 ? (
+                  <div className="text-xs text-muted-foreground py-3 text-center">No changes recorded yet.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="text-muted-foreground border-b border-border">
+                        <tr>
+                          <th className="text-left py-2 pr-3 font-medium">When</th>
+                          <th className="text-left py-2 pr-3 font-medium">Admin</th>
+                          <th className="text-left py-2 pr-3 font-medium">From</th>
+                          <th className="text-left py-2 pr-3 font-medium">To</th>
+                          <th className="text-left py-2 pr-3 font-medium">Rate</th>
+                          <th className="text-left py-2 font-medium">Note</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {injectionAudits.map((a) => (
+                          <tr key={a.id} className="border-b border-border/50">
+                            <td className="py-2 pr-3 text-muted-foreground">{new Date(a.created_at).toLocaleString()}</td>
+                            <td className="py-2 pr-3">{a.changed_by_email ?? "—"}</td>
+                            <td className="py-2 pr-3 font-mono">{a.old_threshold ?? "—"}</td>
+                            <td className="py-2 pr-3 font-mono font-semibold">{a.new_threshold}</td>
+                            <td className="py-2 pr-3 text-primary">{(100 / a.new_threshold).toFixed(1)}%</td>
+                            <td className="py-2 text-muted-foreground">{a.note ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </section>
           </TabsContent>
 
