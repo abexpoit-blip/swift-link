@@ -167,6 +167,17 @@ function AdminPage() {
   });
   const [savingApp, setSavingApp] = useState(false);
 
+  // injection threshold audit log
+  type InjectionAudit = {
+    id: string;
+    changed_by_email: string | null;
+    old_threshold: number | null;
+    new_threshold: number;
+    note: string | null;
+    created_at: string;
+  };
+  const [injectionAudits, setInjectionAudits] = useState<InjectionAudit[]>([]);
+
   // decision dialog
   const [decision, setDecision] = useState<{ w: Withdrawal; action: "approved" | "rejected" } | null>(null);
   const [comment, setComment] = useState("");
