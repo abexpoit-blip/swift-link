@@ -36,8 +36,107 @@ if [[ -z "$SUPABASE_URL" || -z "$ANON_KEY" || -z "$SERVICE_KEY" ]]; then
   exit 1
 fi
 
-json_payload() {
-  node -e 'process.stdout.write(JSON.stringify(JSON.parse(process.argv[1])))' "$1"
+print_auth_diagnostics() {
+  local body_file="$1"
+
+  echo ""
+  echo "--- Auth API response body ---" >&2
+  if [[ -s "$body_file" ]]; then
+    cat "$body_file" >&2
+  else
+    echo "(empty response body)" >&2
+  fi
+  echo "" >&2
+  echo "--- Auth container logs (last 120 lines) ---" >&2
+  if docker inspect supabase-auth >/dev/null 2>&1; then
+    docker logs --tail 120 supabase-auth >&2 || true
+  else
+    docker ps --format '{{.Names}}' | grep -Ei 'auth|gotrue' | while read -r c; do
+      echo "### ${c}" >&2
+      docker logs --tail 120 "$c" >&2 || true
+    done
+  fi
+  echo "" >&2
+}
+
+repair_auth_user_directly_in_db() {
+  echo "==> Repairing admin auth row directly in database"
+  docker exec -i supabase-db psql -U postgres -d postgres \
+    -v ON_ERROR_STOP=1 \
+    -v admin_email="$ADMIN_EMAIL" \
+    -v admin_password="$ADMIN_PASSWORD" <<'SQL'
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
+DO $$
+DECLARE
+  v_uid uuid;
+  v_email text := lower(:'admin_email');
+BEGIN
+  SELECT id INTO v_uid
+  FROM auth.users
+  WHERE lower(email) = v_email
+  ORDER BY created_at ASC
+  LIMIT 1;
+
+  IF v_uid IS NULL THEN
+    v_uid := gen_random_uuid();
+    INSERT INTO auth.users (
+      instance_id, id, aud, role, email, encrypted_password,
+      email_confirmed_at, confirmation_sent_at,
+      raw_app_meta_data, raw_user_meta_data,
+      is_super_admin, created_at, updated_at,
+      confirmation_token, recovery_token, email_change_token_new, email_change
+    ) VALUES (
+      '00000000-0000-0000-0000-000000000000', v_uid,
+      'authenticated', 'authenticated', v_email,
+      extensions.crypt(:'admin_password', extensions.gen_salt('bf')),
+      now(), now(),
+      jsonb_build_object('provider', 'email', 'providers', array['email']),
+      jsonb_build_object('full_name', 'Admin'),
+      false, now(), now(), '', '', '', ''
+    );
+  ELSE
+    UPDATE auth.users
+    SET aud = 'authenticated',
+        role = 'authenticated',
+        email = v_email,
+        encrypted_password = extensions.crypt(:'admin_password', extensions.gen_salt('bf')),
+        email_confirmed_at = COALESCE(email_confirmed_at, now()),
+        confirmation_sent_at = COALESCE(confirmation_sent_at, now()),
+        raw_app_meta_data = jsonb_build_object('provider', 'email', 'providers', array['email']),
+        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('full_name', 'Admin'),
+        confirmation_token = '',
+        recovery_token = '',
+        email_change_token_new = '',
+        email_change = '',
+        updated_at = now()
+    WHERE id = v_uid;
+  END IF;
+
+  INSERT INTO public.profiles (id, email, full_name, plan_slug, click_quota, link_limit, created_at, updated_at)
+  VALUES (v_uid, v_email, 'Admin', 'lifetime', NULL, NULL, now(), now())
+  ON CONFLICT (id) DO UPDATE
+  SET email = EXCLUDED.email,
+      full_name = COALESCE(NULLIF(public.profiles.full_name, ''), 'Admin'),
+      plan_slug = 'lifetime',
+      click_quota = NULL,
+      link_limit = NULL,
+      updated_at = now();
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (v_uid, 'admin')
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RAISE NOTICE 'Admin auth/profile repaired: %', v_uid;
+END $$;
+
+SELECT u.email, u.email_confirmed_at IS NOT NULL AS confirmed,
+       EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = u.id AND r.role = 'admin') AS is_admin
+FROM auth.users u
+WHERE lower(u.email) = lower(:'admin_email')
+ORDER BY u.created_at ASC
+LIMIT 1;
+SQL
 }
 
 admin_headers=(
@@ -48,9 +147,16 @@ admin_headers=(
 
 echo "==> Finding existing admin auth user"
 users_file="/tmp/adspx-auth-users.json"
-curl -sS "${SUPABASE_URL%/}/auth/v1/admin/users?page=1&per_page=1000" \
+users_status="$(curl -sS -o "$users_file" -w "%{http_code}" "${SUPABASE_URL%/}/auth/v1/admin/users?page=1&per_page=1000" \
   "${admin_headers[@]}" \
-  -o "$users_file"
+  || true)"
+
+if [[ "$users_status" != "200" ]]; then
+  echo "Auth admin list failed: HTTP ${users_status}; falling back to direct DB repair." >&2
+  print_auth_diagnostics "$users_file"
+  repair_auth_user_directly_in_db
+  ADMIN_UID="$(docker exec -i supabase-db psql -U postgres -d postgres -tA -v admin_email="$ADMIN_EMAIL" -c "SELECT id FROM auth.users WHERE lower(email)=lower(:'admin_email') ORDER BY created_at ASC LIMIT 1;")"
+else
 
 ADMIN_UID="$(ADMIN_EMAIL="$ADMIN_EMAIL" node -e '
   const fs = require("fs");
@@ -60,6 +166,7 @@ ADMIN_UID="$(ADMIN_EMAIL="$ADMIN_EMAIL" node -e '
   const user = users.find((u) => String(u.email || "").toLowerCase() === email);
   process.stdout.write(user?.id || "");
 ' "$users_file")"
+fi
 
 create_or_update_body="$(ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node -e '
   process.stdout.write(JSON.stringify({
@@ -80,10 +187,12 @@ if [[ -z "$ADMIN_UID" ]]; then
     --data "$create_or_update_body")"
   if [[ "$create_status" != "200" && "$create_status" != "201" ]]; then
     echo "Auth admin create failed: HTTP ${create_status}" >&2
-    cat "$create_file" >&2
-    exit 1
+    print_auth_diagnostics "$create_file"
+    repair_auth_user_directly_in_db
+    ADMIN_UID="$(docker exec -i supabase-db psql -U postgres -d postgres -tA -v admin_email="$ADMIN_EMAIL" -c "SELECT id FROM auth.users WHERE lower(email)=lower(:'admin_email') ORDER BY created_at ASC LIMIT 1;")"
+  else
+    ADMIN_UID="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(p.id || p.user?.id || "")' "$create_file")"
   fi
-  ADMIN_UID="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(p.id || p.user?.id || "")' "$create_file")"
 else
   echo "==> Resetting admin password and confirming email"
   update_file="/tmp/adspx-admin-update.json"
@@ -93,8 +202,8 @@ else
     --data "$create_or_update_body")"
   if [[ "$update_status" != "200" ]]; then
     echo "Auth admin update failed: HTTP ${update_status}" >&2
-    cat "$update_file" >&2
-    exit 1
+    print_auth_diagnostics "$update_file"
+    repair_auth_user_directly_in_db
   fi
 fi
 
@@ -142,7 +251,7 @@ login_status="$(curl -sS -o "$login_file" -w "%{http_code}" \
 
 if [[ "$login_status" != "200" ]]; then
   echo "Admin password login still failed: HTTP ${login_status}" >&2
-  cat "$login_file" >&2
+  print_auth_diagnostics "$login_file"
   exit 1
 fi
 
