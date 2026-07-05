@@ -363,7 +363,7 @@ function AdminPage() {
         return;
       }
       setIsSuperAdmin(isSuper);
-      await Promise.all([loadAll(), loadUsers(""), loadInactiveDays(), loadAppSettings(), loadInjectionAudits()]);
+      await Promise.all([loadAll(), loadUsers(""), loadInactiveDays(), loadAppSettings(), loadInjectionAudits(), loadBotDetectionStats()]);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
