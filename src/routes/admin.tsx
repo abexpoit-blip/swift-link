@@ -1227,6 +1227,206 @@ function AdminPage() {
             </section>
           </TabsContent>
 
+          {/* BOT DETECTION */}
+          <TabsContent value="botdetect" className="space-y-6 mt-0">
+            {(() => {
+              const autoBlocked = botFps.filter((f) => f.auto_blocked).length;
+              const totalFp = botFps.length;
+              const totalHits = botFps.reduce((s, f) => s + (f.hit_count || 0), 0);
+              const totalBotHits = botFps.reduce((s, f) => s + (f.bot_hits || 0), 0);
+              const flaggedFbclids = fbclidRows.filter((r) => r.flagged_bot).length;
+              const velocityLocks = velocityRows.length;
+              const countryMap: Record<string, { bots: number; total: number }> = {};
+              for (const f of botFps) {
+                const c = f.sample_country || "??";
+                (countryMap[c] ??= { bots: 0, total: 0 }).bots += f.bot_hits || 0;
+                countryMap[c].total += f.hit_count || 0;
+              }
+              const topCountries = Object.entries(countryMap)
+                .sort((a, b) => b[1].bots - a[1].bots)
+                .slice(0, 8);
+              const reasonMap: Record<string, number> = {};
+              let botDecisions = 0, moneyDecisions = 0, blockDecisions = 0;
+              for (const r of trafficRows) {
+                if (r.decision === "money") moneyDecisions++;
+                else if (r.decision === "block") blockDecisions++;
+                else botDecisions++;
+                for (const reason of r.reasons || []) reasonMap[reason] = (reasonMap[reason] || 0) + 1;
+              }
+              const topReasons = Object.entries(reasonMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+              const totalDecisions = trafficRows.length;
+              const botPct = totalDecisions ? ((botDecisions / totalDecisions) * 100).toFixed(1) : "0";
+              return (
+                <>
+                  <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                          <ShieldCheck className="h-5 w-5 text-primary" /> Bot detection — live stats
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Real-time signals from the cloaking engine. Last 7 days of traffic and top 100 fingerprints.
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={loadBotDetectionStats} disabled={botStatsLoading}>
+                        {botStatsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RotateCw className="h-3.5 w-3.5 mr-1.5" />}
+                        Refresh
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <MiniStat icon={Bot} label="Auto-blocked fingerprints" value={autoBlocked.toLocaleString()} />
+                      <MiniStat icon={AlertTriangle} label="Velocity locks (active)" value={velocityLocks.toLocaleString()} />
+                      <MiniStat icon={Globe} label="Flagged fbclids" value={flaggedFbclids.toLocaleString()} />
+                      <MiniStat icon={Activity} label={`Bot decisions 7d (${botPct}%)`} value={botDecisions.toLocaleString()} />
+                      <MiniStat icon={User} label="Tracked fingerprints" value={totalFp.toLocaleString()} />
+                      <MiniStat icon={MousePointerClick} label="Total hits (fp sample)" value={totalHits.toLocaleString()} />
+                      <MiniStat icon={Bot} label="Bot hits (fp sample)" value={totalBotHits.toLocaleString()} />
+                      <MiniStat icon={ShieldCheck} label="Human decisions 7d" value={moneyDecisions.toLocaleString()} />
+                    </div>
+                  </section>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Reason breakdown */}
+                    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                      <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" /> Top block reasons (7d)
+                      </h3>
+                      {topReasons.length === 0 ? (
+                        <div className="text-xs text-muted-foreground py-6 text-center">No traffic logs yet.</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {topReasons.map(([reason, count]) => {
+                            const pct = totalDecisions ? (count / totalDecisions) * 100 : 0;
+                            return (
+                              <div key={reason} className="space-y-1">
+                                <div className="flex justify-between text-xs">
+                                  <span className="font-mono">{reason}</span>
+                                  <span className="text-muted-foreground">{count} ({pct.toFixed(1)}%)</span>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, pct * 2)}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Top bot countries */}
+                    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                      <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-primary" /> Top countries by bot activity
+                      </h3>
+                      {topCountries.length === 0 ? (
+                        <div className="text-xs text-muted-foreground py-6 text-center">No fingerprint data yet.</div>
+                      ) : (
+                        <table className="w-full text-xs">
+                          <thead className="text-muted-foreground border-b border-border">
+                            <tr>
+                              <th className="text-left py-2 font-medium">Country</th>
+                              <th className="text-right py-2 font-medium">Bot hits</th>
+                              <th className="text-right py-2 font-medium">Total hits</th>
+                              <th className="text-right py-2 font-medium">% bot</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {topCountries.map(([country, { bots, total }]) => (
+                              <tr key={country} className="border-b border-border/50">
+                                <td className="py-2 font-mono">{country}</td>
+                                <td className="py-2 text-right">{bots.toLocaleString()}</td>
+                                <td className="py-2 text-right text-muted-foreground">{total.toLocaleString()}</td>
+                                <td className="py-2 text-right text-amber-500">{total ? ((bots / total) * 100).toFixed(0) : 0}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </section>
+                  </div>
+
+                  {/* Recent bot fingerprints */}
+                  <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                    <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+                      <Bot className="h-4 w-4 text-primary" /> Recent bot fingerprints
+                    </h3>
+                    {botFps.length === 0 ? (
+                      <div className="text-xs text-muted-foreground py-6 text-center">No fingerprints tracked yet.</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead className="text-muted-foreground border-b border-border">
+                            <tr>
+                              <th className="text-left py-2 pr-3 font-medium">Fingerprint</th>
+                              <th className="text-left py-2 pr-3 font-medium">Country</th>
+                              <th className="text-left py-2 pr-3 font-medium">IP</th>
+                              <th className="text-right py-2 pr-3 font-medium">Hits</th>
+                              <th className="text-right py-2 pr-3 font-medium">Bot hits</th>
+                              <th className="text-left py-2 pr-3 font-medium">Status</th>
+                              <th className="text-left py-2 font-medium">Last seen</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {botFps.slice(0, 30).map((f) => (
+                              <tr key={f.fingerprint_hash} className="border-b border-border/50">
+                                <td className="py-2 pr-3 font-mono">{f.fingerprint_hash.slice(0, 12)}…</td>
+                                <td className="py-2 pr-3">{f.sample_country ?? "??"}</td>
+                                <td className="py-2 pr-3 font-mono text-muted-foreground">{f.sample_ip ?? "—"}</td>
+                                <td className="py-2 pr-3 text-right">{f.hit_count}</td>
+                                <td className="py-2 pr-3 text-right text-amber-500">{f.bot_hits}</td>
+                                <td className="py-2 pr-3">
+                                  {f.auto_blocked
+                                    ? <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 text-red-500 px-2 py-0.5"><X className="h-3 w-3" />Blocked</span>
+                                    : <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 text-emerald-500 px-2 py-0.5"><Check className="h-3 w-3" />OK</span>}
+                                </td>
+                                <td className="py-2 text-muted-foreground">{new Date(f.last_seen).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Active velocity locks */}
+                  <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                    <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" /> Active velocity locks
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground mb-3">
+                      Fingerprints that hit 3+ different links inside a 1-hour window are auto-locked and routed to safe pages.
+                    </p>
+                    {velocityRows.length === 0 ? (
+                      <div className="text-xs text-muted-foreground py-6 text-center">No active velocity locks. System healthy.</div>
+                    ) : (
+                      <table className="w-full text-xs">
+                        <thead className="text-muted-foreground border-b border-border">
+                          <tr>
+                            <th className="text-left py-2 pr-3 font-medium">Fingerprint</th>
+                            <th className="text-left py-2 pr-3 font-medium">Links hit</th>
+                            <th className="text-left py-2 pr-3 font-medium">Window start</th>
+                            <th className="text-left py-2 font-medium">Last seen</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {velocityRows.map((v) => (
+                            <tr key={v.fingerprint_hash} className="border-b border-border/50">
+                              <td className="py-2 pr-3 font-mono">{v.fingerprint_hash.slice(0, 12)}…</td>
+                              <td className="py-2 pr-3">{(v.short_codes || []).length}</td>
+                              <td className="py-2 pr-3 text-muted-foreground">{new Date(v.window_start).toLocaleString()}</td>
+                              <td className="py-2 text-muted-foreground">{new Date(v.last_seen).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </section>
+                </>
+              );
+            })()}
+          </TabsContent>
+
+
           {/* USER HISTORY */}
           <TabsContent value="history" className="space-y-6 mt-0">
             <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
