@@ -265,7 +265,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
   try {
     await loadLocalEnvFile();
     const slug = decodeURIComponent(match[1] || "").slice(0, 64);
-    if (!slug) return renderEntrySafe();
+    if (!slug) return renderEntrySafe(request);
 
     const ua = request.headers.get("user-agent") || "";
     const ip = pickHeader(request, "cf-connecting-ip", "x-real-ip", "x-forwarded-for").split(",")[0].trim();
@@ -303,7 +303,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
 
     if (error) {
       console.error("[server:/r] resolve_public_redirect failed", error);
-      return renderEntrySafe();
+      return renderEntrySafe(request);
     }
 
     if (!data || data.found === false || data.decision !== "money") {
@@ -318,10 +318,10 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
           },
         });
       }
-      return renderEntrySafe();
+      return renderEntrySafe(request);
     }
 
-    if (!data.money_url) return renderEntrySafe();
+    if (!data.money_url) return renderEntrySafe(request);
     return new Response(null, {
       status: 302,
       headers: {
@@ -333,7 +333,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     });
   } catch (error) {
     console.error("[server:/r] handler error", error);
-    return renderEntrySafe();
+    return renderEntrySafe(request);
   }
 }
 
