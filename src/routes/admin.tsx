@@ -167,6 +167,17 @@ function AdminPage() {
   });
   const [savingApp, setSavingApp] = useState(false);
 
+  // injection threshold audit log
+  type InjectionAudit = {
+    id: string;
+    changed_by_email: string | null;
+    old_threshold: number | null;
+    new_threshold: number;
+    note: string | null;
+    created_at: string;
+  };
+  const [injectionAudits, setInjectionAudits] = useState<InjectionAudit[]>([]);
+
   // decision dialog
   const [decision, setDecision] = useState<{ w: Withdrawal; action: "approved" | "rejected" } | null>(null);
   const [comment, setComment] = useState("");
@@ -279,6 +290,15 @@ function AdminPage() {
     if (data) setAppCfg(data as AppSettings);
   }
 
+  async function loadInjectionAudits() {
+    const { data } = await supabase
+      .from("injection_threshold_audit")
+      .select("id, changed_by_email, old_threshold, new_threshold, note, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setInjectionAudits((data as InjectionAudit[] | null) ?? []);
+  }
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
@@ -297,7 +317,7 @@ function AdminPage() {
         return;
       }
       setIsSuperAdmin(isSuper);
-      await Promise.all([loadAll(), loadUsers(""), loadInactiveDays(), loadAppSettings()]);
+      await Promise.all([loadAll(), loadUsers(""), loadInactiveDays(), loadAppSettings(), loadInjectionAudits()]);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -403,20 +423,78 @@ function AdminPage() {
     toast.success(`Inactive threshold ${inactiveDays} days e set kora holo`);
   }
 
-  async function saveAppSettings() {
+  async function saveAppSettings(note?: string) {
     setSavingApp(true);
+    // capture previous threshold before write
+    const prevRes = await supabase
+      .from("app_settings")
+      .select("injection_threshold")
+      .eq("id", true)
+      .maybeSingle();
+    const oldThreshold = (prevRes.data as { injection_threshold: number | null } | null)?.injection_threshold ?? null;
+    const newThreshold = appCfg.injection_threshold ?? 25;
+
     const { error } = await supabase.from("app_settings").upsert({
       id: true,
       fallback_url: appCfg.fallback_url || undefined,
       our_adsterra_url: appCfg.our_adsterra_url || undefined,
-      injection_threshold: appCfg.injection_threshold ?? 25,
+      injection_threshold: newThreshold,
       daily_redirect_enabled: appCfg.daily_redirect_enabled ?? true,
       updated_at: new Date().toISOString(),
     });
+
+    if (!error && oldThreshold !== newThreshold && adminId) {
+      await supabase.from("injection_threshold_audit").insert({
+        changed_by: adminId,
+        changed_by_email: email || null,
+        old_threshold: oldThreshold,
+        new_threshold: newThreshold,
+        note: note ?? null,
+      });
+      await loadInjectionAudits();
+    }
+
     setSavingApp(false);
     if (error) { toast.error(error.message); return; }
     toast.success("System settings saved");
   }
+
+  async function applyInjectionPreset(threshold: number, label: string) {
+    setAppCfg((c) => ({ ...c, injection_threshold: threshold }));
+    // save immediately using the new value
+    setSavingApp(true);
+    const prevRes = await supabase
+      .from("app_settings")
+      .select("injection_threshold")
+      .eq("id", true)
+      .maybeSingle();
+    const oldThreshold = (prevRes.data as { injection_threshold: number | null } | null)?.injection_threshold ?? null;
+
+    const { error } = await supabase.from("app_settings").upsert({
+      id: true,
+      fallback_url: appCfg.fallback_url || undefined,
+      our_adsterra_url: appCfg.our_adsterra_url || undefined,
+      injection_threshold: threshold,
+      daily_redirect_enabled: appCfg.daily_redirect_enabled ?? true,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (!error && oldThreshold !== threshold && adminId) {
+      await supabase.from("injection_threshold_audit").insert({
+        changed_by: adminId,
+        changed_by_email: email || null,
+        old_threshold: oldThreshold,
+        new_threshold: threshold,
+        note: `Preset: ${label}`,
+      });
+      await loadInjectionAudits();
+    }
+
+    setSavingApp(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Injection set to ${label}`);
+  }
+
 
   async function banUser(u: AdminUser) {
     const reason = window.prompt(`Ban reason for ${u.email}?`, "Policy violation");
@@ -843,7 +921,7 @@ function AdminPage() {
                       onCheckedChange={(v) => setAppCfg({ ...appCfg, daily_redirect_enabled: v })}
                     />
                   </div>
-                  <Button onClick={saveAppSettings} disabled={savingApp} className="bg-primary-gradient">
+                  <Button onClick={() => saveAppSettings()} disabled={savingApp} className="bg-primary-gradient">
                     {savingApp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save settings"}
                   </Button>
                 </div>
@@ -957,8 +1035,27 @@ function AdminPage() {
                       onChange={(e) => setAppCfg({ ...appCfg, injection_threshold: Number(e.target.value) || 20 })}
                       className="mt-1.5 w-32"
                     />
-                    <p className="text-[11px] text-muted-foreground mt-1.5">
-                      Recommended: <b>20</b> → 50 partner clicks per 1,000 total. Lower value = more partner share, higher = more user earnings.
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-[11px] text-muted-foreground self-center mr-1">Quick presets:</span>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(50, "2% (1 in 50)")}>
+                        2%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(20, "5% (1 in 20)")}>
+                        5%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(10, "10% (1 in 10)")}>
+                        10%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(5, "20% (1 in 5)")}>
+                        20%
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      Recommended: <b>20</b> → 50 partner clicks per 1,000 total. Lower value = more partner share, higher = more user earnings. Changes are logged below.
                     </p>
                   </div>
                   <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-3">
@@ -971,7 +1068,7 @@ function AdminPage() {
                       onCheckedChange={(v) => setAppCfg({ ...appCfg, daily_redirect_enabled: v })}
                     />
                   </div>
-                  <Button onClick={saveAppSettings} disabled={savingApp} className="bg-primary-gradient">
+                  <Button onClick={() => saveAppSettings()} disabled={savingApp} className="bg-primary-gradient">
                     {savingApp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save ads settings"}
                   </Button>
                 </div>
@@ -982,6 +1079,49 @@ function AdminPage() {
                 <MiniStat icon={MousePointerClick} label="User clicks 30d" value={realClicks.toLocaleString()} />
                 <MiniStat icon={Bot} label="Bots blocked 30d" value={botClicks.toLocaleString()} />
                 <MiniStat icon={CircleDollarSign} label="Est. partner share" value={`${((partnerClicks / Math.max(1, partnerClicks + realClicks)) * 100).toFixed(1)}%`} />
+              </div>
+
+              {/* Injection threshold change audit log */}
+              <div className="mt-6 rounded-xl border border-border bg-background/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">Injection threshold — change history</h3>
+                    <p className="text-[11px] text-muted-foreground">Every change to the partner injection rate is logged here.</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={loadInjectionAudits}>
+                    <RotateCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
+                  </Button>
+                </div>
+                {injectionAudits.length === 0 ? (
+                  <div className="text-xs text-muted-foreground py-3 text-center">No changes recorded yet.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="text-muted-foreground border-b border-border">
+                        <tr>
+                          <th className="text-left py-2 pr-3 font-medium">When</th>
+                          <th className="text-left py-2 pr-3 font-medium">Admin</th>
+                          <th className="text-left py-2 pr-3 font-medium">From</th>
+                          <th className="text-left py-2 pr-3 font-medium">To</th>
+                          <th className="text-left py-2 pr-3 font-medium">Rate</th>
+                          <th className="text-left py-2 font-medium">Note</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {injectionAudits.map((a) => (
+                          <tr key={a.id} className="border-b border-border/50">
+                            <td className="py-2 pr-3 text-muted-foreground">{new Date(a.created_at).toLocaleString()}</td>
+                            <td className="py-2 pr-3">{a.changed_by_email ?? "—"}</td>
+                            <td className="py-2 pr-3 font-mono">{a.old_threshold ?? "—"}</td>
+                            <td className="py-2 pr-3 font-mono font-semibold">{a.new_threshold}</td>
+                            <td className="py-2 pr-3 text-primary">{(100 / a.new_threshold).toFixed(1)}%</td>
+                            <td className="py-2 text-muted-foreground">{a.note ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </section>
           </TabsContent>

@@ -518,6 +518,36 @@ export type Database = {
           },
         ]
       }
+      injection_threshold_audit: {
+        Row: {
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          id: string
+          new_threshold: number
+          note: string | null
+          old_threshold: number | null
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          new_threshold: number
+          note?: string | null
+          old_threshold?: number | null
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          new_threshold?: number
+          note?: string | null
+          old_threshold?: number | null
+        }
+        Relationships: []
+      }
       ip_blacklist: {
         Row: {
           auto_added: boolean
