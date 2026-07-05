@@ -118,7 +118,7 @@ function footerSitemap(site: string, year: number, links: { section: string; ite
   return `<footer class="site-foot"><div class="sf-inner"><div class="sf-brand"><strong>${escapeHtml(site)}</strong><div>Independent writing since ${year - 6}.</div></div>${links.map((col) => `<div class="sf-col"><h5>${escapeHtml(col.section)}</h5>${col.items.map((it) => `<a href="#">${escapeHtml(it)}</a>`).join("")}</div>`).join("")}</div><div class="sf-legal">© ${year} ${escapeHtml(site)}. All rights reserved. · <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Contact</a> · <a href="#">RSS</a></div></footer>`;
 }
 
-function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; }): string {
+function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; wordCount?: number; keywords?: string[] }): string {
   const t = escapeHtml(opts.title);
   const d = escapeHtml(opts.description);
   const site = escapeHtml(opts.siteName);
@@ -126,19 +126,39 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   const author = escapeHtml(opts.author);
   const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
   const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
+  const kw = (opts.keywords ?? pickTags(6));
+  const wordCount = opts.wordCount ?? (900 + Math.floor(Math.random() * 600));
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: opts.title,
     description: opts.description,
     articleSection: opts.section,
+    keywords: kw.join(", "),
+    wordCount,
     inLanguage: "en-US",
-    author: { "@type": "Person", name: opts.author },
-    publisher: { "@type": "Organization", name: opts.siteName, logo: { "@type": "ImageObject", url: `https://${host}/logo.png` } },
+    author: { "@type": "Person", name: opts.author, url: `https://${host}/authors/${opts.author.toLowerCase().replace(/\s+/g, "-")}` },
+    publisher: {
+      "@type": "Organization",
+      name: opts.siteName,
+      url: `https://${host}`,
+      logo: { "@type": "ImageObject", url: `https://${host}/logo.png`, width: 200, height: 60 },
+    },
     datePublished: opts.publishedIso,
     dateModified: opts.publishedIso,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
+    isAccessibleForFree: true,
+    isPartOf: { "@type": "Periodical", name: opts.siteName, issn: `1${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}` },
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `https://${host}` },
+      { "@type": "ListItem", position: 2, name: opts.section, item: `https://${host}/${opts.section.toLowerCase()}` },
+      { "@type": "ListItem", position: 3, name: opts.title, item: url },
+    ],
   };
   const favicon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
   return `<meta charset="utf-8"/>
@@ -147,9 +167,17 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <title>${t} — ${site}</title>
 <meta name="description" content="${d}"/>
 <meta name="author" content="${author}"/>
-<meta name="robots" content="index,follow,max-image-preview:large"/>
+<meta name="keywords" content="${escapeHtml(kw.join(", "))}"/>
+<meta name="news_keywords" content="${escapeHtml(kw.slice(0, 3).join(", "))}"/>
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1"/>
+<meta name="googlebot" content="index,follow"/>
+<meta name="referrer" content="strict-origin-when-cross-origin"/>
+<meta name="format-detection" content="telephone=no"/>
 <link rel="canonical" href="${url}"/>
 <link rel="icon" type="image/svg+xml" href="${favicon}"/>
+<link rel="alternate" type="application/rss+xml" title="${site} RSS Feed" href="https://${host}/feed.xml"/>
+<link rel="sitemap" type="application/xml" href="https://${host}/sitemap.xml"/>
+<link rel="publisher" href="https://${host}"/>
 <meta property="og:type" content="article"/>
 <meta property="og:site_name" content="${site}"/>
 <meta property="og:title" content="${t}"/>
@@ -158,12 +186,16 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <meta property="og:locale" content="en_US"/>
 <meta property="article:author" content="${author}"/>
 <meta property="article:published_time" content="${opts.publishedIso}"/>
+<meta property="article:modified_time" content="${opts.publishedIso}"/>
 <meta property="article:section" content="${escapeHtml(opts.section)}"/>
+${kw.slice(0, 5).map((k) => `<meta property="article:tag" content="${escapeHtml(k)}"/>`).join("\n")}
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:site" content="@${host.split(".")[0]}"/>
+<meta name="twitter:creator" content="@${author.toLowerCase().replace(/\s+/g, "")}"/>
 <meta name="twitter:title" content="${t}"/>
 <meta name="twitter:description" content="${d}"/>
-<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>`;
 }
 
 function tmplDailyReader(p: Snip[], year: number): string {
