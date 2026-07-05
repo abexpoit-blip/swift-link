@@ -1,9 +1,15 @@
+import { renderSafeArticle, type Snip } from "./lib/safe-article";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 let localEnvLoaded = false;
+
+// In-memory cache for DB snippets used by the safe article renderer.
+const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 0 };
+const SNIPPET_TTL_MS = 120_000;
 
 const HARD_BOT_UA =
   /facebookexternalhit|facebookcatalog|meta-externalagent|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
