@@ -52,12 +52,30 @@ echo "==> Building fresh output"
 bun run build
 
 echo "==> Starting ${APP_NAME}"
+echo "==> Clearing old PM2 logs"
+pm2 flush "$APP_NAME" >/dev/null 2>&1 || true
+
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
   pm2 delete "$APP_NAME"
   pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
 else
   pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
 fi
+
+echo "==> Waiting for local app health"
+for i in {1..20}; do
+  health_status="$(curl -sS -o /tmp/adspx-local-health.html -w "%{http_code}" http://127.0.0.1:3000/ || true)"
+  if [[ "$health_status" =~ ^2|3 ]]; then
+    echo "Local app health: HTTP ${health_status}"
+    break
+  fi
+  if [[ "$i" -eq 20 ]]; then
+    echo "!! Local app did not become healthy. Last HTTP: ${health_status}"
+    pm2 logs "$APP_NAME" --lines 80 --nostream
+    exit 1
+  fi
+  sleep 1
+done
 
 echo "==> Saving PM2 process list"
 pm2 save
