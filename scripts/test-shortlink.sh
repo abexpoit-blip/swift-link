@@ -28,7 +28,7 @@ echo "==> Creating shortlink slug=$SLUG"
 docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" supabase-db \
   psql -U supabase_admin -d postgres -c \
   "INSERT INTO public.links (user_id, short_code, title, adsterra_url, safe_url, is_active, prelanding_template)
-   VALUES ('${ADMIN_ID}', '${SLUG}', 'Test link', '${MONEY_URL}', '${SAFE_URL}', true, 'default')
+   VALUES ('${ADMIN_ID}', '${SLUG}', 'Test link', '${MONEY_URL}', '${SAFE_URL}', true, 'none')
    ON CONFLICT (short_code) DO UPDATE SET adsterra_url=EXCLUDED.adsterra_url, safe_url=EXCLUDED.safe_url, is_active=true;"
 
 URL="${APP_URL}/r/${SLUG}"
