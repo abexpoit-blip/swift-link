@@ -587,6 +587,7 @@ function AdminPage() {
             <TabsTrigger value="withdrawals" className="gap-1.5"><Wallet className="h-3.5 w-3.5" />Payouts{pendingCount > 0 && <span className="ml-1 rounded-full bg-amber-500 text-white text-[9px] px-1.5 py-0.5">{pendingCount}</span>}</TabsTrigger>
             <TabsTrigger value="ads" className="gap-1.5"><Megaphone className="h-3.5 w-3.5" />Ads Setup</TabsTrigger>
             <TabsTrigger value="performance" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Performance</TabsTrigger>
+            <TabsTrigger value="botdetect" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" />Bot Detection</TabsTrigger>
             <TabsTrigger value="messages" className="gap-1.5"><Inbox className="h-3.5 w-3.5" />Messages</TabsTrigger>
             <TabsTrigger value="system" className="gap-1.5"><Settings2 className="h-3.5 w-3.5" />System</TabsTrigger>
             <TabsTrigger value="simulator" className="gap-1.5"><FlaskConical className="h-3.5 w-3.5" />Simulator</TabsTrigger>
