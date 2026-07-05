@@ -103,7 +103,7 @@ echo ""
 echo "==> Last 10 click rows"
 docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" supabase-db \
   psql -U supabase_admin -d postgres -c \
-  "SELECT created_at, is_bot, is_human, decision, country, LEFT(user_agent,60) AS ua
+  "SELECT created_at, is_bot, challenge_passed, routed_to, country, LEFT(ua,60) AS ua
      FROM public.clicks
      WHERE link_id = (SELECT id FROM public.links WHERE short_code='${SLUG}')
      ORDER BY created_at DESC LIMIT 10;"
