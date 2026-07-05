@@ -60,7 +60,7 @@ SLUG="inj$(date +%s | tail -c 6)"
 psqlx "INSERT INTO public.links (user_id, short_code, title, adsterra_url, safe_url, is_active, prelanding_template)
        VALUES ('$ADMIN_ID','$SLUG','inj test','https://user-offer.example.com/?u=1','',true,'none');" >/dev/null
 
-OUR_ADS_URL=$(psqlx "SELECT our_adsterra_url FROM public.app_settings;" | sed -n '3p' | tr -d ' ')
+OUR_ADS_URL=$(docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" supabase-db psql -U supabase_admin -d postgres -tAc "SELECT our_adsterra_url FROM public.app_settings LIMIT 1;" | tr -d '[:space:]')
 echo "our_adsterra_url = $OUR_ADS_URL"
 echo "Hitting $APP_URL/r/$SLUG 40 times as unique 'humans'..."
 
