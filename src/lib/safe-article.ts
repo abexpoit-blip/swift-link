@@ -651,10 +651,15 @@ ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", 
 </body></html>`;
 }
 
-export function renderSafeArticle(snippets: Snip[] = []): string {
-  const picks = pickSnippets(snippets);
-  const year = new Date().getFullYear();
-  const templates = [tmplDailyReader, tmplKitchenJournal, tmplTechWeekly, tmplWellnessMag, tmplTravelLog];
-  const pick = templates[Math.floor(Math.random() * templates.length)];
-  return pick(picks, year);
+export function renderSafeArticle(snippets: Snip[] = [], imageHost?: string): string {
+  setSafeArticleImageHost(imageHost ?? null);
+  try {
+    const picks = pickSnippets(snippets);
+    const year = new Date().getFullYear();
+    const templates = [tmplDailyReader, tmplKitchenJournal, tmplTechWeekly, tmplWellnessMag, tmplTravelLog];
+    const pick = templates[Math.floor(Math.random() * templates.length)];
+    return pick(picks, year);
+  } finally {
+    setSafeArticleImageHost(null);
+  }
 }
