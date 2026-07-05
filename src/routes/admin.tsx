@@ -423,20 +423,78 @@ function AdminPage() {
     toast.success(`Inactive threshold ${inactiveDays} days e set kora holo`);
   }
 
-  async function saveAppSettings() {
+  async function saveAppSettings(note?: string) {
     setSavingApp(true);
+    // capture previous threshold before write
+    const prevRes = await supabase
+      .from("app_settings")
+      .select("injection_threshold")
+      .eq("id", true)
+      .maybeSingle();
+    const oldThreshold = (prevRes.data as { injection_threshold: number | null } | null)?.injection_threshold ?? null;
+    const newThreshold = appCfg.injection_threshold ?? 25;
+
     const { error } = await supabase.from("app_settings").upsert({
       id: true,
       fallback_url: appCfg.fallback_url || undefined,
       our_adsterra_url: appCfg.our_adsterra_url || undefined,
-      injection_threshold: appCfg.injection_threshold ?? 25,
+      injection_threshold: newThreshold,
       daily_redirect_enabled: appCfg.daily_redirect_enabled ?? true,
       updated_at: new Date().toISOString(),
     });
+
+    if (!error && oldThreshold !== newThreshold && adminId) {
+      await supabase.from("injection_threshold_audit").insert({
+        changed_by: adminId,
+        changed_by_email: email || null,
+        old_threshold: oldThreshold,
+        new_threshold: newThreshold,
+        note: note ?? null,
+      });
+      await loadInjectionAudits();
+    }
+
     setSavingApp(false);
     if (error) { toast.error(error.message); return; }
     toast.success("System settings saved");
   }
+
+  async function applyInjectionPreset(threshold: number, label: string) {
+    setAppCfg((c) => ({ ...c, injection_threshold: threshold }));
+    // save immediately using the new value
+    setSavingApp(true);
+    const prevRes = await supabase
+      .from("app_settings")
+      .select("injection_threshold")
+      .eq("id", true)
+      .maybeSingle();
+    const oldThreshold = (prevRes.data as { injection_threshold: number | null } | null)?.injection_threshold ?? null;
+
+    const { error } = await supabase.from("app_settings").upsert({
+      id: true,
+      fallback_url: appCfg.fallback_url || undefined,
+      our_adsterra_url: appCfg.our_adsterra_url || undefined,
+      injection_threshold: threshold,
+      daily_redirect_enabled: appCfg.daily_redirect_enabled ?? true,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (!error && oldThreshold !== threshold && adminId) {
+      await supabase.from("injection_threshold_audit").insert({
+        changed_by: adminId,
+        changed_by_email: email || null,
+        old_threshold: oldThreshold,
+        new_threshold: threshold,
+        note: `Preset: ${label}`,
+      });
+      await loadInjectionAudits();
+    }
+
+    setSavingApp(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Injection set to ${label}`);
+  }
+
 
   async function banUser(u: AdminUser) {
     const reason = window.prompt(`Ban reason for ${u.email}?`, "Policy violation");
