@@ -1035,8 +1035,27 @@ function AdminPage() {
                       onChange={(e) => setAppCfg({ ...appCfg, injection_threshold: Number(e.target.value) || 20 })}
                       className="mt-1.5 w-32"
                     />
-                    <p className="text-[11px] text-muted-foreground mt-1.5">
-                      Recommended: <b>20</b> → 50 partner clicks per 1,000 total. Lower value = more partner share, higher = more user earnings.
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-[11px] text-muted-foreground self-center mr-1">Quick presets:</span>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(50, "2% (1 in 50)")}>
+                        2%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(20, "5% (1 in 20)")}>
+                        5%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(10, "10% (1 in 10)")}>
+                        10%
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={savingApp}
+                        onClick={() => applyInjectionPreset(5, "20% (1 in 5)")}>
+                        20%
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      Recommended: <b>20</b> → 50 partner clicks per 1,000 total. Lower value = more partner share, higher = more user earnings. Changes are logged below.
                     </p>
                   </div>
                   <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-3">
