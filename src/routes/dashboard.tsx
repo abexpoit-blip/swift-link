@@ -57,6 +57,8 @@ function DashboardPage() {
   const [logs, setLogs] = useState<TrafficLog[]>([]);
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
+  const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
+  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
   async function loadAll(uid: string) {
     const [profileRes, linksRes, earningsRes, logsRes] = await Promise.all([
       supabase.from("profiles").select("balance_available, balance_withdrawn").eq("id", uid).maybeSingle(),
