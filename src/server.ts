@@ -187,6 +187,52 @@ async function renderEntrySafe(request?: Request): Promise<Response> {
   });
 }
 
+function getBackendApiBase(request: Request): string {
+  const requestOrigin = new URL(request.url).origin;
+  const configured =
+    process.env.SUPABASE_URL ||
+    process.env.API_EXTERNAL_URL ||
+    "https://api.adspx.com";
+  const backend = configured.replace(/\/$/, "");
+
+  // If the browser build points to the main site for same-origin auth proxying,
+  // never proxy back to the same host or it would recurse forever.
+  if (backend === requestOrigin) return "https://api.adspx.com";
+  return backend;
+}
+
+async function handleBackendProxy(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  const shouldProxy =
+    url.pathname.startsWith("/auth/v1/") ||
+    url.pathname.startsWith("/rest/v1/") ||
+    url.pathname.startsWith("/storage/v1/");
+
+  if (!shouldProxy) return null;
+
+  const targetUrl = new URL(`${getBackendApiBase(request)}${url.pathname}${url.search}`);
+  const headers = new Headers(request.headers);
+  headers.delete("connection");
+  headers.delete("content-length");
+
+  const response = await fetch(targetUrl, {
+    method: request.method,
+    headers,
+    body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    redirect: "manual",
+  });
+
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set("cache-control", "no-store");
+  responseHeaders.set("x-adspx-backend-proxy", "selfhost");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
 // ─── On-the-fly OG cover images for safe pages ───
 // Facebook crawler fetches og:image URLs; we generate a 1200×630 SVG cover
 // derived from the slug so every article page has a real, cacheable share preview.
@@ -379,6 +425,8 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       await loadLocalEnvFile();
+      const backendProxyResponse = await handleBackendProxy(request);
+      if (backendProxyResponse) return applySecurityHeaders(request, backendProxyResponse);
       const mediaResponse = handleMediaCover(request);
       if (mediaResponse) return applySecurityHeaders(request, mediaResponse);
       const redirectResponse = await handleRedirectRoute(request);
