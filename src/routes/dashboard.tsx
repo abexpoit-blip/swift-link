@@ -108,9 +108,34 @@ function DashboardPage() {
         .then(({ data }) => setIsAdmin(!!data));
       await loadAll(session.user.id);
       setLoading(false);
+      // fire-and-forget: fetch monitor-mode banner status
+      supabase.from("app_settings").select("monitor_mode, monitor_mode_until").maybeSingle()
+        .then(({ data }) => data && setMonitorMode({ on: !!(data as any).monitor_mode, until: (data as any).monitor_mode_until }));
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Real-time validation widget: poll traffic_logs every 15s for last-60-min bot%
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    async function refresh() {
+      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("traffic_logs")
+        .select("decision")
+        .eq("user_id", userId!)
+        .gte("created_at", since)
+        .limit(1000);
+      if (cancelled || !data) return;
+      const total = data.length;
+      const humans = data.filter((r: any) => r.decision === "money").length;
+      setLiveStats({ total, humans, bots: total - humans, windowMin: 60 });
+    }
+    refresh();
+    const t = setInterval(refresh, 15000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [userId]);
 
   async function loadCloak(linkId: string) {
     const { data } = await supabase.from("cloaking_settings").select("*").eq("link_id", linkId).maybeSingle();
