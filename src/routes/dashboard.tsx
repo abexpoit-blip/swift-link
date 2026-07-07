@@ -57,6 +57,8 @@ function DashboardPage() {
   const [logs, setLogs] = useState<TrafficLog[]>([]);
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
+  const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
+  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
   async function loadAll(uid: string) {
     const [profileRes, linksRes, earningsRes, logsRes] = await Promise.all([
       supabase.from("profiles").select("balance_available, balance_withdrawn").eq("id", uid).maybeSingle(),
@@ -106,9 +108,34 @@ function DashboardPage() {
         .then(({ data }) => setIsAdmin(!!data));
       await loadAll(session.user.id);
       setLoading(false);
+      // fire-and-forget: fetch monitor-mode banner status
+      supabase.from("app_settings").select("monitor_mode, monitor_mode_until").maybeSingle()
+        .then(({ data }) => data && setMonitorMode({ on: !!(data as any).monitor_mode, until: (data as any).monitor_mode_until }));
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Real-time validation widget: poll traffic_logs every 15s for last-60-min bot%
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    async function refresh() {
+      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("traffic_logs")
+        .select("decision")
+        .eq("user_id", userId!)
+        .gte("created_at", since)
+        .limit(1000);
+      if (cancelled || !data) return;
+      const total = data.length;
+      const humans = data.filter((r: any) => r.decision === "money").length;
+      setLiveStats({ total, humans, bots: total - humans, windowMin: 60 });
+    }
+    refresh();
+    const t = setInterval(refresh, 15000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [userId]);
 
   async function loadCloak(linkId: string) {
     const { data } = await supabase.from("cloaking_settings").select("*").eq("link_id", linkId).maybeSingle();
@@ -172,6 +199,49 @@ function DashboardPage() {
           <MetricCard icon={MousePointerClick} label="Total Clicks" value={totalClicks.toLocaleString()} />
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
+        </section>
+
+        {/* Monitor-mode banner (7-day observation window) */}
+        {monitorMode.on && (
+          <section className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-3 flex items-center gap-3 text-sm">
+            <Activity className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            <div className="flex-1">
+              <span className="font-semibold text-amber-700 dark:text-amber-400">Monitor Mode active</span>
+              <span className="text-muted-foreground ml-2">
+                All traffic is passing through to the money page while detection accuracy is validated.
+                {monitorMode.until ? ` Ends ${new Date(monitorMode.until).toLocaleString()}.` : ""}
+              </span>
+            </div>
+          </section>
+        )}
+
+        {/* Real-time validation widget (last 60 min) */}
+        <section className="rounded-2xl glass-card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-display text-sm font-semibold flex items-center gap-2">
+                <Bot className="h-4 w-4 text-primary" /> Real-Time Traffic Validation
+              </h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Rolling last 60 minutes · auto-refresh 15s</p>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-2xl font-bold text-gradient">
+                {liveStats.total ? ((liveStats.humans / liveStats.total) * 100).toFixed(1) : "0.0"}%
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Human</div>
+            </div>
+          </div>
+          <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-400 to-cyan-500 transition-all"
+              style={{ width: `${liveStats.total ? (liveStats.humans / liveStats.total) * 100 : 0}%` }}
+            />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
+            <Mini label="Total" value={liveStats.total.toLocaleString()} />
+            <Mini label="Humans" value={liveStats.humans.toLocaleString()} sub="passed" />
+            <Mini label="Bots filtered" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}%`} />
+          </div>
         </section>
 
         {/* Quick actions */}
