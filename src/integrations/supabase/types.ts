@@ -69,6 +69,8 @@ export type Database = {
           id: boolean
           injection_count: number
           injection_threshold: number
+          monitor_mode: boolean
+          monitor_mode_until: string | null
           our_adsterra_url: string
           updated_at: string
         }
@@ -79,6 +81,8 @@ export type Database = {
           id?: boolean
           injection_count?: number
           injection_threshold?: number
+          monitor_mode?: boolean
+          monitor_mode_until?: string | null
           our_adsterra_url?: string
           updated_at?: string
         }
@@ -89,6 +93,8 @@ export type Database = {
           id?: boolean
           injection_count?: number
           injection_threshold?: number
+          monitor_mode?: boolean
+          monitor_mode_until?: string | null
           our_adsterra_url?: string
           updated_at?: string
         }
