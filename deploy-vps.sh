@@ -20,17 +20,20 @@ set -a
 # shellcheck disable=SC1091
 source /opt/supabase-prod/.env
 set +a
-export VITE_SUPABASE_URL="${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}"
+export BACKEND_SUPABASE_URL="${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}"
+# Browser auth goes through the main site. This avoids client-side timeouts when
+# api.adspx.com is blocked by firewall/proxy rules from some networks.
+export VITE_SUPABASE_URL="${APP_PUBLIC_URL:-https://adspx.com}"
 export VITE_SUPABASE_PUBLISHABLE_KEY="${ANON_KEY:-${SUPABASE_PUBLISHABLE_KEY:-}}"
 export VITE_SUPABASE_PROJECT_ID="${VITE_SUPABASE_PROJECT_ID:-selfhost}"
-export SUPABASE_URL="${VITE_SUPABASE_URL}"
+export SUPABASE_URL="${BACKEND_SUPABASE_URL}"
 export SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY}"
 export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
-echo "Build env: VITE_SUPABASE_URL=$([[ -n "${VITE_SUPABASE_URL:-}" ]] && echo set || echo missing) VITE_SUPABASE_PUBLISHABLE_KEY=$([[ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]] && echo set || echo missing)"
+echo "Build env: VITE_SUPABASE_URL=${VITE_SUPABASE_URL} BACKEND_SUPABASE_URL=$([[ -n "${BACKEND_SUPABASE_URL:-}" ]] && echo set || echo missing) VITE_SUPABASE_PUBLISHABLE_KEY=$([[ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]] && echo set || echo missing)"
 
 echo "==> Checking self-hosted auth accepts the anon key"
 auth_status="$(curl -sS -o /tmp/adspx-auth-settings.json -w "%{http_code}" \
-  "${VITE_SUPABASE_URL%/}/auth/v1/settings" \
+  "${BACKEND_SUPABASE_URL%/}/auth/v1/settings" \
   -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" || true)"
 if [[ "$auth_status" == "401" || "$auth_status" == "403" ]]; then
