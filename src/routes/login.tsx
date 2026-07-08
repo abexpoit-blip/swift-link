@@ -33,10 +33,26 @@ function LoginPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+    // Retry once on transient "Failed to fetch" (preview iframe / flaky network)
+    let error: { message: string } | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await supabase.auth.signInWithPassword({ email: trimmed, password });
+      error = res.error;
+      if (!error) break;
+      const msg = (error.message || "").toLowerCase();
+      if (!msg.includes("failed to fetch") && !msg.includes("network")) break;
+      await new Promise((r) => setTimeout(r, 400));
+    }
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("failed to fetch") || msg.includes("network")) {
+        toast.error("Network blocked. Open https://adspx.com/login in a new tab and try again.");
+      } else if (msg.includes("invalid") || msg.includes("credentials")) {
+        toast.error("Wrong email or password.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
     // bump last_login_at; ignore errors
