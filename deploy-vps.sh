@@ -61,7 +61,7 @@ echo "==> Building fresh output"
 bun run build
 
 echo "==> Verifying browser build uses same-origin backend proxy"
-if rg -q "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
+if grep -Rqs "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
   echo "!! Browser bundle still contains https://api.adspx.com." >&2
   echo "!! Refusing deploy because signup/login would fail in browsers." >&2
   echo "!! Set APP_BROWSER_URL=https://adspx.com and rerun deploy." >&2
