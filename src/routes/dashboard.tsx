@@ -115,7 +115,7 @@ function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Real-time validation widget: poll traffic_logs every 15s for last-60-min bot%
+  // Real-time validation widget: poll traffic_logs every 5s + refresh on focus/visibility
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
@@ -132,10 +132,24 @@ function DashboardPage() {
       const humans = data.filter((r: any) => r.decision === "money").length;
       setLiveStats({ total, humans, bots: total - humans, windowMin: 60 });
     }
+    async function refreshAll() {
+      if (!userId) return;
+      await Promise.all([refresh(), loadAll(userId)]);
+    }
     refresh();
-    const t = setInterval(refresh, 15000);
-    return () => { cancelled = true; clearInterval(t); };
+    const t = setInterval(refresh, 5000);
+    const onFocus = () => { refreshAll(); };
+    const onVis = () => { if (document.visibilityState === "visible") refreshAll(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [userId]);
+
 
   async function loadCloak(linkId: string) {
     const { data } = await supabase.from("cloaking_settings").select("*").eq("link_id", linkId).maybeSingle();

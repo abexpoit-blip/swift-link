@@ -57,7 +57,7 @@ function LoginPage() {
     }
     // bump last_login_at; ignore errors
     supabase.rpc("touch_last_login").then(() => {});
-    toast.success("Signed in");
+    // silent sign-in: no welcome toast
     // admin auto-redirect to admin panel
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
