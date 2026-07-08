@@ -214,11 +214,18 @@ async function handleBackendProxy(request: Request): Promise<Response | null> {
   const headers = new Headers(request.headers);
   headers.delete("connection");
   headers.delete("content-length");
+  headers.delete("host");
+  headers.delete("accept-encoding");
+
+  const method = request.method.toUpperCase();
+  const hasBody = method !== "GET" && method !== "HEAD";
+  // Buffer the body — Node's fetch requires `duplex: 'half'` for streamed bodies.
+  const body = hasBody ? await request.arrayBuffer() : undefined;
 
   const response = await fetch(targetUrl, {
-    method: request.method,
+    method,
     headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    body,
     redirect: "manual",
   });
 
