@@ -73,12 +73,34 @@ echo "==> Starting ${APP_NAME}"
 echo "==> Clearing old PM2 logs"
 pm2 flush "$APP_NAME" >/dev/null 2>&1 || true
 
-if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  pm2 delete "$APP_NAME"
-  pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
-else
-  pm2 start "bun run serve:selfhost" --name "$APP_NAME" --update-env
+# Load the same env that scripts/start-selfhost.sh loads, so PM2 can boot
+# node .output/server/index.mjs directly in cluster mode (one worker per CPU).
+load_env_file() { if [[ -f "$1" ]]; then set -a; source "$1"; set +a; fi; }
+load_env_file "/opt/supabase-prod/.env"
+SELFHOST_SUPABASE_URL="${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}"
+SELFHOST_PUBLISHABLE_KEY="${ANON_KEY:-${SUPABASE_PUBLISHABLE_KEY:-}}"
+SELFHOST_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
+load_env_file "$(pwd)/.env"
+export SUPABASE_URL="${SELFHOST_SUPABASE_URL:-${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}}"
+export SUPABASE_PUBLISHABLE_KEY="${SELFHOST_PUBLISHABLE_KEY:-${SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY:-}}}"
+export SUPABASE_SERVICE_ROLE_KEY="${SELFHOST_SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-${SERVICE_ROLE_KEY:-}}}"
+export HOST="${HOST:-0.0.0.0}"
+export PORT="${PORT:-3000}"
+
+if [[ ! -f ".output/server/index.mjs" ]]; then
+  echo "!! Missing .output/server/index.mjs. Build failed?" >&2
+  exit 1
 fi
+
+# cluster mode with all CPU cores for max throughput
+pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
+pm2 start .output/server/index.mjs \
+  --name "$APP_NAME" \
+  --interpreter node \
+  -i max \
+  --update-env \
+  -- --host "$HOST" --port "$PORT"
+
 
 echo "==> Waiting for local app health"
 for i in {1..20}; do
