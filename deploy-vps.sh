@@ -84,7 +84,7 @@ for i in {1..20}; do
 done
 
 echo "==> Verifying same-origin backend proxy"
-proxy_headers="$(curl -sSI \
+proxy_headers="$(curl -sS -X GET -D - -o /dev/null \
   -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   http://127.0.0.1:3000/auth/v1/settings || true)"
