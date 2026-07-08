@@ -21,9 +21,12 @@ set -a
 source /opt/supabase-prod/.env
 set +a
 export BACKEND_SUPABASE_URL="${SUPABASE_URL:-${API_EXTERNAL_URL:-https://api.adspx.com}}"
-# Browser auth goes through the main site. This avoids client-side timeouts when
-# api.adspx.com is blocked by firewall/proxy rules from some networks.
-export VITE_SUPABASE_URL="${APP_PUBLIC_URL:-https://adspx.com}"
+# Browser auth MUST go through the main site (/auth/v1, /rest/v1, /storage/v1).
+# Do not reuse APP_PUBLIC_URL from the backend env here: self-hosted backend
+# setups often set it to https://api.adspx.com, which makes browsers call the
+# API subdomain directly and fail with TypeError: Failed to fetch.
+export APP_BROWSER_URL="${APP_BROWSER_URL:-${PUBLIC_SITE_URL:-https://adspx.com}}"
+export VITE_SUPABASE_URL="${APP_BROWSER_URL%/}"
 export VITE_SUPABASE_PUBLISHABLE_KEY="${ANON_KEY:-${SUPABASE_PUBLISHABLE_KEY:-}}"
 export VITE_SUPABASE_PROJECT_ID="${VITE_SUPABASE_PROJECT_ID:-selfhost}"
 export SUPABASE_URL="${BACKEND_SUPABASE_URL}"
@@ -56,6 +59,15 @@ bun install --frozen-lockfile
 
 echo "==> Building fresh output"
 bun run build
+
+echo "==> Verifying browser build uses same-origin backend proxy"
+if grep -Rqs "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
+  echo "!! Browser bundle still contains https://api.adspx.com." >&2
+  echo "!! Refusing deploy because signup/login would fail in browsers." >&2
+  echo "!! Set APP_BROWSER_URL=https://adspx.com and rerun deploy." >&2
+  exit 1
+fi
+echo "Browser backend URL check: OK (${VITE_SUPABASE_URL})"
 
 echo "==> Starting ${APP_NAME}"
 echo "==> Clearing old PM2 logs"
