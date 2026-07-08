@@ -25,10 +25,16 @@ function proxiedPath(request: Request): string {
 
 export async function proxySelfhostBackend(request: Request): Promise<Response> {
   const targetUrl = new URL(`${getBackendApiBase(request)}${proxiedPath(request)}`);
+  const method = request.method.toUpperCase();
+  const hasBody = method !== "GET" && method !== "HEAD";
+  // Buffer the body so Node's fetch doesn't need `duplex: 'half'`.
+  // Streaming request.body directly returns 500 Internal Server Error.
+  const body = hasBody ? await request.arrayBuffer() : undefined;
+
   const response = await fetch(targetUrl, {
-    method: request.method,
+    method,
     headers: cleanRequestHeaders(request),
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    body,
     redirect: "manual",
   });
 
