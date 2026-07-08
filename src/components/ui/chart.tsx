@@ -61,6 +61,19 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Only allow identifier chars in the id / key so they can't break out of the
+// selector or property name. Only allow safe CSS color syntax (hex, rgb/hsl/
+// oklch/color functions, named colors, var()). Reject anything with `;`, `{`,
+// `}`, `<`, `>`, quotes, or `/*` to prevent CSS injection.
+const SAFE_ID_RE = /^[A-Za-z0-9_-]+$/;
+const SAFE_COLOR_RE = /^[A-Za-z0-9#(),.\s%_/-]+$/;
+function isSafeColor(v: string): boolean {
+  if (!v || v.length > 128) return false;
+  if (!SAFE_COLOR_RE.test(v)) return false;
+  if (/[;{}<>"'`]|\/\*|\*\//.test(v)) return false;
+  return true;
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([, config]) => config.theme || config.color);
 
@@ -68,18 +81,24 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  const safeId = SAFE_ID_RE.test(id) ? id : "";
+  if (!safeId) return null;
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${safeId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
+    if (!SAFE_ID_RE.test(key)) return null;
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    if (!color || !isSafeColor(color)) return null;
+    return `  --color-${key}: ${color};`;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
@@ -89,6 +108,7 @@ ${colorConfig
     />
   );
 };
+
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
