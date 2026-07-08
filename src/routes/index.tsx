@@ -730,7 +730,12 @@ function RecentPayouts() {
           <div className="text-right">When</div>
         </div>
         {visible.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No payouts to show.</div>
+          // Skeleton rows — server renders these; client swaps in real payouts after mount.
+          Array.from({ length: 8 }).map((_, i) => (
+            <div key={`sk-${i}`} className="px-4 sm:px-5 py-3 border-b border-border/40 last:border-b-0">
+              <div className="h-4 rounded bg-muted/50 animate-pulse" />
+            </div>
+          ))
         ) : (
           visible.map((p, i) => (
             <div key={`${p.user}-${i}`} className="px-4 sm:px-5 py-3 border-b border-border/40 last:border-b-0 text-sm">
