@@ -687,11 +687,16 @@ function buildInitial(): Payout[] {
 }
 
 function RecentPayouts() {
-  const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
+  // Start empty on SSR to avoid hydration mismatch (Math.random() differs
+  // between server and client). Populate on the client only.
+  const [payouts, setPayouts] = useState<Payout[]>([]);
 
   useEffect(() => {
+    // Initial population happens on the client so server & client HTML match.
+    setPayouts(buildInitial());
     const id = setInterval(() => {
       setPayouts((prev) => {
+        if (prev.length === 0) return prev;
         const aged = prev.map((p) => ({ ...p, minutesAgo: p.minutesAgo + 1 }));
         const fresh = makeRecentPayout(0, pickCountry());
         const trimmed = aged.slice(0, aged.length - 1);
@@ -725,7 +730,12 @@ function RecentPayouts() {
           <div className="text-right">When</div>
         </div>
         {visible.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No payouts to show.</div>
+          // Skeleton rows — server renders these; client swaps in real payouts after mount.
+          Array.from({ length: 8 }).map((_, i) => (
+            <div key={`sk-${i}`} className="px-4 sm:px-5 py-3 border-b border-border/40 last:border-b-0">
+              <div className="h-4 rounded bg-muted/50 animate-pulse" />
+            </div>
+          ))
         ) : (
           visible.map((p, i) => (
             <div key={`${p.user}-${i}`} className="px-4 sm:px-5 py-3 border-b border-border/40 last:border-b-0 text-sm">
