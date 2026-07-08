@@ -38,18 +38,31 @@ function SignupPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: trimmedEmail,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: fullName.trim() },
-      },
-    });
+    // Retry once on transient "Failed to fetch" (preview iframe / flaky network)
+    let data: Awaited<ReturnType<typeof supabase.auth.signUp>>["data"] | null = null;
+    let error: { message: string } | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: { full_name: fullName.trim() },
+        },
+      });
+      data = res.data;
+      error = res.error;
+      if (!error) break;
+      const em = (error.message || "").toLowerCase();
+      if (!em.includes("failed to fetch") && !em.includes("network")) break;
+      await new Promise((r) => setTimeout(r, 400));
+    }
     setLoading(false);
     if (error) {
       const msg = (error.message || "").toLowerCase();
-      if (msg.includes("weak") || msg.includes("pwned")) {
+      if (msg.includes("failed to fetch") || msg.includes("network")) {
+        toast.error("Network blocked. Open https://adspx.com/signup in a new tab and try again.");
+      } else if (msg.includes("weak") || msg.includes("pwned")) {
         toast.error("This password is too common or has been leaked online. Use a stronger one (mix letters, numbers & symbols).");
       } else if (msg.includes("already") || msg.includes("registered")) {
         toast.error("This email is already registered. Please sign in instead.");
@@ -58,6 +71,7 @@ function SignupPage() {
       }
       return;
     }
+    if (!data) return;
     if (data.session) {
       toast.success("Account created");
       navigate({ to: "/dashboard" });
