@@ -112,6 +112,13 @@ if ! grep -qiE "^HTTP/[0-9.]+ 2[0-9][0-9]" <<<"$proxy_headers"; then
   pm2 logs "$APP_NAME" --lines 80 --nostream
   exit 1
 fi
+if grep -qiE "^content-(encoding|length):" <<<"$proxy_headers"; then
+  echo "!! Same-origin backend proxy is forwarding stale compression headers." >&2
+  echo "!! This causes browser auth to fail with TypeError: Failed to fetch." >&2
+  echo "$proxy_headers" >&2
+  pm2 logs "$APP_NAME" --lines 80 --nostream
+  exit 1
+fi
 echo "Backend proxy check: OK"
 
 echo "==> Saving PM2 process list"
