@@ -687,11 +687,16 @@ function buildInitial(): Payout[] {
 }
 
 function RecentPayouts() {
-  const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
+  // Start empty on SSR to avoid hydration mismatch (Math.random() differs
+  // between server and client). Populate on the client only.
+  const [payouts, setPayouts] = useState<Payout[]>([]);
 
   useEffect(() => {
+    // Initial population happens on the client so server & client HTML match.
+    setPayouts(buildInitial());
     const id = setInterval(() => {
       setPayouts((prev) => {
+        if (prev.length === 0) return prev;
         const aged = prev.map((p) => ({ ...p, minutesAgo: p.minutesAgo + 1 }));
         const fresh = makeRecentPayout(0, pickCountry());
         const trimmed = aged.slice(0, aged.length - 1);
