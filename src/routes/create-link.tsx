@@ -121,19 +121,32 @@ function CreateLinkPage() {
       if (!["http:", "https:"].includes(u.protocol)) throw new Error();
     } catch { toast.error("Enter a valid https URL"); return; }
     setCreating(true);
-    const { error } = await supabase.from("links").insert({
-      user_id: userId, short_code: genCode(),
-      title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
-    });
+
+    // Retry on short_code unique-violation (Postgres 23505). Grow length after 3 collisions.
+    let lastError: { code?: string; message: string } | null = null;
+    let inserted = false;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const codeLen = attempt < 3 ? 7 : attempt < 5 ? 8 : 9;
+      const { error } = await supabase.from("links").insert({
+        user_id: userId, short_code: genCode(codeLen),
+        title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
+      });
+      if (!error) { inserted = true; break; }
+      lastError = error;
+      // 23505 = unique_violation. Retry only on short_code collision.
+      const isCollision = error.code === "23505" && /short_code/i.test(error.message || "");
+      if (!isCollision) break;
+    }
     setCreating(false);
-    if (error) {
-      toast.error(error.message.replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
+    if (!inserted) {
+      toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
       return;
     }
     toast.success("Short link created");
     setDestUrl(""); setTitle("");
     await loadAll(userId);
   }
+
 
   async function deleteLink(id: string) {
     if (!userId || !confirm("Delete this link?")) return;
