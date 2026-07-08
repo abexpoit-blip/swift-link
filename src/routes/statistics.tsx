@@ -128,10 +128,19 @@ function StatisticsPage() {
     }
 
     loadOnce(true);
-    // stable 8-second refresh — no random jitter
-    timer = setInterval(() => { loadOnce(false); }, 8000);
+    // fast 5-second refresh + refresh on tab focus/visibility for instant updates
+    timer = setInterval(() => { loadOnce(false); }, 5000);
+    const onFocus = () => loadOnce(false);
+    const onVis = () => { if (document.visibilityState === "visible") loadOnce(false); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
 
-    return () => { cancelled = true; if (timer) clearInterval(timer); };
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 
 
