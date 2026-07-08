@@ -23,6 +23,9 @@ import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RSlugRouteImport } from './routes/r.$slug'
+import { Route as StorageV1SplatRouteImport } from './routes/storage/v1/$'
+import { Route as RestV1SplatRouteImport } from './routes/rest/v1/$'
+import { Route as AuthV1SplatRouteImport } from './routes/auth/v1/$'
 import { Route as ApiPublicBehaviorCheckRouteImport } from './routes/api/public/behavior-check'
 
 const WithdrawRoute = WithdrawRouteImport.update({
@@ -95,6 +98,21 @@ const RSlugRoute = RSlugRouteImport.update({
   path: '/r/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StorageV1SplatRoute = StorageV1SplatRouteImport.update({
+  id: '/storage/v1/$',
+  path: '/storage/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestV1SplatRoute = RestV1SplatRouteImport.update({
+  id: '/rest/v1/$',
+  path: '/rest/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthV1SplatRoute = AuthV1SplatRouteImport.update({
+  id: '/auth/v1/$',
+  path: '/auth/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBehaviorCheckRoute = ApiPublicBehaviorCheckRouteImport.update({
   id: '/api/public/behavior-check',
   path: '/api/public/behavior-check',
@@ -117,6 +135,9 @@ export interface FileRoutesByFullPath {
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
+  '/auth/v1/$': typeof AuthV1SplatRoute
+  '/rest/v1/$': typeof RestV1SplatRoute
+  '/storage/v1/$': typeof StorageV1SplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +155,9 @@ export interface FileRoutesByTo {
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
+  '/auth/v1/$': typeof AuthV1SplatRoute
+  '/rest/v1/$': typeof RestV1SplatRoute
+  '/storage/v1/$': typeof StorageV1SplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +176,9 @@ export interface FileRoutesById {
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
+  '/auth/v1/$': typeof AuthV1SplatRoute
+  '/rest/v1/$': typeof RestV1SplatRoute
+  '/storage/v1/$': typeof StorageV1SplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +198,9 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
+    | '/auth/v1/$'
+    | '/rest/v1/$'
+    | '/storage/v1/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +218,9 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
+    | '/auth/v1/$'
+    | '/rest/v1/$'
+    | '/storage/v1/$'
   id:
     | '__root__'
     | '/'
@@ -205,6 +238,9 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
+    | '/auth/v1/$'
+    | '/rest/v1/$'
+    | '/storage/v1/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +259,9 @@ export interface RootRouteChildren {
   WithdrawRoute: typeof WithdrawRoute
   RSlugRoute: typeof RSlugRoute
   ApiPublicBehaviorCheckRoute: typeof ApiPublicBehaviorCheckRoute
+  AuthV1SplatRoute: typeof AuthV1SplatRoute
+  RestV1SplatRoute: typeof RestV1SplatRoute
+  StorageV1SplatRoute: typeof StorageV1SplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -325,6 +364,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/storage/v1/$': {
+      id: '/storage/v1/$'
+      path: '/storage/v1/$'
+      fullPath: '/storage/v1/$'
+      preLoaderRoute: typeof StorageV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rest/v1/$': {
+      id: '/rest/v1/$'
+      path: '/rest/v1/$'
+      fullPath: '/rest/v1/$'
+      preLoaderRoute: typeof RestV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/v1/$': {
+      id: '/auth/v1/$'
+      path: '/auth/v1/$'
+      fullPath: '/auth/v1/$'
+      preLoaderRoute: typeof AuthV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/behavior-check': {
       id: '/api/public/behavior-check'
       path: '/api/public/behavior-check'
@@ -351,6 +411,9 @@ const rootRouteChildren: RootRouteChildren = {
   WithdrawRoute: WithdrawRoute,
   RSlugRoute: RSlugRoute,
   ApiPublicBehaviorCheckRoute: ApiPublicBehaviorCheckRoute,
+  AuthV1SplatRoute: AuthV1SplatRoute,
+  RestV1SplatRoute: RestV1SplatRoute,
+  StorageV1SplatRoute: StorageV1SplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
