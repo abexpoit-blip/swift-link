@@ -83,6 +83,25 @@ for i in {1..20}; do
   sleep 1
 done
 
+echo "==> Verifying same-origin backend proxy"
+proxy_headers="$(curl -sSI \
+  -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+  -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+  http://127.0.0.1:3000/auth/v1/settings || true)"
+if ! grep -qi "x-adspx-backend-proxy: selfhost" <<<"$proxy_headers"; then
+  echo "!! Same-origin backend proxy is not active. Expected x-adspx-backend-proxy: selfhost" >&2
+  echo "$proxy_headers" >&2
+  pm2 logs "$APP_NAME" --lines 80 --nostream
+  exit 1
+fi
+if ! grep -qiE "^HTTP/[0-9.]+ 2[0-9][0-9]" <<<"$proxy_headers"; then
+  echo "!! Same-origin backend proxy did not return HTTP 2xx for /auth/v1/settings" >&2
+  echo "$proxy_headers" >&2
+  pm2 logs "$APP_NAME" --lines 80 --nostream
+  exit 1
+fi
+echo "Backend proxy check: OK"
+
 echo "==> Saving PM2 process list"
 pm2 save
 
