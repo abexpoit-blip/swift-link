@@ -232,6 +232,12 @@ async function handleBackendProxy(request: Request): Promise<Response | null> {
   const responseHeaders = new Headers(response.headers);
   responseHeaders.set("cache-control", "no-store");
   responseHeaders.set("x-adspx-backend-proxy", "selfhost");
+  // Node fetch transparently decompresses upstream auth responses, so forwarding
+  // the original compression headers makes browsers fail with
+  // net::ERR_CONTENT_DECODING_FAILED, surfaced by the auth client as
+  // TypeError: Failed to fetch.
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("content-length");
 
   return new Response(response.body, {
     status: response.status,
