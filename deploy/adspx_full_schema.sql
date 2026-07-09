@@ -47,7 +47,7 @@ CREATE TABLE public.packages (
   name text NOT NULL,
   price_usd numeric NOT NULL DEFAULT 0,
   click_quota bigint,
-  link_limit int DEFAULT 1,
+  link_limit int DEFAULT 100,
   is_active boolean NOT NULL DEFAULT true,
   sort_order int NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -68,7 +68,7 @@ CREATE TABLE public.profiles (
   click_quota bigint DEFAULT 10000,
   clicks_used bigint NOT NULL DEFAULT 0,
   clicks_period_start timestamptz NOT NULL DEFAULT now(),
-  link_limit int DEFAULT 1,
+  link_limit int DEFAULT 100,
   links_used int NOT NULL DEFAULT 0,
   is_banned boolean NOT NULL DEFAULT false,
   last_daily_redirect_at timestamptz,
@@ -86,7 +86,7 @@ CREATE TRIGGER t_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE 
 
 -- packages seed
 INSERT INTO public.packages (slug, name, price_usd, click_quota, link_limit, is_active, sort_order) VALUES
-  ('free',     'Free',        0,  10000,   1,    true, 1),
+  ('free',     'Free',        0,  10000,   100,  true, 1),
   ('monthly',  'Monthly Pro', 5,  1000000, 50,   true, 2),
   ('lifetime', 'Lifetime',    50, NULL,    NULL, true, 3),
   ('unlimited','Lifetime',    50, NULL,    NULL, false,4)
@@ -486,8 +486,8 @@ BEGIN
   IF NOT FOUND THEN
     SELECT click_quota, link_limit INTO v_free_click_quota, v_free_link_limit FROM public.packages WHERE slug = 'free';
     INSERT INTO public.profiles (id, plan_slug, click_quota, link_limit, links_used)
-    VALUES (NEW.user_id, 'free', COALESCE(v_free_click_quota, 10000), COALESCE(v_free_link_limit, 1), 0);
-    v_used := 0; v_limit := COALESCE(v_free_link_limit, 1);
+    VALUES (NEW.user_id, 'free', COALESCE(v_free_click_quota, 10000), COALESCE(v_free_link_limit, 100), 0);
+    v_used := 0; v_limit := COALESCE(v_free_link_limit, 100);
   END IF;
   IF COALESCE(v_is_admin, false) THEN
     UPDATE public.profiles SET links_used = links_used + 1 WHERE id = NEW.user_id;
@@ -537,7 +537,7 @@ BEGIN
     NULLIF(NEW.raw_user_meta_data->>'telegram',''),
     CASE WHEN v_role='admin' THEN 'lifetime' ELSE 'free' END,
     CASE WHEN v_role='admin' THEN NULL ELSE 10000 END,
-    CASE WHEN v_role='admin' THEN NULL ELSE 1 END
+    CASE WHEN v_role='admin' THEN NULL ELSE 100 END
   )
   ON CONFLICT (id) DO NOTHING;
   INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, v_role)
