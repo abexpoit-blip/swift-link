@@ -666,8 +666,7 @@ function formatWhen(min: number): string {
   return `${d} days ago`;
 }
 
-// Weighted country picker — mostly India & Pakistan, sometimes Bangladesh,
-// occasionally other countries drawn from the full publisher pool.
+// Weighted country picker — used for client-side updates only (random ok after mount).
 const OTHER_CCS: CC[] = ["us", "id", "ng", "br", "mx", "eg", "tr", "ph", "ma", "gb", "de", "sa", "ae", "ir"];
 function pickCountry(): CC | undefined {
   const r = Math.random();
@@ -677,23 +676,27 @@ function pickCountry(): CC | undefined {
   return OTHER_CCS[Math.floor(Math.random() * OTHER_CCS.length)];
 }
 
+// Deterministic initial rows so SSR + client hydration match exactly.
+// Hardcoded (no Math.random) — makeRecentPayout is used only for client-side updates.
+const INITIAL_PAYOUTS: Payout[] = [
+  { user: "arjun.k***",   country: "in", amount: 42.50, method: "USDT TRC20", minutesAgo: 3 },
+  { user: "hassan.a***",  country: "pk", amount: 28.10, method: "USDT BEP20", minutesAgo: 11 },
+  { user: "rakib.h***",   country: "bd", amount: 55.00, method: "USDT TRC20", minutesAgo: 24 },
+  { user: "michael.b***", country: "us", amount: 47.20, method: "USDT TRC20", minutesAgo: 47 },
+  { user: "rahul.m***",   country: "in", amount: 18.75, method: "USDT BEP20", minutesAgo: 82 },
+  { user: "chinedu.o***", country: "ng", amount: 22.40, method: "USDT TRC20", minutesAgo: 130 },
+  { user: "bilal.k***",   country: "pk", amount: 34.90, method: "USDT BEP20", minutesAgo: 210 },
+  { user: "budi.s***",    country: "id", amount: 15.30, method: "USDT TRC20", minutesAgo: 340 },
+];
 function buildInitial(): Payout[] {
-  const list: Payout[] = [];
-  const minutes = [3, 11, 24, 47, 82, 130, 210, 340];
-  for (let i = 0; i < minutes.length; i++) {
-    list.push(makeRecentPayout(minutes[i] + Math.floor(Math.random() * 6), pickCountry()));
-  }
-  return list;
+  return INITIAL_PAYOUTS;
 }
 
 function RecentPayouts() {
-  // Start empty on SSR to avoid hydration mismatch (Math.random() differs
-  // between server and client). Populate on the client only.
-  const [payouts, setPayouts] = useState<Payout[]>([]);
+  // Deterministic initial state → SSR HTML matches first client render.
+  const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
 
   useEffect(() => {
-    // Initial population happens on the client so server & client HTML match.
-    setPayouts(buildInitial());
     const id = setInterval(() => {
       setPayouts((prev) => {
         if (prev.length === 0) return prev;
