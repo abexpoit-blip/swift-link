@@ -666,8 +666,7 @@ function formatWhen(min: number): string {
   return `${d} days ago`;
 }
 
-// Weighted country picker — mostly India & Pakistan, sometimes Bangladesh,
-// occasionally other countries drawn from the full publisher pool.
+// Weighted country picker — used for client-side updates only (random ok after mount).
 const OTHER_CCS: CC[] = ["us", "id", "ng", "br", "mx", "eg", "tr", "ph", "ma", "gb", "de", "sa", "ae", "ir"];
 function pickCountry(): CC | undefined {
   const r = Math.random();
@@ -677,23 +676,19 @@ function pickCountry(): CC | undefined {
   return OTHER_CCS[Math.floor(Math.random() * OTHER_CCS.length)];
 }
 
+// Deterministic initial rows so SSR + client hydration match exactly.
+// No Math.random — same output every render.
+const INITIAL_COUNTRIES: CC[] = ["in", "pk", "bd", "us", "in", "ng", "pk", "id"];
+const INITIAL_MINUTES = [3, 11, 24, 47, 82, 130, 210, 340];
 function buildInitial(): Payout[] {
-  const list: Payout[] = [];
-  const minutes = [3, 11, 24, 47, 82, 130, 210, 340];
-  for (let i = 0; i < minutes.length; i++) {
-    list.push(makeRecentPayout(minutes[i] + Math.floor(Math.random() * 6), pickCountry()));
-  }
-  return list;
+  return INITIAL_MINUTES.map((m, i) => makeRecentPayout(m, INITIAL_COUNTRIES[i]));
 }
 
 function RecentPayouts() {
-  // Start empty on SSR to avoid hydration mismatch (Math.random() differs
-  // between server and client). Populate on the client only.
-  const [payouts, setPayouts] = useState<Payout[]>([]);
+  // Deterministic initial state → SSR HTML matches first client render.
+  const [payouts, setPayouts] = useState<Payout[]>(() => buildInitial());
 
   useEffect(() => {
-    // Initial population happens on the client so server & client HTML match.
-    setPayouts(buildInitial());
     const id = setInterval(() => {
       setPayouts((prev) => {
         if (prev.length === 0) return prev;
