@@ -86,7 +86,7 @@ CREATE TRIGGER t_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE 
 
 -- packages seed
 INSERT INTO public.packages (slug, name, price_usd, click_quota, link_limit, is_active, sort_order) VALUES
-  ('free',     'Free',        0,  10000,   1,    true, 1),
+  ('free',     'Free',        0,  10000,   100,  true, 1),
   ('monthly',  'Monthly Pro', 5,  1000000, 50,   true, 2),
   ('lifetime', 'Lifetime',    50, NULL,    NULL, true, 3),
   ('unlimited','Lifetime',    50, NULL,    NULL, false,4)
