@@ -264,7 +264,7 @@ function AppSidebar({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["app-shell-session"],
     staleTime: 60_000,
     gcTime: 5 * 60_000,
@@ -294,10 +294,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       };
     },
   });
-
-  if (isLoading && !data) {
-    return <div className="min-h-screen">{children}</div>;
-  }
 
   const { isAdmin = false, email = "", fullName = "", balance = 0 } = data ?? {};
 

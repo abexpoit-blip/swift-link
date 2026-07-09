@@ -59,12 +59,12 @@ function DashboardPage() {
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
   const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
   const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
-  async function loadAll(uid: string) {
-    const [profileRes, linksRes, earningsRes, logsRes] = await Promise.all([
+  async function loadAll(uid: string, options: { includeLogs?: boolean } = {}) {
+    const includeLogs = options.includeLogs ?? true;
+    const [profileRes, linksRes, earningsRes] = await Promise.all([
       supabase.from("profiles").select("balance_available, balance_withdrawn").eq("id", uid).maybeSingle(),
       supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("earnings_ledger").select("link_id, total_clicks, adsterra_clicks, user_clicks, earnings_usd").eq("user_id", uid),
-      supabase.from("traffic_logs").select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid").eq("user_id", uid).order("created_at", { ascending: false }).limit(50),
     ]);
     setBalance(Number(profileRes.data?.balance_available ?? 0));
     setWithdrawn(Number(profileRes.data?.balance_withdrawn ?? 0));
@@ -80,6 +80,13 @@ function DashboardPage() {
       agg[k].earnings_usd += Number(e.earnings_usd);
     }
     setEarningsByLink(agg);
+    if (!includeLogs) return;
+    const logsRes = await supabase
+      .from("traffic_logs")
+      .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false })
+      .limit(50);
     setLogs((logsRes.data as TrafficLog[] | null) ?? []);
   }
 
@@ -89,6 +96,7 @@ function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate({ to: "/login" }); return; }
       setUserId(session.user.id);
+      setLoading(false);
       // fire-and-forget: record activity for inactive-user purge
       supabase.rpc("touch_last_login").then(() => {});
       // check ban status
@@ -106,8 +114,17 @@ function DashboardPage() {
       // check admin role (fire-and-forget, non-blocking)
       supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" })
         .then(({ data }) => setIsAdmin(!!data));
-      await loadAll(session.user.id);
-      setLoading(false);
+      loadAll(session.user.id, { includeLogs: false })
+        .then(() =>
+          supabase
+            .from("traffic_logs")
+            .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
+            .eq("user_id", session.user.id)
+            .order("created_at", { ascending: false })
+            .limit(50),
+        )
+        .then(({ data }) => setLogs((data as TrafficLog[] | null) ?? []))
+        .catch((error) => toast.error(error.message));
       // fire-and-forget: fetch monitor-mode banner status
       supabase.from("app_settings").select("monitor_mode, monitor_mode_until").maybeSingle()
         .then(({ data }) => data && setMonitorMode({ on: !!(data as any).monitor_mode, until: (data as any).monitor_mode_until }));
@@ -137,7 +154,7 @@ function DashboardPage() {
       await Promise.all([refresh(), loadAll(userId)]);
     }
     refresh();
-    const t = setInterval(refresh, 5000);
+    const t = setInterval(refresh, 15000);
     const onFocus = () => { refreshAll(); };
     const onVis = () => { if (document.visibilityState === "visible") refreshAll(); };
     window.addEventListener("focus", onFocus);
@@ -176,10 +193,12 @@ function DashboardPage() {
 
   async function deleteLink(id: string) {
     if (!userId || !confirm("Delete this link?")) return;
+    const previousLinks = links;
+    setLinks((current) => current.filter((link) => link.id !== id));
     const { error } = await supabase.from("links").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { setLinks(previousLinks); toast.error(error.message); return; }
     toast.success("Deleted");
-    await loadAll(userId);
+    loadAll(userId).catch((err) => toast.error(err.message));
   }
 
   function copyShort(code: string) {
@@ -188,6 +207,7 @@ function DashboardPage() {
   }
 
   async function signOut() {
+    setLoading(true);
     await supabase.auth.signOut();
     navigate({ to: "/" });
   }
