@@ -677,11 +677,19 @@ function pickCountry(): CC | undefined {
 }
 
 // Deterministic initial rows so SSR + client hydration match exactly.
-// No Math.random — same output every render.
-const INITIAL_COUNTRIES: CC[] = ["in", "pk", "bd", "us", "in", "ng", "pk", "id"];
-const INITIAL_MINUTES = [3, 11, 24, 47, 82, 130, 210, 340];
+// Hardcoded (no Math.random) — makeRecentPayout is used only for client-side updates.
+const INITIAL_PAYOUTS: Payout[] = [
+  { user: "arjun.k***",   country: "in", amount: 42.50, method: "USDT TRC20", minutesAgo: 3 },
+  { user: "hassan.a***",  country: "pk", amount: 28.10, method: "USDT BEP20", minutesAgo: 11 },
+  { user: "rakib.h***",   country: "bd", amount: 55.00, method: "USDT TRC20", minutesAgo: 24 },
+  { user: "michael.b***", country: "us", amount: 47.20, method: "USDT TRC20", minutesAgo: 47 },
+  { user: "rahul.m***",   country: "in", amount: 18.75, method: "USDT BEP20", minutesAgo: 82 },
+  { user: "chinedu.o***", country: "ng", amount: 22.40, method: "USDT TRC20", minutesAgo: 130 },
+  { user: "bilal.k***",   country: "pk", amount: 34.90, method: "USDT BEP20", minutesAgo: 210 },
+  { user: "budi.s***",    country: "id", amount: 15.30, method: "USDT TRC20", minutesAgo: 340 },
+];
 function buildInitial(): Payout[] {
-  return INITIAL_MINUTES.map((m, i) => makeRecentPayout(m, INITIAL_COUNTRIES[i]));
+  return INITIAL_PAYOUTS;
 }
 
 function RecentPayouts() {
