@@ -12,7 +12,7 @@ import appCss from "@/styles.css?url";
 const favicon32 = { url: "/favicon-32.png" };
 const appleTouch = { url: "/apple-touch-icon.png" };
 const icon192 = { url: "/icon-192.png" };
-const ogDefault = { url: "/og-default.jpg" };
+const ogDefault = { url: "https://adspx.com/og-default.jpg" };
 
 
 interface RouterCtx {
