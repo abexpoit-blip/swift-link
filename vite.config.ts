@@ -13,12 +13,20 @@ export default defineConfig({
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
+            // Keep React and ReactDOM in one chunk. Splitting only react-dom out
+            // creates a circular entry import in production, so hydration never
+            // attaches event handlers on pages like /login.
+            if (
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/scheduler/") ||
+              id.includes("node_modules/use-sync-external-store/")
+            ) return "vendor-react";
             if (id.includes("@supabase")) return "vendor-supabase";
             if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
             if (id.includes("@radix-ui")) return "vendor-radix";
             if (id.includes("@tanstack")) return "vendor-tanstack";
             if (id.includes("lucide-react")) return "vendor-icons";
-            if (id.includes("react-dom")) return "vendor-react-dom";
           },
         },
       },
