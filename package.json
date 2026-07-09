@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite dev",
     "verify-env": "node scripts/verify-env.mjs",
-    "build": "vite build",
+    "build": "bash scripts/build-selfhost-safe.sh",
+    "build:vite": "vite build",
     "build:dev": "vite build --mode development",
     "serve:selfhost": "bash scripts/start-selfhost.sh",
     "preview": "vite preview",
