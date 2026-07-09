@@ -184,7 +184,7 @@ function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <BalanceWidget balance={balance} />
+
 
         {groups.map((group) => (
           <SidebarGroup key={group.label}>
