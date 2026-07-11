@@ -12,6 +12,9 @@
 --   child click/log rows in the user request.
 -- - Redirect code already refuses inactive links.
 -- - Raw logs are still pruned by the existing scheduled prune job.
+CREATE INDEX IF NOT EXISTS idx_links_user_active_created
+  ON public.links (user_id, is_active, created_at DESC);
+
 CREATE OR REPLACE FUNCTION public.delete_user_link_fast(_link_id uuid)
 RETURNS boolean
 LANGUAGE plpgsql
