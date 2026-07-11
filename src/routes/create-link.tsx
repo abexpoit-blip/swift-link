@@ -116,37 +116,53 @@ function CreateLinkPage() {
   async function createLink(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
+    const cleanUrl = destUrl.trim();
+    const cleanTitle = title.trim();
     try {
-      const u = new URL(destUrl.trim());
+      const u = new URL(cleanUrl);
       if (!["http:", "https:"].includes(u.protocol)) throw new Error();
     } catch { toast.error("Enter a valid https URL"); return; }
-    setCreating(true);
 
-    // Retry on short_code unique-violation (Postgres 23505). Grow length after 3 collisions.
-    let lastError: { code?: string; message: string } | null = null;
-    let newRow: LinkRow | null = null;
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const codeLen = attempt < 3 ? 7 : attempt < 5 ? 8 : 9;
-      const { data, error } = await supabase.from("links").insert({
-        user_id: userId, short_code: genCode(codeLen),
-        title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
-      }).select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").single();
-      if (!error && data) { newRow = data as LinkRow; break; }
-      lastError = error;
-      const isCollision = error?.code === "23505" && /short_code/i.test(error?.message || "");
-      if (!isCollision) break;
-    }
-    setCreating(false);
-    if (!newRow) {
-      toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
-      return;
-    }
-    // Optimistic: prepend instantly, reconcile in background
-    setLinks((prev) => [newRow!, ...prev]);
-    toast.success("Short link created");
+    // Truly instant UX: clear form immediately, show optimistic row with temp id,
+    // then reconcile with real DB row in background. No blocking spinner.
+    const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const tempCode = genCode(7);
+    const optimistic: LinkRow = {
+      id: tempId, short_code: tempCode, title: cleanTitle || null,
+      adsterra_url: cleanUrl, clicks_count: 0, bot_clicks_count: 0,
+      is_active: true, created_at: new Date().toISOString(),
+    };
+    setLinks((prev) => [optimistic, ...prev]);
     setDestUrl(""); setTitle("");
-    loadAll(userId).catch(() => {});
+    toast.success("Short link created");
+
+    // Background insert with retry on short_code unique-violation (Postgres 23505).
+    (async () => {
+      let lastError: { code?: string; message: string } | null = null;
+      let newRow: LinkRow | null = null;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const codeLen = attempt < 3 ? 7 : attempt < 5 ? 8 : 9;
+        const code = attempt === 0 ? tempCode : genCode(codeLen);
+        const { data, error } = await supabase.from("links").insert({
+          user_id: userId, short_code: code,
+          title: cleanTitle || null, adsterra_url: cleanUrl, safe_url: undefined,
+        }).select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").single();
+        if (!error && data) { newRow = data as LinkRow; break; }
+        lastError = error;
+        const isCollision = error?.code === "23505" && /short_code/i.test(error?.message || "");
+        if (!isCollision) break;
+      }
+      if (!newRow) {
+        // Rollback optimistic row on failure.
+        setLinks((cur) => cur.filter((l) => l.id !== tempId));
+        toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
+        return;
+      }
+      // Replace temp row with real row (in place, no reorder).
+      setLinks((cur) => cur.map((l) => (l.id === tempId ? newRow! : l)));
+    })();
   }
+
 
 
   async function deleteLink(id: string) {
