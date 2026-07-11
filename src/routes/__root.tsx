@@ -1,3 +1,5 @@
+// Self-hosted Supabase guard — must run before any @supabase/supabase-js import.
+import "@/integrations/supabase/guard";
 import {
   HeadContent,
   Scripts,
