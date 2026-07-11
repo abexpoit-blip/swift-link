@@ -223,9 +223,10 @@ function StatisticsPage() {
 
   const clickHumans = clicks.filter(c => !c.is_bot).length;
   const clickBots = clicks.length - clickHumans;
-  const totalHumans = tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans;
-  const totalBots   = tlogs.length ? tlogs.length - totalHumans : clickBots;
-  const evaluated   = totalHumans + totalBots;
+  // Prefer accurate HEAD counts (not row-limited). Fall back to fetched rows.
+  const totalHumans = totalCounts.total ? totalCounts.humans : (tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans);
+  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length ? tlogs.length - totalHumans : clickBots);
+  const evaluated   = totalCounts.total || (totalHumans + totalBots);
   const totalClicks = evaluated || linkClicks;
   const totalCountries = countriesAll.length;
   const humanPct    = evaluated ? ((totalHumans / evaluated) * 100).toFixed(1) : "—";
