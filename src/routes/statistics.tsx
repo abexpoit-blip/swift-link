@@ -91,7 +91,7 @@ function StatisticsPage() {
     let timer: ReturnType<typeof setInterval> | null = null;
 
     // Paginate to bypass PostgREST max-rows (default 1000 on many self-hosted setups).
-    async function fetchAll<T>(build: (from: number, to: number) => Promise<{ data: T[] | null }>, pageSize = 1000, hardCap = 50000): Promise<T[]> {
+    async function fetchAll<T>(build: (from: number, to: number) => any, pageSize = 1000, hardCap = 50000): Promise<T[]> {
       const out: T[] = [];
       for (let from = 0; from < hardCap; from += pageSize) {
         const to = from + pageSize - 1;
