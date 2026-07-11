@@ -84,9 +84,24 @@ function StatisticsPage() {
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [linkClicks, setLinkClicks] = useState(0);
 
+  const [totalCounts, setTotalCounts] = useState<{ total: number; humans: number }>({ total: 0, humans: 0 });
+
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | null = null;
+
+    // Paginate to bypass PostgREST max-rows (default 1000 on many self-hosted setups).
+    async function fetchAll<T>(build: (from: number, to: number) => any, pageSize = 1000, hardCap = 50000): Promise<T[]> {
+      const out: T[] = [];
+      for (let from = 0; from < hardCap; from += pageSize) {
+        const to = from + pageSize - 1;
+        const { data } = await build(from, to);
+        if (!data || data.length === 0) break;
+        out.push(...(data as T[]));
+        if (data.length < pageSize) break;
+      }
+      return out;
+    }
 
     async function loadOnce(showSpinner: boolean) {
       const { data: { session } } = await supabase.auth.getSession();
@@ -98,19 +113,26 @@ function StatisticsPage() {
       const userId = session.user.id;
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-      const [traffic, click, earnings, links] = await Promise.all([
-        supabase.from("traffic_logs")
-          .select("decision, country, created_at")
-          .eq("user_id", userId)
-          .gte("created_at", since)
-          .order("created_at", { ascending: true })
-          .limit(5000),
-        supabase.from("clicks")
-          .select("country, referer_host, is_bot, created_at, links!inner(user_id)")
-          .eq("links.user_id", userId)
-          .gte("created_at", since)
-          .order("created_at", { ascending: true })
-          .limit(5000),
+      const [trafficTotalRes, trafficHumansRes, traffic, click, earnings, links] = await Promise.all([
+        // Accurate totals via HEAD count — not row-limited
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since),
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId).eq("decision", "money").gte("created_at", since),
+        fetchAll<TLog>((from, to) =>
+          supabase.from("traffic_logs")
+            .select("decision, country, created_at")
+            .eq("user_id", userId)
+            .gte("created_at", since)
+            .order("created_at", { ascending: true })
+            .range(from, to)),
+        fetchAll<ClickRow>((from, to) =>
+          supabase.from("clicks")
+            .select("country, referer_host, is_bot, created_at, links!inner(user_id)")
+            .eq("links.user_id", userId)
+            .gte("created_at", since)
+            .order("created_at", { ascending: true })
+            .range(from, to)),
         supabase.from("earnings_ledger")
           .select("earnings_usd")
           .eq("user_id", userId),
@@ -120,16 +142,19 @@ function StatisticsPage() {
       ]);
 
       if (cancelled) return;
-      setTlogs((traffic.data ?? []) as TLog[]);
-      setClicks((click.data ?? []) as unknown as ClickRow[]);
+      setTotalCounts({
+        total: Number(trafficTotalRes.count ?? 0),
+        humans: Number(trafficHumansRes.count ?? 0),
+      });
+      setTlogs((traffic ?? []) as TLog[]);
+      setClicks((click ?? []) as unknown as ClickRow[]);
       setTotalEarnings((earnings.data ?? []).reduce((a, r: any) => a + Number(r.earnings_usd || 0), 0));
       setLinkClicks((links.data ?? []).reduce((a, r: any) => a + Number(r.clicks_count || 0) + Number(r.bot_clicks_count || 0), 0));
       if (showSpinner) setLoading(false);
     }
 
     loadOnce(true);
-    // fast 5-second refresh + refresh on tab focus/visibility for instant updates
-    timer = setInterval(() => { loadOnce(false); }, 5000);
+    timer = setInterval(() => { loadOnce(false); }, 15000);
     const onFocus = () => loadOnce(false);
     const onVis = () => { if (document.visibilityState === "visible") loadOnce(false); };
     window.addEventListener("focus", onFocus);
@@ -198,9 +223,10 @@ function StatisticsPage() {
 
   const clickHumans = clicks.filter(c => !c.is_bot).length;
   const clickBots = clicks.length - clickHumans;
-  const totalHumans = tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans;
-  const totalBots   = tlogs.length ? tlogs.length - totalHumans : clickBots;
-  const evaluated   = totalHumans + totalBots;
+  // Prefer accurate HEAD counts (not row-limited). Fall back to fetched rows.
+  const totalHumans = totalCounts.total ? totalCounts.humans : (tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans);
+  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length ? tlogs.length - totalHumans : clickBots);
+  const evaluated   = totalCounts.total || (totalHumans + totalBots);
   const totalClicks = evaluated || linkClicks;
   const totalCountries = countriesAll.length;
   const humanPct    = evaluated ? ((totalHumans / evaluated) * 100).toFixed(1) : "—";
