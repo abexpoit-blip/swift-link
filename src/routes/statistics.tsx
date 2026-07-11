@@ -132,7 +132,7 @@ function StatisticsPage() {
             .eq("links.user_id", userId)
             .gte("created_at", since)
             .order("created_at", { ascending: true })
-            .range(from, to) as unknown as Promise<{ data: ClickRow[] | null }>),
+            .range(from, to)),
         supabase.from("earnings_ledger")
           .select("earnings_usd")
           .eq("user_id", userId),
