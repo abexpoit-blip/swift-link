@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,16 +51,18 @@ function CreateLinkPage() {
   const [destUrl, setDestUrl] = useState("");
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  const deletedLinkIdsRef = useRef(new Set<string>());
+  const deletedTempIdsRef = useRef(new Set<string>());
 
   async function loadAll(uid: string) {
     const [profileRes, linksRes, earningsRes] = await Promise.all([
       supabase.from("profiles").select("link_limit, plan_slug").eq("id", uid).maybeSingle(),
-      supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).eq("is_active", true).order("created_at", { ascending: false }),
       supabase.from("earnings_ledger").select("link_id, total_clicks, adsterra_clicks, user_clicks, earnings_usd").eq("user_id", uid),
     ]);
     const profile = profileRes.data as { link_limit: number | null; plan_slug: string | null } | null;
     setLinkLimit(profile?.plan_slug === "free" ? Math.max(Number(profile?.link_limit ?? FREE_LINK_LIMIT), FREE_LINK_LIMIT) : profile?.link_limit ?? null);
-    setLinks((linksRes.data as LinkRow[] | null) ?? []);
+    setLinks(((linksRes.data as LinkRow[] | null) ?? []).filter((link) => !deletedLinkIdsRef.current.has(link.id)));
     const agg: Record<string, EarningRow> = {};
     for (const e of (earningsRes.data as EarningRow[] | null) ?? []) {
       const k = e.link_id ?? "_";
@@ -158,11 +160,22 @@ function CreateLinkPage() {
         toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
         return;
       }
+      if (deletedTempIdsRef.current.has(tempId)) {
+        deletedTempIdsRef.current.delete(tempId);
+        deletedLinkIdsRef.current.add(newRow.id);
+        await deleteStoredLink(newRow.id);
+        return;
+      }
       // Replace temp row with real row (in place, no reorder).
       setLinks((cur) => cur.map((l) => (l.id === tempId ? newRow! : l)));
     })();
   }
 
+  async function deleteStoredLink(id: string) {
+    const { error } = await (supabase as any).rpc("delete_user_link_fast", { _link_id: id });
+    if (!error) return { error: null };
+    return supabase.from("links").update({ is_active: false }).eq("id", id).eq("user_id", userId!);
+  }
 
 
   async function deleteLink(id: string) {
@@ -170,9 +183,10 @@ function CreateLinkPage() {
     // Optimistic remove (temp rows too); no reload needed.
     const prev = links;
     setLinks((cur) => cur.filter((l) => l.id !== id));
-    if (id.startsWith("tmp_")) { toast.success("Deleted"); return; }
-    const { error } = await supabase.from("links").delete().eq("id", id);
-    if (error) { setLinks(prev); toast.error(error.message); return; }
+    if (id.startsWith("tmp_")) { deletedTempIdsRef.current.add(id); toast.success("Deleted"); return; }
+    deletedLinkIdsRef.current.add(id);
+    const { error } = await deleteStoredLink(id);
+    if (error) { deletedLinkIdsRef.current.delete(id); setLinks(prev); toast.error(error.message); return; }
     toast.success("Deleted");
   }
 
