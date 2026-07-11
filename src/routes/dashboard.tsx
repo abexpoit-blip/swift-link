@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,16 +59,17 @@ function DashboardPage() {
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
   const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
   const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
+  const deletedLinkIdsRef = useRef(new Set<string>());
   async function loadAll(uid: string, options: { includeLogs?: boolean } = {}) {
     const includeLogs = options.includeLogs ?? true;
     const [profileRes, linksRes, earningsRes] = await Promise.all([
       supabase.from("profiles").select("balance_available, balance_withdrawn").eq("id", uid).maybeSingle(),
-      supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("links").select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").eq("user_id", uid).eq("is_active", true).order("created_at", { ascending: false }),
       supabase.from("earnings_ledger").select("link_id, total_clicks, adsterra_clicks, user_clicks, earnings_usd").eq("user_id", uid),
     ]);
     setBalance(Number(profileRes.data?.balance_available ?? 0));
     setWithdrawn(Number(profileRes.data?.balance_withdrawn ?? 0));
-    const lks = (linksRes.data as LinkRow[] | null) ?? [];
+    const lks = ((linksRes.data as LinkRow[] | null) ?? []).filter((link) => !deletedLinkIdsRef.current.has(link.id));
     setLinks(lks);
     const agg: Record<string, EarningRow> = {};
     for (const e of (earningsRes.data as EarningRow[] | null) ?? []) {
@@ -195,8 +196,10 @@ function DashboardPage() {
     if (!userId || !confirm("Delete this link?")) return;
     const previousLinks = links;
     setLinks((current) => current.filter((link) => link.id !== id));
-    const { error } = await supabase.from("links").delete().eq("id", id);
-    if (error) { setLinks(previousLinks); toast.error(error.message); return; }
+    deletedLinkIdsRef.current.add(id);
+    const { error } = await (supabase as any).rpc("delete_user_link_fast", { _link_id: id });
+    const fallback = error ? await supabase.from("links").update({ is_active: false }).eq("id", id).eq("user_id", userId) : { error: null };
+    if (fallback.error) { deletedLinkIdsRef.current.delete(id); setLinks(previousLinks); toast.error(fallback.error.message); return; }
     toast.success("Deleted");
     loadAll(userId).catch((err) => toast.error(err.message));
   }
