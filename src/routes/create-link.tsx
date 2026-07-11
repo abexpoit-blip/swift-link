@@ -116,7 +116,7 @@ function CreateLinkPage() {
     return out;
   }
 
-  async function createLink(e: React.FormEvent) {
+  function createLink(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
     const cleanUrl = destUrl.trim();
@@ -126,51 +126,55 @@ function CreateLinkPage() {
       if (!["http:", "https:"].includes(u.protocol)) throw new Error();
     } catch { toast.error("Enter a valid https URL"); return; }
 
-    // Truly instant UX: clear form immediately, show optimistic row with temp id,
-    // then reconcile with real DB row in background. No blocking spinner.
-    const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const tempCode = genCode(7);
+    // INSTANT UX: use client-generated UUID + 8-char short_code so the optimistic
+    // row IS the real row (no reconcile swap). Flush the render synchronously
+    // so the user sees the new row + cleared form before we even touch the network.
+    const tempId = (crypto as any)?.randomUUID?.() ?? `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    const shortCode = genCode(8); // 8 chars ≈ 62^8 space → collision practically zero
     const optimistic: LinkRow = {
-      id: tempId, short_code: tempCode, title: cleanTitle || null,
+      id: tempId, short_code: shortCode, title: cleanTitle || null,
       adsterra_url: cleanUrl, clicks_count: 0, bot_clicks_count: 0,
       is_active: true, created_at: new Date().toISOString(),
     };
-    setLinks((prev) => [optimistic, ...prev]);
-    setDestUrl(""); setTitle("");
+    flushSync(() => {
+      setLinks((prev) => [optimistic, ...prev]);
+      setDestUrl(""); setTitle("");
+    });
     toast.success("Short link created");
 
-    // Background insert with retry on short_code unique-violation (Postgres 23505).
+    // Background insert with client-supplied id + short_code. Retry only on collision.
     (async () => {
       let lastError: { code?: string; message: string } | null = null;
-      let newRow: LinkRow | null = null;
-      for (let attempt = 0; attempt < 6; attempt++) {
-        const codeLen = attempt < 3 ? 7 : attempt < 5 ? 8 : 9;
-        const code = attempt === 0 ? tempCode : genCode(codeLen);
-        const { data, error } = await supabase.from("links").insert({
-          user_id: userId, short_code: code,
-          title: cleanTitle || null, adsterra_url: cleanUrl, safe_url: undefined,
-        }).select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").single();
-        if (!error && data) { newRow = data as LinkRow; break; }
+      let inserted = false;
+      let code = shortCode;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt > 0) code = genCode(9);
+        const { error } = await supabase.from("links").insert({
+          id: tempId, user_id: userId, short_code: code,
+          title: cleanTitle || null, adsterra_url: cleanUrl,
+        } as any);
+        if (!error) { inserted = true; break; }
         lastError = error;
         const isCollision = error?.code === "23505" && /short_code/i.test(error?.message || "");
         if (!isCollision) break;
       }
-      if (!newRow) {
-        // Rollback optimistic row on failure.
+      if (!inserted) {
         setLinks((cur) => cur.filter((l) => l.id !== tempId));
         toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
         return;
       }
+      // If short_code changed due to collision, sync it into the visible row.
+      if (code !== shortCode) {
+        setLinks((cur) => cur.map((l) => (l.id === tempId ? { ...l, short_code: code } : l)));
+      }
       if (deletedTempIdsRef.current.has(tempId)) {
         deletedTempIdsRef.current.delete(tempId);
-        deletedLinkIdsRef.current.add(newRow.id);
-        await deleteStoredLink(newRow.id);
-        return;
+        deletedLinkIdsRef.current.add(tempId);
+        await deleteStoredLink(tempId);
       }
-      // Replace temp row with real row (in place, no reorder).
-      setLinks((cur) => cur.map((l) => (l.id === tempId ? newRow! : l)));
     })();
   }
+
 
   async function deleteStoredLink(id: string) {
     const { error } = await (supabase as any).rpc("delete_user_link_fast", { _link_id: id });
