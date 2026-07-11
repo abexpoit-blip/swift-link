@@ -1,4 +1,14 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+// Build-time safeguard: refuse to build if Supabase URL points to managed cloud.
+// This project is self-hosted on VPS only.
+const _sbUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+if (_sbUrl && /(^|\.)supabase\.(co|in)$/i.test(new URL(_sbUrl).hostname)) {
+  throw new Error(
+    `[vite] Refusing to build: VITE_SUPABASE_URL="${_sbUrl}" points to managed Supabase cloud. Use your self-hosted endpoint (e.g. https://supabase.adspx.com).`,
+  );
+}
+
 const appBuildVersion = process.env.APP_BUILD_VERSION || process.env.GIT_COMMIT_SHA || `${Date.now()}`;
 export default defineConfig({
   nitro: { preset: "node-server" },
