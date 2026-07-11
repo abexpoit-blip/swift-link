@@ -1,11 +1,15 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// Build-time safeguard: refuse to build if Supabase URL points to managed cloud.
-// This project is self-hosted on VPS only.
+// Build-time safeguard: refuse PRODUCTION builds if Supabase URL points to managed cloud.
+// This project is self-hosted on VPS only. Dev sandbox (Lovable editor) is exempt.
 const _sbUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-if (_sbUrl && /(^|\.)supabase\.(co|in)$/i.test(new URL(_sbUrl).hostname)) {
+if (
+  process.env.NODE_ENV === "production" &&
+  _sbUrl &&
+  /(^|\.)supabase\.(co|in)$/i.test(new URL(_sbUrl).hostname)
+) {
   throw new Error(
-    `[vite] Refusing to build: VITE_SUPABASE_URL="${_sbUrl}" points to managed Supabase cloud. Use your self-hosted endpoint (e.g. https://supabase.adspx.com).`,
+    `[vite] Refusing production build: VITE_SUPABASE_URL="${_sbUrl}" points to managed Supabase cloud. Use your self-hosted endpoint (e.g. https://supabase.adspx.com).`,
   );
 }
 

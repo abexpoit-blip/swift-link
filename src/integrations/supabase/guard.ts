@@ -23,6 +23,14 @@ function getConfiguredUrl(): string {
   return String(fromVite || fromProc || "");
 }
 
+function isDev(): boolean {
+  const mode =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as ImportMeta).env?.MODE) ||
+    (typeof process !== "undefined" ? process.env?.NODE_ENV : "");
+  return mode !== "production";
+}
+
 function assertSelfHosted(url: string): void {
   if (!url) return; // client.ts already errors on missing url
   let host = "";
@@ -34,6 +42,12 @@ function assertSelfHosted(url: string): void {
     );
   }
   if (FORBIDDEN_HOST_RE.test(host)) {
+    if (isDev()) {
+      console.warn(
+        `[supabase-guard] DEV: Supabase URL points to managed cloud "${host}". Production builds will refuse to boot with this URL.`,
+      );
+      return;
+    }
     throw new Error(
       `[supabase-guard] Refusing to boot: Supabase URL points to managed cloud "${host}". This project uses a self-hosted VPS instance. Fix VITE_SUPABASE_URL / SUPABASE_URL in .env and redeploy.`,
     );
