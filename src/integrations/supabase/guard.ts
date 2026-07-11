@@ -90,6 +90,6 @@ function patchFetch(): void {
 }
 
 assertSelfHosted(getConfiguredUrl());
-patchFetch();
+if (!isDev()) patchFetch();
 
 export {};
