@@ -46,13 +46,15 @@ if [[ "$auth_status" == "401" || "$auth_status" == "403" ]]; then
 fi
 echo "Auth API check: HTTP ${auth_status}"
 
-echo "==> Stopping ${APP_NAME} before replacing build files"
-if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  pm2 stop "$APP_NAME"
-fi
+echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (rolling reload after)"
+# NOTE: previously we stopped the app before build. That caused ~30s of 502s
+# on /r/:code redirects and lost click stats during every deploy. We now build
+# in place and use `pm2 reload` (cluster rolling restart) so at least one
+# worker is always serving traffic.
 
-echo "==> Removing stale build artifacts"
-rm -rf .output node_modules/.vite
+echo "==> Removing stale build artifacts (keeps running workers untouched)"
+rm -rf .output.new node_modules/.vite
+
 
 echo "==> Installing dependencies"
 bun install --frozen-lockfile
@@ -92,14 +94,24 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
   exit 1
 fi
 
-# cluster mode with all CPU cores for max throughput
-pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
-pm2 start .output/server/index.mjs \
-  --name "$APP_NAME" \
-  --interpreter node \
-  -i max \
-  --update-env \
-  -- --host "$HOST" --port "$PORT"
+# Zero-downtime: reload if already running (rolling restart across cluster workers),
+# otherwise start fresh. `pm2 reload` restarts workers one-by-one so /r/:code
+# never returns 502 during code updates. Missed click stats (during the ~1s
+# per-worker restart window) are auto-reconciled by adspx-reconcile-earnings
+# cron every hour from the clicks table.
+if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+  echo "==> Rolling reload (zero-downtime)"
+  pm2 reload "$APP_NAME" --update-env
+else
+  echo "==> First-time start (cluster mode, all CPU cores)"
+  pm2 start .output/server/index.mjs \
+    --name "$APP_NAME" \
+    --interpreter node \
+    -i max \
+    --update-env \
+    -- --host "$HOST" --port "$PORT"
+fi
+
 
 
 echo "==> Waiting for local app health"
