@@ -124,36 +124,39 @@ function CreateLinkPage() {
 
     // Retry on short_code unique-violation (Postgres 23505). Grow length after 3 collisions.
     let lastError: { code?: string; message: string } | null = null;
-    let inserted = false;
+    let newRow: LinkRow | null = null;
     for (let attempt = 0; attempt < 6; attempt++) {
       const codeLen = attempt < 3 ? 7 : attempt < 5 ? 8 : 9;
-      const { error } = await supabase.from("links").insert({
+      const { data, error } = await supabase.from("links").insert({
         user_id: userId, short_code: genCode(codeLen),
         title: title.trim() || null, adsterra_url: destUrl.trim(), safe_url: undefined,
-      });
-      if (!error) { inserted = true; break; }
+      }).select("id, short_code, title, adsterra_url, clicks_count, bot_clicks_count, is_active, created_at").single();
+      if (!error && data) { newRow = data as LinkRow; break; }
       lastError = error;
-      // 23505 = unique_violation. Retry only on short_code collision.
-      const isCollision = error.code === "23505" && /short_code/i.test(error.message || "");
+      const isCollision = error?.code === "23505" && /short_code/i.test(error?.message || "");
       if (!isCollision) break;
     }
     setCreating(false);
-    if (!inserted) {
+    if (!newRow) {
       toast.error((lastError?.message || "Failed to create link").replace("(1/1)", `(1/${FREE_LINK_LIMIT})`));
       return;
     }
+    // Optimistic: prepend instantly, reconcile in background
+    setLinks((prev) => [newRow!, ...prev]);
     toast.success("Short link created");
     setDestUrl(""); setTitle("");
-    await loadAll(userId);
+    loadAll(userId).catch(() => {});
   }
 
 
   async function deleteLink(id: string) {
     if (!userId || !confirm("Delete this link?")) return;
+    const prev = links;
+    setLinks((cur) => cur.filter((l) => l.id !== id));
     const { error } = await supabase.from("links").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { setLinks(prev); toast.error(error.message); return; }
     toast.success("Deleted");
-    await loadAll(userId);
+    loadAll(userId).catch(() => {});
   }
 
   function copyShort(code: string) {
