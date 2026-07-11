@@ -167,13 +167,15 @@ function CreateLinkPage() {
 
   async function deleteLink(id: string) {
     if (!userId || !confirm("Delete this link?")) return;
+    // Optimistic remove (temp rows too); no reload needed.
     const prev = links;
     setLinks((cur) => cur.filter((l) => l.id !== id));
+    if (id.startsWith("tmp_")) { toast.success("Deleted"); return; }
     const { error } = await supabase.from("links").delete().eq("id", id);
     if (error) { setLinks(prev); toast.error(error.message); return; }
     toast.success("Deleted");
-    loadAll(userId).catch(() => {});
   }
+
 
   function copyShort(code: string) {
     navigator.clipboard.writeText(`${window.location.origin}/r/${code}`);
