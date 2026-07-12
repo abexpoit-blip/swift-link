@@ -223,7 +223,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <meta property="og:locale" content="en_US"/>
 <meta property="og:image" content="${coverUrl}"/>
 <meta property="og:image:secure_url" content="${coverUrl}"/>
-<meta property="og:image:type" content="image/svg+xml"/>
+<meta property="og:image:type" content="image/jpeg"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:image:alt" content="${t}"/>
