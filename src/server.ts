@@ -135,7 +135,9 @@ function isHardcodedBot(ua: string, ip: string): boolean {
   if (!ua) return true;
   if (HARD_BOT_UA.test(ua)) return true;
   const lowerIp = ip.toLowerCase();
-  return META_V6.some((prefix) => lowerIp.startsWith(prefix));
+  if (META_V6.some((prefix) => lowerIp.startsWith(prefix))) return true;
+  if (META_V4.some((prefix) => lowerIp.startsWith(prefix))) return true;
+  return false;
 }
 
 function fingerprintHash(ua: string, ip: string, acceptLang: string): string {
