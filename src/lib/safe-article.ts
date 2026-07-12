@@ -140,7 +140,9 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   // Realistic CMS generator strings — rotates so fingerprint doesn't lock
   const generators = ["WordPress 6.5.2", "Ghost 5.82", "WordPress 6.4.3", "Ghost 5.75", "WordPress 6.5.5"];
   const generator = generators[Math.floor(Math.random() * generators.length)];
-  const coverUrl = `https://${imageHost}/media/${slug}-cover.jpg`;
+  // Universal editorial cover — real JPEG served from /public. Eliminates FB "og:image not explicit" warning
+  // that was caused by the previous SVG-with-jpg-extension mismatch.
+  const coverUrl = `https://${imageHost}/og-cover.jpg`;
   const authorSlug = opts.author.toLowerCase().replace(/\s+/g, "-");
   const readMin = 5 + Math.floor(Math.random() * 6);
   const jsonLd = {
@@ -221,7 +223,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <meta property="og:locale" content="en_US"/>
 <meta property="og:image" content="${coverUrl}"/>
 <meta property="og:image:secure_url" content="${coverUrl}"/>
-<meta property="og:image:type" content="image/svg+xml"/>
+<meta property="og:image:type" content="image/jpeg"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:image:alt" content="${t}"/>

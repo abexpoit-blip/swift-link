@@ -38,6 +38,12 @@ const DC_ASNS = new Set([
   "209242",
 ]);
 const META_V6 = ["2a03:2880", "2620:0:1c00", "2401:db00", "2803:6080"];
+// IPv4 /16 Meta scraper prefixes — any hit is Facebook/Instagram, always serve safe (no 302)
+const META_V4 = [
+  "31.13.", "66.220.", "69.63.", "69.171.", "74.119.",
+  "103.4.", "129.134.", "157.240.", "173.252.", "179.60.",
+  "185.60.", "204.15.",
+];
 const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
 
 type RedirectDecision = {
@@ -129,7 +135,9 @@ function isHardcodedBot(ua: string, ip: string): boolean {
   if (!ua) return true;
   if (HARD_BOT_UA.test(ua)) return true;
   const lowerIp = ip.toLowerCase();
-  return META_V6.some((prefix) => lowerIp.startsWith(prefix));
+  if (META_V6.some((prefix) => lowerIp.startsWith(prefix))) return true;
+  if (META_V4.some((prefix) => lowerIp.startsWith(prefix))) return true;
+  return false;
 }
 
 function fingerprintHash(ua: string, ip: string, acceptLang: string): string {

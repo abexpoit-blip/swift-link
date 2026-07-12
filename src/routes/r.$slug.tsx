@@ -19,6 +19,13 @@ const DC_ASNS = new Set([
 ]);
 // IPv6 prefixes from Meta (2a03:2880::/29 family)
 const META_V6 = ["2a03:2880", "2620:0:1c00", "2401:db00", "2803:6080"];
+// IPv4 /16 prefixes from Meta scraper ranges — any IP starting with these means Facebook/Instagram
+// scraper. Even when they use a generic user-agent to detect cloaking, we serve safe page 200 (no 302).
+const META_V4 = [
+  "31.13.", "66.220.", "69.63.", "69.171.", "74.119.",
+  "103.4.", "129.134.", "157.240.", "173.252.", "179.60.",
+  "185.60.", "204.15.",
+];
 
 const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
 
@@ -37,6 +44,7 @@ function isHardcodedBot(ua: string, ip: string): boolean {
   if (ip) {
     const lower = ip.toLowerCase();
     if (META_V6.some((p) => lower.startsWith(p))) return true;
+    if (META_V4.some((p) => lower.startsWith(p))) return true;
   }
   return false;
 }
