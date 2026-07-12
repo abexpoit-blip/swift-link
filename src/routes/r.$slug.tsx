@@ -44,6 +44,7 @@ function isHardcodedBot(ua: string, ip: string): boolean {
   if (ip) {
     const lower = ip.toLowerCase();
     if (META_V6.some((p) => lower.startsWith(p))) return true;
+    if (META_V4.some((p) => lower.startsWith(p))) return true;
   }
   return false;
 }
