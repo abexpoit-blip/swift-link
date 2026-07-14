@@ -653,15 +653,59 @@ ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", 
 </body></html>`;
 }
 
-export function renderSafeArticle(snippets: Snip[] = [], imageHost?: string): string {
+// ---- Deterministic template selection ----
+// FB/Meta crawler → SAME template every time for a given slug (consistency = FB trust).
+// Real safe (bot detected) → random template (variety).
+// Unknown/other → deterministic hash of slug+UA (stable per visitor).
+const CRAWLER_UA_RE = /facebookexternalhit|meta-externalagent|meta-externalfetcher|facebookcatalog|facebot|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|googlebot|bingbot|yandex|duckduckbot|applebot/i;
+
+function stableHash(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h;
+}
+
+function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: string }): number {
+  const ua = ctx?.ua || "";
+  const slug = ctx?.slug || "";
+  // FB / social crawlers → deterministic by slug ONLY (same URL always = same page)
+  if (slug && CRAWLER_UA_RE.test(ua)) {
+    return stableHash(slug) % templateCount;
+  }
+  // Real human or unknown bot → deterministic by slug+UA (stable per visitor session)
+  if (slug && ua) {
+    return stableHash(slug + "|" + ua.slice(0, 40)) % templateCount;
+  }
+  // No context → random
+  return Math.floor(Math.random() * templateCount);
+}
+
+export function renderSafeArticle(
+  snippets: Snip[] = [],
+  imageHost?: string,
+  ctx?: { slug?: string; ua?: string },
+): string {
   setSafeArticleImageHost(imageHost ?? null);
   try {
     const picks = pickSnippets(snippets);
     const year = new Date().getFullYear();
-    const templates = [tmplDailyReader, tmplKitchenJournal, tmplTechWeekly, tmplWellnessMag, tmplTravelLog];
-    const pick = templates[Math.floor(Math.random() * templates.length)];
-    return pick(picks, year);
+    const templates = [
+      tmplDailyReader,
+      tmplKitchenJournal,
+      tmplTechWeekly,
+      tmplWellnessMag,
+      tmplTravelLog,
+      tmplRecipeBox,
+      tmplPhotoJournal,
+      tmplBookReview,
+    ];
+    const idx = selectTemplateIndex(templates.length, ctx);
+    return templates[idx](picks, year);
   } finally {
     setSafeArticleImageHost(null);
   }
 }
+
