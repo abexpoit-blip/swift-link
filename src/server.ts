@@ -163,7 +163,7 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
-async function renderEntrySafe(request?: Request): Promise<Response> {
+async function renderEntrySafe(request?: Request, slug?: string): Promise<Response> {
   // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
   const now = Date.now();
   if (!SNIPPET_CACHE.items.length || SNIPPET_CACHE.expires < now) {
@@ -184,7 +184,10 @@ async function renderEntrySafe(request?: Request): Promise<Response> {
   // og:image must resolve on the actual serving host (adspx.com) — the /media/*-cover.jpg
   // handler lives here. Persona domains (dailyreader.co etc.) are only for branding text.
   const imageHost = request ? new URL(request.url).host : undefined;
-  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost), {
+  // Deterministic template selection: FB / Meta crawlers get the SAME template every time
+  // for a given slug (consistency = FB trust signal). Real safe traffic gets variety.
+  const ua = request?.headers.get("user-agent") || undefined;
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug, ua }), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -194,6 +197,7 @@ async function renderEntrySafe(request?: Request): Promise<Response> {
     },
   });
 }
+
 
 function getBackendApiBase(request: Request): string {
   const requestOrigin = new URL(request.url).origin;
