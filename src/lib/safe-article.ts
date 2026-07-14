@@ -709,3 +709,349 @@ export function renderSafeArticle(
   }
 }
 
+
+// ================ NEW TEMPLATE 1: Recipe Box ================
+function tmplRecipeBox(p: Snip[], year: number): string {
+  const [lead, a, b, c, d, e, f, g] = p;
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  const prepMin = 10 + Math.floor(Math.random() * 20);
+  const cookMin = 20 + Math.floor(Math.random() * 40);
+  const servings = 2 + Math.floor(Math.random() * 6);
+  const rating = (4.5 + Math.random() * 0.4).toFixed(1);
+  const votes = 40 + Math.floor(Math.random() * 800);
+  return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Weeknight Kitchen", siteHost: "weeknightkitchen.co", section: "Recipes", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#c8582f", faviconEmoji: "🍅" })}
+<style>*{box-sizing:border-box}body{margin:0;font-family:"Nunito Sans",-apple-system,system-ui,sans-serif;background:#fdfaf5;color:#2b2320;line-height:1.7}
+header.site{background:#fff;border-bottom:1px solid #f0e6d6;padding:16px 26px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+header.site .brand{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c8582f}
+header.site nav a{color:#5a4b42;text-decoration:none;margin-left:22px;font-size:14px;font-weight:600}
+.crumbs{max-width:760px;margin:0 auto;padding:20px 24px 0;font-size:13px;color:#8b7c70}.crumbs a{color:#8b7c70;text-decoration:none}
+main{max-width:760px;margin:0 auto;padding:24px 24px 40px}
+.kicker{color:#c8582f;font-size:12px;text-transform:uppercase;letter-spacing:.16em;font-weight:800;margin-bottom:12px}
+h1{font-family:Georgia,serif;font-size:42px;line-height:1.15;margin:0 0 14px;color:#2b2320}
+.byline{display:flex;gap:14px;align-items:center;padding:16px 0;border-top:1px solid #f0e6d6;border-bottom:1px solid #f0e6d6;margin:22px 0;font-size:14px;color:#5a4b42}
+.byline .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e8a87c,#c8582f)}
+.stars{color:#e0a020;margin-left:auto;font-size:14px;letter-spacing:1px}.stars b{color:#2b2320;margin-left:6px}
+.recipe-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#fff;border:1px solid #f0e6d6;border-radius:14px;padding:18px;margin:20px 0}
+.rm-item{text-align:center;padding:8px}.rm-item .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#8b7c70;margin-bottom:4px;font-weight:700}
+.rm-item .val{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c8582f}
+.pill{background:#fff5ea;color:#c8582f;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;display:inline-block;margin-right:6px;margin-bottom:6px}
+p{font-size:17px;margin:0 0 18px}p.lead{font-size:19px;color:#5a4b42;font-style:italic}
+h2{font-family:Georgia,serif;font-size:26px;margin:36px 0 14px;color:#2b2320;border-left:4px solid #c8582f;padding-left:14px}
+.ingredients{background:#fff;border:2px solid #c8582f;border-radius:14px;padding:24px;margin:26px 0}
+.ingredients h3{margin:0 0 14px;color:#c8582f;font-family:Georgia,serif;font-size:22px}
+.ingredients ul{list-style:none;padding:0;margin:0;columns:2;column-gap:32px}
+.ingredients li{padding:6px 0;font-size:15px;break-inside:avoid;position:relative;padding-left:22px}
+.ingredients li::before{content:"✓";color:#c8582f;font-weight:700;position:absolute;left:0}
+.steps ol{padding-left:0;list-style:none;counter-reset:step}
+.steps li{counter-increment:step;padding:14px 0 14px 46px;position:relative;border-bottom:1px solid #f5edd8;font-size:16px}
+.steps li::before{content:counter(step);position:absolute;left:0;top:12px;background:#c8582f;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.pro-tip{background:linear-gradient(135deg,#fff5ea,#ffe8d1);border-left:5px solid #c8582f;padding:18px 22px;margin:28px 0;border-radius:0 12px 12px 0;font-size:15px}
+.pro-tip strong{color:#c8582f;text-transform:uppercase;letter-spacing:.1em;font-size:12px;display:block;margin-bottom:6px}
+.share{display:flex;gap:12px;padding:16px 0;color:#8b7c70;font-size:13px;align-items:center}
+.share a{width:32px;height:32px;border-radius:50%;background:#fff5ea;color:#c8582f;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.author-card{margin:36px 0;padding:22px;background:#fff;border:1px solid #f0e6d6;border-radius:14px;display:flex;gap:16px}
+.a-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e8a87c,#c8582f)}
+.a-info h4{margin:0 0 4px}.a-role{color:#8b7c70;font-size:13px;margin-bottom:8px}
+.a-info p{font-size:14px;margin:0}
+.newsletter{background:linear-gradient(135deg,#c8582f,#a8451f);color:#fff;border-radius:16px;padding:30px;margin:36px 0;text-align:center}
+.nl-tag{font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;margin-bottom:10px;color:#fff5ea}
+.newsletter h3{margin:0 0 8px;font-size:24px;font-family:Georgia,serif}.newsletter p{margin:0 0 18px;font-size:14px;color:#fce6d1}
+.nl-row{display:flex;gap:8px;max-width:420px;margin:0 auto}.nl-row input{flex:1;padding:12px 14px;border-radius:99px;border:0;font-size:14px}
+.nl-row button{padding:12px 22px;border-radius:99px;background:#2b2320;color:#fff;border:0;font-weight:700;cursor:pointer}
+.nl-fine{color:#fce6d1;font-size:11px;margin-top:10px}
+.related{margin:44px 0 0;padding-top:32px;border-top:2px solid #f0e6d6}
+.related h3{font-family:Georgia,serif;font-size:22px;margin-bottom:20px;color:#c8582f}
+.rp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.rp-card{display:block;text-decoration:none;color:inherit;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #f0e6d6}
+.rp-thumb{width:100%;aspect-ratio:4/3;position:relative}
+.rp-tag{position:absolute;top:10px;left:10px;background:#fff;color:#c8582f;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700}
+.rp-card h4{margin:12px 14px 4px;font-family:Georgia,serif;font-size:16px;line-height:1.3}
+.rp-meta{color:#8b7c70;font-size:12px;margin:0 14px 14px}
+.comments{margin:44px 0 0;padding-top:32px;border-top:2px solid #f0e6d6}
+.comments h3{font-family:Georgia,serif;font-size:22px;margin-bottom:20px}
+.comment{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #f5edd8}
+.c-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#e8a87c,#c8582f)}
+.c-head{font-size:13px;margin-bottom:4px}.c-head span{color:#8b7c70;margin-left:6px;font-size:12px}
+.comment p{font-size:14px;margin:0}
+.c-more{color:#c8582f;font-weight:700;font-size:13px;margin-top:10px}
+.site-foot{background:#2b2320;color:#d9c9b8;padding:40px 24px 24px;margin-top:50px}
+.sf-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+.sf-brand strong{color:#c8582f;display:block;font-family:Georgia,serif;font-size:20px;margin-bottom:6px}.sf-brand div{font-size:13px;max-width:250px}
+.sf-col h5{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:#c8582f;font-weight:800}
+.sf-col a{display:block;color:#d9c9b8;text-decoration:none;font-size:13px;padding:3px 0}
+.sf-legal{max-width:960px;margin:28px auto 0;padding-top:18px;border-top:1px solid #4a3d34;font-size:12px;text-align:center;color:#8b7c70}
+@media(max-width:720px){.rp-grid,.recipe-meta{grid-template-columns:1fr}.ingredients ul{columns:1}.sf-inner{grid-template-columns:1fr 1fr}h1{font-size:32px}}
+</style></head>
+<body>
+<header class="site"><div class="brand">The Weeknight Kitchen 🍅</div><nav><a href="#">Recipes</a><a href="#">Meal Plans</a><a href="#">Techniques</a><a href="#">About</a></nav></header>
+<div class="crumbs"><a href="#">Home</a> / <a href="#">Recipes</a> / <a href="#">Weeknight</a> / ${escapeHtml(lead.title)}</div>
+<main>
+  <div class="kicker">Weeknight Dinner · Under an Hour</div>
+  <h1>${escapeHtml(lead.title)}</h1>
+  <div class="byline"><span class="avatar"></span><div><div>By <strong>${escapeHtml(author.name)}</strong></div><div style="font-size:12px;color:#8b7c70">Updated ${formatDate(iso)} · ${readMin} min read</div></div><div class="stars">★★★★★ <b>${rating}</b> <span style="color:#8b7c70;font-weight:400">(${votes})</span></div></div>
+  <div>${["Vegetarian friendly","Quick","One pot","Family favorite","Batch cook"].slice(0, 3 + Math.floor(Math.random() * 2)).map(t => `<span class="pill">${t}</span>`).join("")}</div>
+  <div class="recipe-meta">
+    <div class="rm-item"><div class="lbl">Prep</div><div class="val">${prepMin} min</div></div>
+    <div class="rm-item"><div class="lbl">Cook</div><div class="val">${cookMin} min</div></div>
+    <div class="rm-item"><div class="lbl">Total</div><div class="val">${prepMin + cookMin} min</div></div>
+    <div class="rm-item"><div class="lbl">Serves</div><div class="val">${servings}</div></div>
+  </div>
+  ${socialShareBar()}
+  ${paragraphsHtml(lead.body.split(/\n\n/).slice(0, 2).join("\n\n"), { dropCap: false, leadClass: "lead" })}
+  <div class="ingredients">
+    <h3>What you'll need</h3>
+    <ul>
+      <li>2 tbsp good olive oil</li><li>1 large yellow onion, sliced thin</li><li>3 cloves garlic, smashed</li><li>1 tsp kosher salt, plus more to taste</li>
+      <li>½ tsp black pepper, freshly ground</li><li>1 cup dry short-grain rice</li><li>2 ½ cups vegetable broth, warm</li><li>1 bay leaf</li>
+      <li>Zest of 1 lemon</li><li>2 tbsp unsalted butter</li><li>Small handful fresh parsley, chopped</li><li>Parmesan, to finish</li>
+    </ul>
+  </div>
+  <h2>How to make it</h2>
+  <div class="steps"><ol>
+    <li>Warm the olive oil in a wide, heavy pan over medium heat. Add the onion with a pinch of salt and cook until soft and translucent, about 6–8 minutes. Do not rush this — the sweetness of the onion is the base of everything.</li>
+    <li>Add the garlic and stir for 30 seconds until fragrant. Pour in the rice and stir to coat every grain in the fat. Toast for 2 minutes.</li>
+    <li>Add the warm broth, one ladle at a time, stirring often. Wait for each addition to absorb before adding the next. This takes about 18 minutes and cannot be hurried.</li>
+    <li>When the rice is tender but still has a slight bite, remove from the heat. Stir in the butter, lemon zest, and half the parsley. Taste and adjust salt.</li>
+    <li>Serve immediately in warm bowls with parmesan grated over the top and the remaining parsley scattered.</li>
+  </ol></div>
+  <div class="pro-tip"><strong>Chef's tip</strong>${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 200))}</div>
+  <h2>Why this recipe works</h2>
+  ${paragraphsHtml(b.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <h2>Make it your own</h2>
+  ${paragraphsHtml(c.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Recipe developer · The Weeknight Kitchen</div><p>${escapeHtml(author.bio)}</p></div></div>
+  ${newsletterCta("The Weeknight Kitchen", "One tested weeknight recipe every Sunday. Real food for real weekday nights.")}
+  <section class="related"><h3>You might also like</h3><div class="rp-grid">${relatedGrid([d, e, f, g], "#c8582f")}</div></section>
+  ${commentsBlock(38 + Math.floor(Math.random() * 220))}
+</main>
+${footerSitemap("The Weeknight Kitchen", year, [{ section: "Recipes", items: ["Weeknight", "One Pot", "Vegetarian", "30-Minute"] }, { section: "Learn", items: ["Techniques", "Meal Prep", "Substitutions", "Equipment"] }, { section: "About", items: ["Our story", "Contact", "Press", "RSS"] }])}
+</body></html>`;
+}
+
+// ================ NEW TEMPLATE 2: Photo Journal ================
+function tmplPhotoJournal(p: Snip[], year: number): string {
+  const [lead, a, b, c, d, e, f, g] = p;
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Frame & Field", siteHost: "frameandfield.co", section: "Photography", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#0f1614", faviconEmoji: "📷" })}
+<style>*{box-sizing:border-box}body{margin:0;font-family:"Inter",-apple-system,system-ui,sans-serif;background:#0f1614;color:#e8e6df;line-height:1.7}
+header.site{padding:20px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e2a26;position:sticky;top:0;background:rgba(15,22,20,.95);z-index:10;backdrop-filter:blur(8px)}
+header.site .brand{font-family:"Playfair Display",Georgia,serif;font-size:24px;letter-spacing:.02em}
+header.site nav a{color:#a4b0ab;text-decoration:none;margin-left:22px;font-size:13px;text-transform:uppercase;letter-spacing:.15em}
+.crumbs{max-width:820px;margin:0 auto;padding:22px 24px 0;font-size:12px;color:#6b7772;letter-spacing:.1em;text-transform:uppercase}.crumbs a{color:#6b7772;text-decoration:none}
+.hero-img{width:100%;height:420px;background:linear-gradient(135deg,#243530 0%,#3a5148 50%,#1e2a26 100%);position:relative;margin-top:20px}
+.hero-img::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,rgba(200,180,140,.15),transparent 60%)}
+.caption{max-width:820px;margin:12px auto 0;padding:0 24px;font-size:12px;color:#6b7772;font-style:italic;letter-spacing:.02em}
+main{max-width:720px;margin:0 auto;padding:36px 24px 40px}
+.kicker{color:#c8a870;font-size:11px;text-transform:uppercase;letter-spacing:.28em;font-weight:600;margin-bottom:16px}
+h1{font-family:"Playfair Display",Georgia,serif;font-size:44px;line-height:1.15;margin:0 0 14px;font-weight:500;color:#f5f2e8}
+.subtitle{font-size:18px;color:#a4b0ab;font-style:italic;line-height:1.55;margin-bottom:26px}
+.byline{display:flex;gap:14px;align-items:center;padding:18px 0;border-top:1px solid #1e2a26;border-bottom:1px solid #1e2a26;margin:22px 0;font-size:14px;color:#a4b0ab}
+.byline .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
+.byline strong{color:#f5f2e8}
+.share{display:flex;gap:12px;padding:14px 0 26px;color:#6b7772;font-size:12px;align-items:center;letter-spacing:.1em;text-transform:uppercase}
+.share a{width:34px;height:34px;border-radius:50%;background:#1e2a26;color:#c8a870;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+p{font-size:17px;margin:0 0 20px;color:#d5d3cb}
+p.lead::first-letter{font-family:"Playfair Display",Georgia,serif;font-size:4.5em;float:left;line-height:.85;padding:6px 12px 0 0;color:#c8a870}
+h2{font-family:"Playfair Display",Georgia,serif;font-size:28px;margin:40px 0 16px;color:#f5f2e8;font-weight:500}
+.photo-frame{margin:36px -20px;background:#1a2320;border:1px solid #2a3833;border-radius:4px;overflow:hidden}
+.photo-frame .img{width:100%;height:340px;background:linear-gradient(160deg,#3a5148,#243530 60%,#0f1614);position:relative}
+.photo-frame .img::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(200,168,112,.2),transparent 65%)}
+.photo-frame .cap{padding:14px 20px;background:#0f1614;border-top:1px solid #2a3833;font-size:12px;color:#6b7772;font-style:italic;display:flex;justify-content:space-between}
+.photo-frame .cap b{color:#c8a870;font-style:normal;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:32px 0}
+.gallery .thumb{aspect-ratio:1;border-radius:2px;background:linear-gradient(135deg,#243530,#3a5148)}
+.gallery .thumb:nth-child(2){background:linear-gradient(135deg,#3a5148,#5c6b60)}
+.gallery .thumb:nth-child(3){background:linear-gradient(135deg,#5c6b60,#243530)}
+.gallery .thumb:nth-child(4){background:linear-gradient(135deg,#c8a870,#8b7040)}
+.gallery .thumb:nth-child(5){background:linear-gradient(135deg,#8b7040,#3a5148)}
+.gallery .thumb:nth-child(6){background:linear-gradient(135deg,#243530,#0f1614)}
+blockquote{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-height:1.4;color:#c8a870;font-style:italic;border-left:2px solid #c8a870;padding-left:24px;margin:32px 0;font-weight:400}
+.author-card{margin:40px 0;padding:26px;background:#1a2320;border:1px solid #2a3833;border-radius:6px;display:flex;gap:18px}
+.a-av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
+.a-info h4{margin:0 0 4px;color:#f5f2e8;font-family:"Playfair Display",serif;font-size:18px}
+.a-role{color:#c8a870;font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.a-info p{font-size:14px;margin:0;color:#a4b0ab}
+.newsletter{background:linear-gradient(180deg,#1a2320,#0f1614);border:1px solid #2a3833;border-radius:8px;padding:30px;margin:40px 0;text-align:center}
+.nl-tag{color:#c8a870;font-size:11px;text-transform:uppercase;letter-spacing:.28em;font-weight:600;margin-bottom:10px}
+.newsletter h3{margin:0 0 8px;font-size:24px;font-family:"Playfair Display",serif;color:#f5f2e8;font-weight:500}
+.newsletter p{margin:0 0 18px;font-size:14px;color:#a4b0ab}
+.nl-row{display:flex;gap:8px;max-width:400px;margin:0 auto}
+.nl-row input{flex:1;padding:12px 14px;border-radius:2px;border:1px solid #2a3833;background:#0f1614;color:#f5f2e8;font-size:14px}
+.nl-row button{padding:12px 22px;border-radius:2px;background:#c8a870;color:#0f1614;border:0;font-weight:700;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;font-size:12px}
+.nl-fine{color:#6b7772;font-size:11px;margin-top:10px}
+.related{margin:48px 0 0;padding-top:36px;border-top:1px solid #1e2a26}
+.related h3{font-size:11px;letter-spacing:.28em;color:#c8a870;text-transform:uppercase;margin-bottom:22px;font-weight:600}
+.rp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.rp-card{display:block;text-decoration:none;color:inherit}
+.rp-thumb{width:100%;aspect-ratio:3/2;position:relative;margin-bottom:12px}
+.rp-tag{position:absolute;bottom:10px;left:10px;background:rgba(15,22,20,.9);color:#c8a870;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase}
+.rp-card h4{margin:0 0 6px;font-family:"Playfair Display",serif;font-size:17px;line-height:1.3;color:#f5f2e8;font-weight:500}
+.rp-meta{color:#6b7772;font-size:11px;letter-spacing:.08em}
+.comments{margin:44px 0 0;padding-top:32px;border-top:1px solid #1e2a26}
+.comments h3{font-size:18px;margin-bottom:20px;font-family:"Playfair Display",serif;color:#f5f2e8;font-weight:500}
+.comment{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #1e2a26}
+.c-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
+.c-head{font-size:13px;color:#f5f2e8}.c-head span{color:#6b7772;margin-left:6px;font-size:12px}
+.comment p{font-size:14px;margin:0;color:#a4b0ab}
+.c-more{color:#c8a870;font-weight:600;font-size:12px;margin-top:12px;letter-spacing:.14em;text-transform:uppercase}
+.site-foot{background:#0a0f0d;border-top:1px solid #1e2a26;padding:40px 24px 24px;margin-top:60px}
+.sf-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+.sf-brand strong{display:block;font-family:"Playfair Display",serif;font-size:20px;color:#f5f2e8;margin-bottom:6px}.sf-brand div{color:#6b7772;font-size:13px;max-width:250px}
+.sf-col h5{margin:0 0 12px;font-size:11px;letter-spacing:.18em;color:#c8a870;text-transform:uppercase;font-weight:600}
+.sf-col a{display:block;color:#a4b0ab;text-decoration:none;font-size:13px;padding:3px 0}
+.sf-legal{max-width:960px;margin:28px auto 0;padding-top:18px;border-top:1px solid #1e2a26;color:#6b7772;font-size:11px;text-align:center;letter-spacing:.08em}
+@media(max-width:720px){.gallery{grid-template-columns:1fr 1fr}.rp-grid{grid-template-columns:1fr}.sf-inner{grid-template-columns:1fr 1fr}.hero-img{height:280px}h1{font-size:32px}}
+</style></head>
+<body>
+<header class="site"><div class="brand">Frame & Field</div><nav><a href="#">Essays</a><a href="#">Portfolios</a><a href="#">Interviews</a><a href="#">Print</a></nav></header>
+<div class="crumbs"><a href="#">Home</a> · <a href="#">Essays</a> · Field Study</div>
+<div class="hero-img"></div>
+<div class="caption">Cover photograph · ${escapeHtml(author.name)}, ${new Date(iso).getFullYear()}</div>
+<main>
+  <div class="kicker">Field Study · Vol. ${8 + Math.floor(Math.random() * 30)}</div>
+  <h1>${escapeHtml(lead.title)}</h1>
+  <div class="subtitle">${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 150))}…</div>
+  <div class="byline"><span class="avatar"></span><div>By <strong>${escapeHtml(author.name)}</strong> · ${formatDate(iso)} · ${readMin} min read</div></div>
+  ${socialShareBar()}
+  ${paragraphsHtml(lead.body.split(/\n\n/).slice(0, 2).join("\n\n"), { dropCap: true, leadClass: "lead" })}
+  <div class="photo-frame"><div class="img"></div><div class="cap"><span>Untitled study, 2024. Silver gelatin print.</span><b>Plate I</b></div></div>
+  ${paragraphsHtml(a.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <blockquote>${escapeHtml(b.body.split(/\n\n/)[0].slice(0, 180))}</blockquote>
+  ${paragraphsHtml(c.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <h2>Selected frames</h2>
+  <div class="gallery"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
+  <p style="text-align:center;color:#6b7772;font-size:12px;font-style:italic;margin-top:-8px">Six frames from the ongoing series. Prints available in the studio.</p>
+  <h2>On making the work</h2>
+  ${paragraphsHtml(d.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Photographer · Contributor</div><p>${escapeHtml(author.bio)}</p></div></div>
+  ${newsletterCta("Frame & Field", "A monthly letter on making pictures. New essays, portfolio updates, print releases.")}
+  <section class="related"><h3>Further Reading</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#c8a870")}</div></section>
+  ${commentsBlock(24 + Math.floor(Math.random() * 130))}
+</main>
+${footerSitemap("Frame & Field", year, [{ section: "Read", items: ["Essays", "Portfolios", "Interviews", "Archive"] }, { section: "Shop", items: ["Prints", "Books", "Zines", "Editions"] }, { section: "About", items: ["Studio", "Contact", "Press", "Newsletter"] }])}
+</body></html>`;
+}
+
+// ================ NEW TEMPLATE 3: Book Review (The Margin) ================
+function tmplBookReview(p: Snip[], year: number): string {
+  const [lead, a, b, c, d, e, f, g] = p;
+  const author = pickAuthor();
+  const iso = recentIsoDate();
+  const readMin = READ_MINS();
+  const rating = 3 + Math.floor(Math.random() * 3);
+  const bookTitle = lead.title;
+  return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Margin", siteHost: "themargin.press", section: "Reviews", title: `Review: ${bookTitle}`, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#5c1f1f", faviconEmoji: "📚" })}
+<style>*{box-sizing:border-box}body{margin:0;font-family:"Lora","Iowan Old Style",Georgia,serif;background:#f7f2ea;color:#2a1e1e;line-height:1.8}
+header.site{background:#5c1f1f;color:#f7f2ea;padding:16px 30px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+header.site .brand{font-family:"Playfair Display",Georgia,serif;font-size:24px;font-style:italic;font-weight:600}
+header.site nav a{color:#e8d8b8;text-decoration:none;margin-left:22px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.crumbs{max-width:800px;margin:0 auto;padding:22px 24px 0;font-size:12px;color:#8b6060;letter-spacing:.06em;text-transform:uppercase;font-family:"Inter",sans-serif}.crumbs a{color:#8b6060;text-decoration:none}
+.hero{max-width:800px;margin:0 auto;padding:32px 24px 12px;display:grid;grid-template-columns:180px 1fr;gap:36px;align-items:center}
+.book-cover{aspect-ratio:2/3;background:linear-gradient(135deg,#8b3030,#5c1f1f);border-radius:2px;box-shadow:0 12px 32px rgba(92,31,31,.25);position:relative;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+.book-cover::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:rgba(255,255,255,.15)}
+.book-cover .bc-inner{color:#e8d8b8;font-family:"Playfair Display",serif;font-size:20px;line-height:1.2;font-style:italic}
+.book-cover .bc-author{position:absolute;bottom:16px;left:0;right:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-style:normal;color:#c8a870;font-family:"Inter",sans-serif}
+.hero-meta .kicker{font-family:"Inter",sans-serif;color:#5c1f1f;font-size:11px;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:12px}
+.hero-meta h1{font-family:"Playfair Display",Georgia,serif;font-size:38px;line-height:1.15;margin:0 0 12px;font-weight:500;letter-spacing:-.01em}
+.hero-meta .book-info{color:#6b4a4a;font-size:14px;line-height:1.6;margin-bottom:14px}
+.hero-meta .book-info b{color:#2a1e1e}
+.rating{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.rating .stars{color:#c89020;font-size:20px;letter-spacing:2px}.rating .txt{font-family:"Inter",sans-serif;font-size:12px;color:#6b4a4a;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+main{max-width:720px;margin:0 auto;padding:20px 24px 40px}
+.byline{display:flex;gap:14px;align-items:center;padding:20px 0;border-top:1px solid #e5d8c4;border-bottom:1px solid #e5d8c4;margin:22px 0;font-size:14px;color:#6b4a4a}
+.byline .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#c89020,#5c1f1f)}
+.byline strong{color:#2a1e1e}
+.share{display:flex;gap:12px;padding:14px 0 22px;color:#8b6060;font-size:12px;align-items:center;letter-spacing:.08em;text-transform:uppercase;font-family:"Inter",sans-serif}
+.share a{width:34px;height:34px;border-radius:50%;background:#efe4d0;color:#5c1f1f;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+p{font-size:18px;margin:0 0 22px}
+p.lead{font-size:22px;color:#4a3838;font-style:italic;line-height:1.55}
+p.lead::first-letter{font-family:"Playfair Display",serif;font-size:5em;float:left;line-height:.85;padding:8px 14px 0 0;color:#5c1f1f;font-style:normal}
+h2{font-family:"Playfair Display",Georgia,serif;font-size:28px;margin:44px 0 16px;color:#2a1e1e;font-weight:500;font-style:italic}
+h2::before{content:"§ ";color:#c89020;font-style:normal}
+blockquote{font-family:"Playfair Display",Georgia,serif;font-size:22px;line-height:1.5;color:#5c1f1f;font-style:italic;padding:20px 28px;margin:32px -8px;background:#efe4d0;border-radius:2px;position:relative}
+blockquote::before{content:"“";position:absolute;left:8px;top:-14px;font-size:64px;color:#c89020;font-family:Georgia,serif}
+.verdict{background:linear-gradient(135deg,#5c1f1f,#8b3030);color:#f7f2ea;border-radius:4px;padding:24px 28px;margin:36px 0}
+.verdict .lbl{font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#c89020;font-weight:700;margin-bottom:10px}
+.verdict p{font-family:"Playfair Display",serif;font-size:20px;font-style:italic;margin:0;line-height:1.45}
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:32px 0}
+.pc-col{padding:20px;border-radius:4px;background:#fff;border:1px solid #e5d8c4}
+.pc-col h4{margin:0 0 10px;font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.pc-col.pro h4{color:#4a7040}.pc-col.con h4{color:#8b3030}
+.pc-col ul{padding-left:18px;margin:0;font-size:14px;line-height:1.6}.pc-col li{margin-bottom:6px}
+.author-card{margin:40px 0;padding:24px;background:#fff;border:1px solid #e5d8c4;border-radius:4px;display:flex;gap:18px}
+.a-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c89020,#5c1f1f)}
+.a-info h4{margin:0 0 4px;font-family:"Playfair Display",serif;font-size:20px}
+.a-role{color:#8b6060;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-family:"Inter",sans-serif;margin-bottom:8px}
+.a-info p{font-size:14px;margin:0;color:#6b4a4a}
+.newsletter{background:#2a1e1e;color:#f7f2ea;border-radius:4px;padding:32px;margin:40px 0;text-align:center}
+.nl-tag{color:#c89020;font-size:11px;letter-spacing:.28em;text-transform:uppercase;font-weight:700;margin-bottom:10px;font-family:"Inter",sans-serif}
+.newsletter h3{margin:0 0 8px;font-family:"Playfair Display",serif;font-size:26px;font-style:italic;color:#f7f2ea;font-weight:500}
+.newsletter p{margin:0 0 18px;font-size:14px;color:#c8a880}
+.nl-row{display:flex;gap:8px;max-width:400px;margin:0 auto}
+.nl-row input{flex:1;padding:12px 14px;border:0;background:#f7f2ea;color:#2a1e1e;font-size:14px;font-family:inherit}
+.nl-row button{padding:12px 22px;background:#c89020;color:#2a1e1e;border:0;font-weight:700;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;font-size:12px;font-family:"Inter",sans-serif}
+.nl-fine{color:#8b6060;font-size:11px;margin-top:10px;font-family:"Inter",sans-serif}
+.related{margin:48px 0 0;padding-top:36px;border-top:2px solid #e5d8c4}
+.related h3{font-family:"Playfair Display",serif;font-size:22px;font-style:italic;margin-bottom:20px;color:#5c1f1f}
+.rp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.rp-card{display:block;text-decoration:none;color:inherit;padding:16px;border:1px solid #e5d8c4;border-radius:4px;background:#fff}
+.rp-thumb{width:60px;height:88px;background:linear-gradient(135deg,#8b3030,#5c1f1f);border-radius:2px;float:left;margin-right:12px;position:relative}
+.rp-tag{position:absolute;bottom:-6px;left:0;background:#c89020;color:#2a1e1e;padding:2px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.rp-card h4{margin:0 0 6px;font-family:"Playfair Display",serif;font-size:16px;line-height:1.3}
+.rp-meta{color:#8b6060;font-size:12px;font-family:"Inter",sans-serif}
+.comments{margin:44px 0 0;padding-top:32px;border-top:2px solid #e5d8c4}
+.comments h3{font-family:"Playfair Display",serif;font-size:22px;font-style:italic;margin-bottom:20px}
+.comment{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #e5d8c4}
+.c-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c89020,#5c1f1f)}
+.c-head{font-size:13px}.c-head span{color:#8b6060;margin-left:6px;font-size:12px}
+.comment p{font-size:15px;margin:0;font-family:"Lora",Georgia,serif}
+.c-more{color:#5c1f1f;font-weight:700;font-size:12px;margin-top:12px;letter-spacing:.14em;text-transform:uppercase;font-family:"Inter",sans-serif}
+.site-foot{background:#2a1e1e;color:#c8a880;padding:40px 24px 24px;margin-top:60px;font-family:"Inter",sans-serif}
+.sf-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+.sf-brand strong{display:block;font-family:"Playfair Display",serif;font-size:22px;color:#c89020;margin-bottom:6px;font-style:italic;font-weight:500}.sf-brand div{color:#8b6060;font-size:13px;max-width:250px;font-family:"Lora",serif}
+.sf-col h5{margin:0 0 12px;font-size:11px;letter-spacing:.18em;color:#c89020;text-transform:uppercase;font-weight:700}
+.sf-col a{display:block;color:#c8a880;text-decoration:none;font-size:13px;padding:3px 0}
+.sf-legal{max-width:960px;margin:28px auto 0;padding-top:18px;border-top:1px solid #4a3838;color:#8b6060;font-size:11px;text-align:center;letter-spacing:.08em}
+@media(max-width:720px){.hero{grid-template-columns:120px 1fr;gap:20px}.pros-cons,.rp-grid{grid-template-columns:1fr}.sf-inner{grid-template-columns:1fr 1fr}.hero-meta h1{font-size:28px}}
+</style></head>
+<body>
+<header class="site"><div class="brand">The Margin</div><nav><a href="#">Reviews</a><a href="#">Essays</a><a href="#">Interviews</a><a href="#">Archive</a></nav></header>
+<div class="crumbs"><a href="#">Home</a> · <a href="#">Reviews</a> · <a href="#">Non-fiction</a></div>
+<div class="hero">
+  <div class="book-cover"><div class="bc-inner">${escapeHtml(bookTitle.slice(0, 40))}</div><div class="bc-author">${escapeHtml(pickAuthor().name)}</div></div>
+  <div class="hero-meta">
+    <div class="kicker">Book Review · Non-fiction</div>
+    <h1>${escapeHtml(bookTitle)}</h1>
+    <div class="book-info"><b>By ${escapeHtml(pickAuthor().name)}</b> · Independent Press · ${240 + Math.floor(Math.random() * 200)} pages · £${12 + Math.floor(Math.random() * 8)}.99</div>
+    <div class="rating"><span class="stars">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</span><span class="txt">${rating}/5 · Highly recommended</span></div>
+  </div>
+</div>
+<main>
+  <div class="byline"><span class="avatar"></span><div>Reviewed by <strong>${escapeHtml(author.name)}</strong> · ${formatDate(iso)} · ${readMin} min read</div></div>
+  ${socialShareBar()}
+  ${paragraphsHtml(lead.body.split(/\n\n/).slice(0, 1).join("\n\n"), { dropCap: false, leadClass: "lead" })}
+  ${paragraphsHtml(a.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <blockquote>${escapeHtml(b.body.split(/\n\n/)[0].slice(0, 170))}</blockquote>
+  <h2>What works</h2>
+  ${paragraphsHtml(b.body.split(/\n\n/).slice(1, 3).join("\n\n") || c.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <h2>Where it stumbles</h2>
+  ${paragraphsHtml(c.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <div class="pros-cons">
+    <div class="pc-col pro"><h4>Strengths</h4><ul><li>Clear-eyed prose without decoration</li><li>Structural discipline throughout</li><li>Rare emotional restraint on a big subject</li></ul></div>
+    <div class="pc-col con"><h4>Weaknesses</h4><ul><li>Middle chapters lose some momentum</li><li>A few arguments feel underdeveloped</li></ul></div>
+  </div>
+  <h2>The verdict</h2>
+  ${paragraphsHtml(d.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
+  <div class="verdict"><div class="lbl">The Margin says</div><p>“A patient, quietly ambitious book that rewards the reader who slows down. Among the best non-fiction of the year.”</p></div>
+  <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Senior Reviewer · The Margin</div><p>${escapeHtml(author.bio)}</p></div></div>
+  ${newsletterCta("The Margin", "A weekly review letter. One book, unhurried. Read by 24,000 patient readers.")}
+  <section class="related"><h3>More reviews</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#5c1f1f")}</div></section>
+  ${commentsBlock(28 + Math.floor(Math.random() * 140))}
+</main>
+${footerSitemap("The Margin", year, [{ section: "Read", items: ["Reviews", "Essays", "Interviews", "Longreads"] }, { section: "Subjects", items: ["Non-fiction", "Fiction", "Poetry", "Criticism"] }, { section: "About", items: ["Editors", "Contact", "Submissions", "Newsletter"] }])}
+</body></html>`;
+}
