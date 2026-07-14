@@ -183,11 +183,19 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
   }
   // og:image must resolve on the actual serving host (adspx.com) — the /media/*-cover.jpg
   // handler lives here. Persona domains (dailyreader.co etc.) are only for branding text.
-  const imageHost = request ? new URL(request.url).host : undefined;
+  const reqUrl = request ? new URL(request.url) : null;
+  const imageHost = reqUrl?.host;
+  // Fallback: derive slug from URL if caller didn't pass one, so every /r/{slug}
+  // response — including error/catch paths — selects the same template deterministically.
+  let effectiveSlug = slug;
+  if (!effectiveSlug && reqUrl) {
+    const m = reqUrl.pathname.match(/^\/r\/([^/]+)\/?$/);
+    if (m) effectiveSlug = decodeURIComponent(m[1] || "").slice(0, 64) || undefined;
+  }
   // Deterministic template selection: FB / Meta crawlers get the SAME template every time
   // for a given slug (consistency = FB trust signal). Real safe traffic gets variety.
   const ua = request?.headers.get("user-agent") || undefined;
-  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug, ua }), {
+  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug: effectiveSlug, ua }), {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
