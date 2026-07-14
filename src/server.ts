@@ -404,7 +404,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     });
   } catch (error) {
     console.error("[server:/r] handler error", error);
-    return renderEntrySafe(request, slug);
+    return renderEntrySafe(request);
   }
 }
 
