@@ -356,7 +356,9 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const secChMobile = request.headers.get("sec-ch-ua-mobile") || "";
     const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
 
-    console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
+    if (process.env.DEBUG_REDIRECT === "1") {
+      console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
+    }
 
     const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
     const supabasePublic = getAdspxPublicClient();
