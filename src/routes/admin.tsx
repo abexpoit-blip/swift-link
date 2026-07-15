@@ -421,20 +421,25 @@ function AdminPage() {
     if (decision.action === "rejected" && !comment.trim()) { toast.error("Rejection requires a comment"); return; }
     setSubmittingDecision(true);
     const { w, action } = decision;
-    const { error: updErr } = await supabase.from("withdrawals").update({
-      status: action, admin_comment: comment.trim() || null, processed_by: adminId, processed_at: new Date().toISOString(),
-    }).eq("id", w.id);
-    if (updErr) { setSubmittingDecision(false); return toast.error(updErr.message); }
-    const { error: audErr } = await supabase.from("withdrawal_audit").insert({
-      withdrawal_id: w.id, admin_id: adminId, admin_email: email, action,
-      previous_status: w.status, new_status: action, comment: comment.trim() || null,
+    // Atomic RPC: checks balance + updates withdrawal + decrements profile in one transaction.
+    // Prevents double-spend when a user submits multiple withdrawals from parallel tabs.
+    const { data: rpcData, error: rpcErr } = await (supabase.rpc as any)("admin_process_withdrawal", {
+      _withdrawal_id: w.id,
+      _decision: action,
+      _comment: comment.trim() || null,
     });
+    if (rpcErr) { setSubmittingDecision(false); return toast.error(rpcErr.message); }
+    const result = rpcData as { ok?: boolean; error?: string } | null;
+    if (result && result.ok === false) {
+      setSubmittingDecision(false);
+      return toast.error(result.error || "Withdrawal could not be processed");
+    }
     setSubmittingDecision(false);
-    if (audErr) toast.warning(`Updated, but audit log failed: ${audErr.message}`);
-    else toast.success(`Withdrawal ${action}`);
+    toast.success(`Withdrawal ${action}`);
     setDecision(null); setComment("");
     await loadAll();
   }
+
 
   async function deleteMessage(id: string) {
     if (!confirm("Delete this message?")) return;
