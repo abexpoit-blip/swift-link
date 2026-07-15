@@ -380,7 +380,9 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const data = rpcResult.data as RedirectDecision | null;
     const error = rpcResult.error;
 
-    console.log(`[server:/r] rpc_result data=${JSON.stringify(data)} error=${JSON.stringify(error)}`);
+    if (process.env.DEBUG_REDIRECT === "1") {
+      console.log(`[server:/r] rpc_result data=${JSON.stringify(data)} error=${JSON.stringify(error)}`);
+    }
 
     if (error) {
       console.error("[server:/r] resolve_public_redirect failed", error);
