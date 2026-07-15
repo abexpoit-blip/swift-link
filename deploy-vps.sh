@@ -53,7 +53,13 @@ echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (rollin
 # worker is always serving traffic.
 
 echo "==> Removing stale build artifacts (keeps running workers untouched)"
-rm -rf .output.new node_modules/.vite
+# CRITICAL: wipe .output entirely. Otherwise chunks from previous partial builds
+# stay behind while the new SSR manifest references NEW hashes. If the new build
+# fails to emit a chunk (or an earlier build was aborted), the browser downloads
+# HTML referencing NEW hashes, but the /assets/<hash>.js file is missing on disk,
+# causing 500 "unhandled" for lazy route chunks (login, create-link, withdraw…).
+# Users then see "Something went wrong — Failed to fetch dynamically imported module".
+rm -rf .output .output.new node_modules/.vite
 
 
 echo "==> Installing dependencies"
@@ -61,6 +67,38 @@ bun install --frozen-lockfile
 
 echo "==> Building fresh output"
 bun run build
+
+echo "==> Verifying every SSR-referenced asset chunk exists on disk"
+missing_chunks="$(node - <<'JS'
+const { readFileSync, readdirSync, statSync, existsSync } = require('node:fs');
+const { join } = require('node:path');
+const assetsDir = '.output/public/assets';
+if (!existsSync(assetsDir)) { console.log('MISSING_ASSETS_DIR'); process.exit(0); }
+const onDisk = new Set(readdirSync(assetsDir));
+const refs = new Set();
+function scan(dir) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    const s = statSync(p);
+    if (s.isDirectory()) { scan(p); continue; }
+    if (!/\.(js|mjs|cjs|html|json)$/.test(name)) continue;
+    const txt = readFileSync(p, 'utf8');
+    for (const m of txt.matchAll(/assets\/([A-Za-z0-9_.\-]+\.js)/g)) refs.add(m[1]);
+  }
+}
+scan('.output/server');
+scan(assetsDir);
+const missing = [...refs].filter((f) => !onDisk.has(f));
+if (missing.length) console.log(missing.join('\n'));
+JS
+)"
+if [[ -n "$missing_chunks" ]]; then
+  echo "!! Build produced SSR/manifest references to asset chunks that are missing on disk:" >&2
+  echo "$missing_chunks" >&2
+  echo "!! Refusing deploy — users would hit 500 on lazy route chunks (Failed to fetch dynamically imported module)." >&2
+  exit 1
+fi
+echo "Asset integrity check: OK ($(ls .output/public/assets | wc -l) chunks on disk)"
 
 echo "==> Verifying browser build uses same-origin backend proxy"
 if grep -Rqs "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
