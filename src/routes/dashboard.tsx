@@ -58,7 +58,7 @@ function DashboardPage() {
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
   const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
-  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
+  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 2880 });
   const deletedLinkIdsRef = useRef(new Set<string>());
   async function loadAll(uid: string, options: { includeLogs?: boolean } = {}) {
     const includeLogs = options.includeLogs ?? true;
@@ -87,7 +87,7 @@ function DashboardPage() {
       .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(300);
     setLogs((logsRes.data as TrafficLog[] | null) ?? []);
   }
 
@@ -122,7 +122,7 @@ function DashboardPage() {
             .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
             .eq("user_id", session.user.id)
             .order("created_at", { ascending: false })
-            .limit(50),
+            .limit(300),
         )
         .then(({ data }) => setLogs((data as TrafficLog[] | null) ?? []))
         .catch((error) => toast.error(error.message));
@@ -133,22 +133,22 @@ function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Real-time validation widget: poll traffic_logs every 5s + refresh on focus/visibility
+  // Traffic widget: last 48h (covers yesterday + today) via HEAD counts + refresh on focus/visibility
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     async function refresh() {
-      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
-        .from("traffic_logs")
-        .select("decision")
-        .eq("user_id", userId!)
-        .gte("created_at", since)
-        .limit(1000);
-      if (cancelled || !data) return;
-      const total = data.length;
-      const humans = data.filter((r: any) => r.decision === "money").length;
-      setLiveStats({ total, humans, bots: total - humans, windowMin: 60 });
+      const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const [totalRes, humansRes] = await Promise.all([
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId!).gte("created_at", since),
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId!).eq("decision", "money").gte("created_at", since),
+      ]);
+      if (cancelled) return;
+      const total = Number(totalRes.count ?? 0);
+      const humans = Number(humansRes.count ?? 0);
+      setLiveStats({ total, humans, bots: total - humans, windowMin: 2880 });
     }
     async function refreshAll() {
       if (!userId) return;
@@ -255,14 +255,14 @@ function DashboardPage() {
           </section>
         )}
 
-        {/* Real-time validation widget (last 60 min) */}
+        {/* Real-time validation widget (last 48h: yesterday + today) */}
         <section className="rounded-2xl glass-card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="font-display text-sm font-semibold flex items-center gap-2">
                 <Bot className="h-4 w-4 text-primary" /> Real-Time Traffic Validation
               </h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Rolling last 60 minutes · auto-refresh 15s</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Last 48 hours (yesterday + today) · auto-refresh 15s</p>
             </div>
             <div className="text-right">
               <div className="font-display text-2xl font-bold text-gradient">
