@@ -255,8 +255,9 @@ function CreateLinkPage() {
             <div className="space-y-3">
               {links.map((l) => {
                 const e = earningsByLink[l.id];
-                const total = e?.total_clicks ?? 0;
-                const usr = e?.user_clicks ?? 0;
+                const humanClicks = Number(l.clicks_count || 0);
+                const filteredClicks = Number(l.bot_clicks_count || 0);
+                const totalTraffic = humanClicks + filteredClicks;
                 const earned = e?.earnings_usd ?? 0;
 
                 const expanded = expandedLink === l.id;
@@ -281,9 +282,10 @@ function CreateLinkPage() {
                         <Button size="sm" variant="ghost" onClick={() => deleteLink(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      <Mini label="Total Clicks" value={total.toLocaleString()} />
-                      <Mini label="Verified Humans" value={usr.toLocaleString()} sub={`${total ? ((usr / total) * 100).toFixed(1) : "0"}%`} />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <Mini label="Total Traffic" value={totalTraffic.toLocaleString()} />
+                      <Mini label="Verified Humans" value={humanClicks.toLocaleString()} sub={`${totalTraffic ? ((humanClicks / totalTraffic) * 100).toFixed(1) : "0"}%`} />
+                      <Mini label="Filtered" value={filteredClicks.toLocaleString()} />
                       <Mini label="Earned" value={`$${earned.toFixed(4)}`} highlight />
                     </div>
 
