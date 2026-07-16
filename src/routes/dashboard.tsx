@@ -255,14 +255,14 @@ function DashboardPage() {
           </section>
         )}
 
-        {/* Real-time validation widget (last 60 min) */}
+        {/* Real-time validation widget (last 48h: yesterday + today) */}
         <section className="rounded-2xl glass-card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="font-display text-sm font-semibold flex items-center gap-2">
                 <Bot className="h-4 w-4 text-primary" /> Real-Time Traffic Validation
               </h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Rolling last 60 minutes · auto-refresh 15s</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Last 48 hours (yesterday + today) · auto-refresh 15s</p>
             </div>
             <div className="text-right">
               <div className="font-display text-2xl font-bold text-gradient">
