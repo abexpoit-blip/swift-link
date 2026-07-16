@@ -122,7 +122,7 @@ function DashboardPage() {
             .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
             .eq("user_id", session.user.id)
             .order("created_at", { ascending: false })
-            .limit(50),
+            .limit(300),
         )
         .then(({ data }) => setLogs((data as TrafficLog[] | null) ?? []))
         .catch((error) => toast.error(error.message));
