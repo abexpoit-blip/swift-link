@@ -87,7 +87,7 @@ function DashboardPage() {
       .select("id, decision, reasons, coherence_score, country, is_mobile, created_at, fbclid")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(300);
     setLogs((logsRes.data as TrafficLog[] | null) ?? []);
   }
 
