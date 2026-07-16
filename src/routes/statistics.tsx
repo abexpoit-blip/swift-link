@@ -22,7 +22,7 @@ export const Route = createFileRoute("/statistics")({
 });
 
 /* ────────────────────────── types ────────────────────────── */
-type TLog = { decision: string; country: string | null; created_at: string };
+type TLog = { decision: string; country: string | null; referer: string | null; created_at: string };
 type ClickRow = { country: string | null; referer_host: string | null; is_bot: boolean; created_at: string };
 
 type DayPoint = { day: string; humans: number; bots: number; date: string };
@@ -121,7 +121,7 @@ function StatisticsPage() {
           .eq("user_id", userId).eq("decision", "money").gte("created_at", since),
         fetchAll<TLog>((from, to) =>
           supabase.from("traffic_logs")
-            .select("decision, country, created_at")
+            .select("decision, country, referer, created_at")
             .eq("user_id", userId)
             .gte("created_at", since)
             .order("created_at", { ascending: true })
@@ -210,16 +210,23 @@ function StatisticsPage() {
 
   const sources = useMemo<SourceRow[]>(() => {
     const m = new Map<string, number>();
-    for (const c of clicks) {
-      const bucket = bucketSource(c.referer_host);
-      m.set(bucket, (m.get(bucket) ?? 0) + 1);
+    if (tlogs.length > 0) {
+      for (const t of tlogs) {
+        const bucket = bucketSource(t.referer);
+        m.set(bucket, (m.get(bucket) ?? 0) + 1);
+      }
+    } else {
+      for (const c of clicks) {
+        const bucket = bucketSource(c.referer_host);
+        m.set(bucket, (m.get(bucket) ?? 0) + 1);
+      }
     }
     const total = [...m.values()].reduce((a, n) => a + n, 0) || 1;
     return [...m.entries()]
       .map(([name, n]) => ({ name, value: Math.round((n / total) * 1000) / 10, color: SRC_COLORS[name] ?? "#9CA3AF" }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6);
-  }, [clicks]);
+  }, [tlogs, clicks]);
 
   const clickHumans = clicks.filter(c => !c.is_bot).length;
   const clickBots = clicks.length - clickHumans;
