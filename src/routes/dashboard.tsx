@@ -58,7 +58,7 @@ function DashboardPage() {
   const [expandedLink, setExpandedLink] = useState<string | null>(null);
   const [cloakByLink, setCloakByLink] = useState<Record<string, CloakSettings>>({});
   const [monitorMode, setMonitorMode] = useState<{ on: boolean; until: string | null }>({ on: false, until: null });
-  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 60 });
+  const [liveStats, setLiveStats] = useState<{ total: number; humans: number; bots: number; windowMin: number }>({ total: 0, humans: 0, bots: 0, windowMin: 2880 });
   const deletedLinkIdsRef = useRef(new Set<string>());
   async function loadAll(uid: string, options: { includeLogs?: boolean } = {}) {
     const includeLogs = options.includeLogs ?? true;
