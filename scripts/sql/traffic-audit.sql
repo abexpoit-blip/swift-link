@@ -23,12 +23,49 @@ SELECT l.short_code,
        count(*) FILTER (WHERE t.decision='money') AS money,
        count(*) FILTER (WHERE t.decision<>'money') AS filtered,
        l.clicks_count AS human_counter,
-       l.bot_clicks_count AS bot_counter
+       l.bot_clicks_count AS bot_counter,
+       (l.clicks_count + l.bot_clicks_count) AS ui_total_counter
 FROM public.traffic_logs t
 JOIN public.links l ON l.id = t.link_id
 WHERE t.created_at > now() - interval '24 hours'
 GROUP BY l.short_code, l.clicks_count, l.bot_clicks_count
 ORDER BY hits DESC LIMIT 20;
+
+\echo === Per-user quota and money/safe summary last 24h ===
+SELECT p.email,
+       count(*) AS hits_24h,
+       count(*) FILTER (WHERE t.decision='money') AS money_24h,
+       count(*) FILTER (WHERE t.decision<>'money') AS filtered_24h,
+       p.clicks_used,
+       p.click_quota,
+       p.banned
+FROM public.traffic_logs t
+JOIN public.profiles p ON p.id = t.user_id
+WHERE t.created_at > now() - interval '24 hours'
+GROUP BY p.email, p.clicks_used, p.click_quota, p.banned
+ORDER BY hits_24h DESC
+LIMIT 20;
+
+\echo === Counter divergence check last 24h ===
+SELECT l.short_code,
+       l.clicks_count AS ui_human,
+       l.bot_clicks_count AS ui_bot,
+       count(*) FILTER (WHERE t.decision='money') AS actual_money_24h,
+       count(*) FILTER (WHERE t.decision<>'money') AS actual_safe_24h,
+       count(*) AS actual_total_24h
+FROM public.links l
+LEFT JOIN public.traffic_logs t
+  ON t.link_id = l.id
+ AND t.created_at > now() - interval '24 hours'
+WHERE EXISTS (
+  SELECT 1
+  FROM public.traffic_logs t2
+  WHERE t2.link_id = l.id
+    AND t2.created_at > now() - interval '24 hours'
+)
+GROUP BY l.short_code, l.clicks_count, l.bot_clicks_count
+ORDER BY count(*) DESC
+LIMIT 20;
 
 \echo === clicks table vs traffic_logs (should match) last 24h ===
 SELECT

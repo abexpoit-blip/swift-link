@@ -215,7 +215,10 @@ function DashboardPage() {
     navigate({ to: "/" });
   }
 
-  const totalClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
+  const totalTrackedClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0) + Number(link.bot_clicks_count || 0), 0);
+  const totalHumanClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0), 0);
+  const totalFilteredClicks = links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0);
+  const monetizedClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
   const totalEarned = Object.values(earningsByLink).reduce((s, e) => s + e.earnings_usd, 0);
   const humansCount = logs.filter((l) => l.decision === "money").length;
   const botsCount = logs.length - humansCount;
@@ -233,8 +236,8 @@ function DashboardPage() {
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
-          <MetricCard icon={MousePointerClick} label="Total Clicks" value={totalClicks.toLocaleString()} />
-          <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent`} accent="cyan" />
+          <MetricCard icon={MousePointerClick} label="Total Traffic" value={totalTrackedClicks.toLocaleString()} sub={`${totalHumanClicks.toLocaleString()} human · ${totalFilteredClicks.toLocaleString()} filtered`} />
+          <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent · ${monetizedClicks.toLocaleString()} paid`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
         </section>
 
@@ -304,7 +307,7 @@ function DashboardPage() {
         <MetersPanel
           humanPct={humanPct}
           balance={balance}
-          totalClicks={totalClicks}
+          totalClicks={totalTrackedClicks}
           totalEarned={totalEarned}
           withdrawn={withdrawn}
         />
@@ -337,6 +340,7 @@ function DashboardPage() {
               <div className="space-y-2">
                 {links.slice(0, 5).map((l) => {
                   const e = earningsByLink[l.id];
+                  const tracked = Number(l.clicks_count || 0) + Number(l.bot_clicks_count || 0);
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">
@@ -344,7 +348,8 @@ function DashboardPage() {
                         <div className="font-mono text-[11px] text-primary truncate">/r/{l.short_code}</div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
-                        <span className="text-muted-foreground">{(e?.total_clicks ?? 0).toLocaleString()} clicks</span>
+                        <span className="text-muted-foreground">{tracked.toLocaleString()} traffic</span>
+                        <span className="text-muted-foreground">{Number(l.bot_clicks_count || 0).toLocaleString()} filtered</span>
                         <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
                       </div>
                     </div>
