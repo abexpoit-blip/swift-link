@@ -307,7 +307,7 @@ function DashboardPage() {
         <MetersPanel
           humanPct={humanPct}
           balance={balance}
-          totalClicks={totalTrackedClicks}
+          earningClicks={monetizedClicks}
           totalEarned={totalEarned}
           withdrawn={withdrawn}
         />
@@ -596,13 +596,13 @@ function Gauge({
 function MetersPanel({
   humanPct,
   balance,
-  totalClicks,
+  earningClicks,
   totalEarned,
   withdrawn,
 }: {
   humanPct: number;
   balance: number;
-  totalClicks: number;
+  earningClicks: number;
   totalEarned: number;
   withdrawn: number;
 }) {
@@ -610,7 +610,7 @@ function MetersPanel({
   const payoutPct = Math.min(100, (balance / MIN_PAYOUT) * 100);
   // Next earning tier — $1 per 50k. Progress toward the next full dollar.
   const perDollarClicks = 50_000;
-  const nextTierPct = ((totalClicks % perDollarClicks) / perDollarClicks) * 100;
+  const nextTierPct = ((earningClicks % perDollarClicks) / perDollarClicks) * 100;
   const lifetime = totalEarned + withdrawn;
 
   return (
@@ -642,7 +642,7 @@ function MetersPanel({
         <Gauge
           label="Next $1 Tier"
           value={nextTierPct}
-          display={`${(totalClicks % perDollarClicks).toLocaleString()}`}
+          display={`${(earningClicks % perDollarClicks).toLocaleString()}`}
           sub={`clicks toward next $1 (per ${perDollarClicks.toLocaleString()})`}
           color="#ec4899"
         />
