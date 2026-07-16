@@ -133,22 +133,22 @@ function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Real-time validation widget: poll traffic_logs every 5s + refresh on focus/visibility
+  // Traffic widget: last 48h (covers yesterday + today) via HEAD counts + refresh on focus/visibility
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     async function refresh() {
-      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
-        .from("traffic_logs")
-        .select("decision")
-        .eq("user_id", userId!)
-        .gte("created_at", since)
-        .limit(1000);
-      if (cancelled || !data) return;
-      const total = data.length;
-      const humans = data.filter((r: any) => r.decision === "money").length;
-      setLiveStats({ total, humans, bots: total - humans, windowMin: 60 });
+      const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const [totalRes, humansRes] = await Promise.all([
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId!).gte("created_at", since),
+        supabase.from("traffic_logs").select("id", { count: "exact", head: true })
+          .eq("user_id", userId!).eq("decision", "money").gte("created_at", since),
+      ]);
+      if (cancelled) return;
+      const total = Number(totalRes.count ?? 0);
+      const humans = Number(humansRes.count ?? 0);
+      setLiveStats({ total, humans, bots: total - humans, windowMin: 2880 });
     }
     async function refreshAll() {
       if (!userId) return;
