@@ -73,6 +73,15 @@ bun install --frozen-lockfile
 echo "==> Building fresh output"
 bun run build
 
+echo "==> Verifying production server wrapper is bundled"
+if ! grep -Rqs "x-adspx-chunk-recovery" .output/server 2>/dev/null; then
+  echo "!! Production server bundle does not include the AdsPx wrapper." >&2
+  echo "!! Refusing deploy because HTML injection, /r safe routing, and backend proxy would not run." >&2
+  echo "!! Check vite.config.ts tanstackStart.server.entry points to the custom src/server.ts wrapper." >&2
+  exit 1
+fi
+echo "Server wrapper bundle check: OK"
+
 echo "==> Verifying every SSR-referenced asset chunk exists on disk"
 missing_chunks="$(node - <<'JS'
 const { readFileSync, readdirSync, statSync, existsSync } = require('node:fs');
@@ -137,23 +146,23 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
   exit 1
 fi
 
-# Zero-downtime: reload if already running (rolling restart across cluster workers),
-# otherwise start fresh. `pm2 reload` restarts workers one-by-one so /r/:code
-# never returns 502 during code updates. Missed click stats (during the ~1s
-# per-worker restart window) are auto-reconciled by adspx-reconcile-earnings
-# cron every hour from the clicks table.
+# PM2 reload keeps the original process script/args forever. If the app was
+# first created from an older command, reload can keep serving the old TanStack
+# entry and bypass src/server.ts entirely (no x-adspx-route headers, no chunk
+# recovery injection, no /r wrapper). Recreate the process so PM2 always points
+# at the freshly built .output/server/index.mjs and current args.
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  echo "==> Rolling reload (zero-downtime)"
-  pm2 reload "$APP_NAME" --update-env
-else
-  echo "==> First-time start (cluster mode, all CPU cores)"
-  pm2 start .output/server/index.mjs \
-    --name "$APP_NAME" \
-    --interpreter node \
-    -i max \
-    --update-env \
-    -- --host "$HOST" --port "$PORT"
+  echo "==> Recreating PM2 process with fresh server entry"
+  pm2 delete "$APP_NAME"
 fi
+
+echo "==> Starting cluster mode with current build"
+pm2 start .output/server/index.mjs \
+  --name "$APP_NAME" \
+  --interpreter node \
+  -i max \
+  --update-env \
+  -- --host "$HOST" --port "$PORT"
 
 
 
@@ -173,12 +182,30 @@ for i in {1..20}; do
 done
 
 echo "==> Verifying chunk-recovery script is served from origin"
-recovery_count="$(curl -sS -H "Host: adspx.com" "http://127.0.0.1:3000/?deploy_check=$(date +%s)" | grep -a -c "adspx_chunk_reload" || true)"
-if [[ "$recovery_count" != "1" ]]; then
-  echo "!! WARN: Origin HTML does not include adspx_chunk_reload (count=$recovery_count). Continuing deploy for diagnostics." >&2
+recovery_headers="$(mktemp)"
+recovery_body="$(mktemp)"
+curl -sS -D "$recovery_headers" -H "Host: adspx.com" "http://127.0.0.1:3000/?deploy_check=$(date +%s)" -o "$recovery_body" || true
+recovery_count="$(grep -a -c "adspx_chunk_reload" "$recovery_body" || true)"
+if ! grep -qi "x-adspx-route: ssr" "$recovery_headers"; then
+  echo "!! Origin request is not passing through AdsPx SSR wrapper. Headers:" >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  exit 1
+fi
+if ! grep -qi "x-adspx-chunk-recovery: 1" "$recovery_headers"; then
+  echo "!! AdsPx wrapper ran, but chunk recovery injection did not complete. Headers:" >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  echo "Body marker count: $recovery_count" >&2
+  exit 1
+fi
+if [[ "$recovery_count" -lt "1" ]]; then
+  echo "!! Origin HTML does not include adspx_chunk_reload (count=$recovery_count). Refusing deploy." >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  head -c 500 "$recovery_body" >&2 || true
+  exit 1
 else
   echo "Chunk recovery check: OK"
 fi
+rm -f "$recovery_headers" "$recovery_body"
 
 
 echo "==> Verifying same-origin backend proxy"
