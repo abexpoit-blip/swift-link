@@ -74,13 +74,45 @@ echo "==> Building fresh output"
 bun run build
 
 echo "==> Verifying production server wrapper is bundled"
-if ! grep -qs "x-adspx-route" .output/server/index.mjs 2>/dev/null || ! grep -qs "handleBackendProxy" .output/server/index.mjs 2>/dev/null; then
+wrapper_bundle_file="$(node - <<'JS'
+const { existsSync, readFileSync, readdirSync, statSync } = require('node:fs');
+const { join } = require('node:path');
+
+const root = '.output/server';
+const markers = ['x-adspx-route', 'handleBackendProxy'];
+let match = '';
+
+function scan(dir) {
+  if (!existsSync(dir) || match) return;
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      scan(path);
+      if (match) return;
+      continue;
+    }
+    if (!/\.(mjs|js|cjs)$/.test(name)) continue;
+    const text = readFileSync(path, 'utf8');
+    if (markers.every((marker) => text.includes(marker))) {
+      match = path;
+      return;
+    }
+  }
+}
+
+scan(root);
+process.stdout.write(match);
+JS
+)"
+if [[ -z "$wrapper_bundle_file" ]]; then
   echo "!! Production server entry is not the AdsPx wrapper." >&2
   echo "!! Refusing deploy because HTML injection, /r safe routing, and backend proxy would not run." >&2
+  echo "!! Checked all server bundle files under .output/server for AdsPx wrapper markers." >&2
   echo "!! Check vite.config.ts tanstackStart.server.entry points to the custom src/server.ts wrapper." >&2
   exit 1
 fi
-echo "Server wrapper bundle check: OK"
+echo "Server wrapper bundle check: OK (${wrapper_bundle_file})"
 
 echo "==> Verifying every SSR-referenced asset chunk exists on disk"
 missing_chunks="$(node - <<'JS'
