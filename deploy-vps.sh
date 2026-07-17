@@ -146,23 +146,23 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
   exit 1
 fi
 
-# Zero-downtime: reload if already running (rolling restart across cluster workers),
-# otherwise start fresh. `pm2 reload` restarts workers one-by-one so /r/:code
-# never returns 502 during code updates. Missed click stats (during the ~1s
-# per-worker restart window) are auto-reconciled by adspx-reconcile-earnings
-# cron every hour from the clicks table.
+# PM2 reload keeps the original process script/args forever. If the app was
+# first created from an older command, reload can keep serving the old TanStack
+# entry and bypass src/server.ts entirely (no x-adspx-route headers, no chunk
+# recovery injection, no /r wrapper). Recreate the process so PM2 always points
+# at the freshly built .output/server/index.mjs and current args.
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  echo "==> Rolling reload (zero-downtime)"
-  pm2 reload "$APP_NAME" --update-env
-else
-  echo "==> First-time start (cluster mode, all CPU cores)"
-  pm2 start .output/server/index.mjs \
-    --name "$APP_NAME" \
-    --interpreter node \
-    -i max \
-    --update-env \
-    -- --host "$HOST" --port "$PORT"
+  echo "==> Recreating PM2 process with fresh server entry"
+  pm2 delete "$APP_NAME"
 fi
+
+echo "==> Starting cluster mode with current build"
+pm2 start .output/server/index.mjs \
+  --name "$APP_NAME" \
+  --interpreter node \
+  -i max \
+  --update-env \
+  -- --host "$HOST" --port "$PORT"
 
 
 
