@@ -373,9 +373,15 @@ async function injectChunkRecoveryIntoHtml(request: Request, response: Response)
 
   const url = new URL(request.url);
   if (url.pathname.startsWith("/r/") || url.pathname.startsWith("/media/")) return response;
+  if (url.pathname.startsWith("/auth/v1/") || url.pathname.startsWith("/rest/v1/") || url.pathname.startsWith("/storage/v1/")) return response;
+  if (url.pathname.startsWith("/api/")) return response;
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/_build/")) return response;
+  // Static file extensions — skip. Everything else (HTML routes, streaming SSR) gets checked.
+  if (/\.(js|mjs|css|map|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|txt|xml|json)$/i.test(url.pathname)) return response;
 
   const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("text/html")) return response;
+  // Some SSR responses omit content-type before streaming — accept empty too, we'll re-check body.
+  if (contentType && !contentType.includes("text/html")) return response;
 
   const html = await response.text();
   const injectedHtml = html.includes("adspx_chunk_reload")
