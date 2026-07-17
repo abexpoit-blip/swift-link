@@ -128,8 +128,8 @@ function StatisticsPage() {
             .range(from, to)),
         fetchAll<ClickRow>((from, to) =>
           supabase.from("clicks")
-            .select("country, referer_host, is_bot, created_at, links!inner(user_id)")
-            .eq("links.user_id", userId)
+            .select("country, referer_host, is_bot, created_at")
+            .eq("user_id", userId)
             .gte("created_at", since)
             .order("created_at", { ascending: true })
             .range(from, to)),
