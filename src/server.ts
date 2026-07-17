@@ -369,19 +369,23 @@ const CHUNK_RECOVERY_SCRIPT = `<script id="adspx_chunk_reload">
 </script>`;
 
 async function injectChunkRecoveryIntoHtml(request: Request, response: Response): Promise<Response> {
-  if (response.status < 200 || response.status >= 400) return response;
-
   const url = new URL(request.url);
-  if (url.pathname.startsWith("/r/") || url.pathname.startsWith("/media/")) return response;
-  if (url.pathname.startsWith("/auth/v1/") || url.pathname.startsWith("/rest/v1/") || url.pathname.startsWith("/storage/v1/")) return response;
-  if (url.pathname.startsWith("/api/")) return response;
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/_build/")) return response;
-  // Static file extensions — skip. Everything else (HTML routes, streaming SSR) gets checked.
-  if (/\.(js|mjs|css|map|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|txt|xml|json)$/i.test(url.pathname)) return response;
+  const trace = (reason: string) => {
+    const h = new Headers(response.headers);
+    h.set("x-adspx-chunk-recovery", `skip:${reason}`);
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers: h });
+  };
+
+  if (response.status < 200 || response.status >= 400) return trace(`status-${response.status}`);
+  if (url.pathname.startsWith("/r/") || url.pathname.startsWith("/media/")) return trace("path-r-media");
+  if (url.pathname.startsWith("/auth/v1/") || url.pathname.startsWith("/rest/v1/") || url.pathname.startsWith("/storage/v1/")) return trace("path-backend");
+  if (url.pathname.startsWith("/api/")) return trace("path-api");
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/_build/")) return trace("path-assets");
+  if (/\.(js|mjs|css|map|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|txt|xml|json)$/i.test(url.pathname)) return trace("ext-static");
 
   const contentType = response.headers.get("content-type") || "";
-  // Some SSR responses omit content-type before streaming — accept empty too, we'll re-check body.
-  if (contentType && !contentType.includes("text/html")) return response;
+  if (contentType && !contentType.includes("text/html")) return trace(`ct-${contentType.split(";")[0]}`);
+
 
   const html = await response.text();
   let injectedHtml = html;
@@ -538,18 +542,24 @@ function applySecurityHeaders(request: Request, response: Response): Response {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const tag = (r: Response, source: string): Response => {
+      const h = new Headers(r.headers);
+      h.set("x-adspx-route", source);
+      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+    };
     try {
       await loadLocalEnvFile();
       const backendProxyResponse = await handleBackendProxy(request);
-      if (backendProxyResponse) return applySecurityHeaders(request, backendProxyResponse);
+      if (backendProxyResponse) return applySecurityHeaders(request, tag(backendProxyResponse, "proxy"));
       const mediaResponse = handleMediaCover(request);
-      if (mediaResponse) return applySecurityHeaders(request, mediaResponse);
+      if (mediaResponse) return applySecurityHeaders(request, tag(mediaResponse, "media"));
       const redirectResponse = await handleRedirectRoute(request);
-      if (redirectResponse) return applySecurityHeaders(request, redirectResponse);
+      if (redirectResponse) return applySecurityHeaders(request, tag(redirectResponse, "redirect"));
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return applySecurityHeaders(request, await injectChunkRecoveryIntoHtml(request, response));
+      return applySecurityHeaders(request, tag(await injectChunkRecoveryIntoHtml(request, response), "ssr"));
+
     } catch (error) {
       console.error(error);
       return applySecurityHeaders(
