@@ -1,4 +1,7 @@
 import { renderSafeArticle, type Snip } from "./lib/safe-article";
+import "./lib/error-capture";
+import { renderErrorPage } from "./lib/error-page";
+import { consumeLastCapturedError } from "./lib/error-capture";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -45,6 +48,8 @@ const META_V4 = [
   "185.60.", "204.15.",
 ];
 const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
+const ALLOWED_BACKEND_HOSTS = new Set(["api.adspx.com"]);
+const PRIVATE_HOST_RE = /^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.0\.0\.0|::1|fc00:|fe80:)/i;
 
 type RedirectDecision = {
   found?: boolean;
@@ -163,6 +168,18 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
+function isBackendAllowed(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (PRIVATE_HOST_RE.test(host)) return false;
+    return ALLOWED_BACKEND_HOSTS.has(host);
+  } catch {
+    return false;
+  }
+}
+
 async function renderEntrySafe(request?: Request, slug?: string): Promise<Response> {
   // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
   const now = Date.now();
@@ -210,6 +227,7 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
 function getBackendApiBase(request: Request): string {
   const requestOrigin = new URL(request.url).origin;
   const configured =
+    process.env.BACKEND_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     process.env.API_EXTERNAL_URL ||
     "https://api.adspx.com";
@@ -218,7 +236,30 @@ function getBackendApiBase(request: Request): string {
   // If the browser build points to the main site for same-origin auth proxying,
   // never proxy back to the same host or it would recurse forever.
   if (backend === requestOrigin) return "https://api.adspx.com";
+  // Fail closed to the real self-hosted API if env accidentally points at the
+  // app host or a private host. This keeps /auth/v1 and /rest/v1 from recursing.
+  if (!isBackendAllowed(backend)) return "https://api.adspx.com";
   return backend;
+}
+
+async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+  if (response.status < 500) return response;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return response;
+
+  const body = await response.clone().text();
+  try {
+    const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
+    if (payload.unhandled !== true || payload.message !== "HTTPError") return response;
+  } catch {
+    return response;
+  }
+
+  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  return new Response(renderErrorPage(), {
+    status: 500,
+    headers: { "content-type": "text/html; charset=utf-8" },
+  });
 }
 
 async function handleBackendProxy(request: Request): Promise<Response | null> {
@@ -557,16 +598,16 @@ export default {
       if (redirectResponse) return applySecurityHeaders(request, tag(redirectResponse, "redirect"));
 
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await normalizeCatastrophicSsrResponse(await handler.fetch(request, env, ctx));
       return applySecurityHeaders(request, tag(await injectChunkRecoveryIntoHtml(request, response), "ssr"));
 
     } catch (error) {
       console.error(error);
       return applySecurityHeaders(
         request,
-        new Response("Internal Server Error", {
+        new Response(renderErrorPage(), {
           status: 500,
-          headers: { "content-type": "text/plain; charset=utf-8" },
+          headers: { "content-type": "text/html; charset=utf-8" },
         }),
       );
     }
