@@ -7,7 +7,12 @@ APP_DIR="${APP_DIR:-/var/www/adspx}"
 cd "$APP_DIR"
 
 echo "==> Updating source"
-git pull origin main
+git fetch origin main
+if ! git merge --ff-only origin/main; then
+  echo "==> Fast-forward blocked; discarding generated route tree and retrying"
+  git checkout -- src/routeTree.gen.ts 2>/dev/null || true
+  git merge --ff-only origin/main
+fi
 
 echo "==> Ensuring self-hosted backend env has all required keys"
 bash scripts/ensure-selfhost-env.sh
@@ -166,6 +171,15 @@ for i in {1..20}; do
   fi
   sleep 1
 done
+
+echo "==> Verifying chunk-recovery script is served from origin"
+recovery_count="$(curl -sS -H "Host: adspx.com" "http://127.0.0.1:3000/?deploy_check=$(date +%s)" | grep -c "adspx_chunk_reload" || true)"
+if [[ "$recovery_count" != "1" ]]; then
+  echo "!! Origin HTML does not include adspx_chunk_reload. Refusing deploy because old lazy chunks can break users." >&2
+  pm2 logs "$APP_NAME" --lines 80 --nostream
+  exit 1
+fi
+echo "Chunk recovery check: OK"
 
 echo "==> Verifying same-origin backend proxy"
 proxy_headers="$(curl -sS -X GET -D - -o /dev/null \
