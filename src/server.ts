@@ -384,9 +384,19 @@ async function injectChunkRecoveryIntoHtml(request: Request, response: Response)
   if (contentType && !contentType.includes("text/html")) return response;
 
   const html = await response.text();
-  const injectedHtml = html.includes("adspx_chunk_reload")
-    ? html
-    : html.replace(/<\/head>/i, `${CHUNK_RECOVERY_SCRIPT}</head>`);
+  let injectedHtml = html;
+  if (!injectedHtml.includes("adspx_chunk_reload")) {
+    if (/<\/head>/i.test(injectedHtml)) {
+      injectedHtml = injectedHtml.replace(/<\/head>/i, `${CHUNK_RECOVERY_SCRIPT}</head>`);
+    } else if (/<head[^>]*>/i.test(injectedHtml)) {
+      injectedHtml = injectedHtml.replace(/<head[^>]*>/i, (m) => `${m}${CHUNK_RECOVERY_SCRIPT}`);
+    } else if (/<body[^>]*>/i.test(injectedHtml)) {
+      injectedHtml = injectedHtml.replace(/<body[^>]*>/i, (m) => `${m}${CHUNK_RECOVERY_SCRIPT}`);
+    } else {
+      injectedHtml = `${CHUNK_RECOVERY_SCRIPT}${injectedHtml}`;
+    }
+  }
+
 
   const headers = new Headers(response.headers);
   headers.set("content-type", "text/html; charset=utf-8");

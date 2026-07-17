@@ -96,7 +96,14 @@ export const Route = createRootRouteWithContext<RouterCtx>()({
 
       { rel: "manifest", href: "/manifest.json" },
     ],
+    scripts: [
+      {
+        id: "adspx_chunk_reload",
+        children: CHUNK_RECOVERY_JS,
+      },
+    ],
   }),
+
 
   shellComponent: RootDocument,
   notFoundComponent: () => (
@@ -114,9 +121,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <script id="adspx_chunk_reload" dangerouslySetInnerHTML={{ __html: CHUNK_RECOVERY_JS }} />
         <HeadContent />
       </head>
+
       <body>
         <QueryClientProvider client={queryClient}>
           {children}
