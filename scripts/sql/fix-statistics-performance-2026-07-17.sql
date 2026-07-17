@@ -48,9 +48,20 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_traffic_logs_user_created_cover
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_traffic_logs_user_decision_created
   ON public.traffic_logs (user_id, decision, created_at);
 
+\echo '==> Creating compatibility indexes for old browser bundles'
+-- Old cached bundles used PostgREST embedding: clicks + links!inner(user_id).
+-- Keep that legacy query fast even if a stale tab or direct API client still calls it.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_links_user_id_id
+  ON public.links (user_id, id);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_clicks_link_created_cover
+  ON public.clicks (link_id, created_at)
+  INCLUDE (country, referer_host, is_bot);
+
 \echo '==> Refreshing planner stats'
 ANALYZE public.clicks;
 ANALYZE public.traffic_logs;
+ANALYZE public.links;
 
 \echo '==> Verifying remaining rows without user_id'
 SELECT count(*) AS clicks_without_user_id
