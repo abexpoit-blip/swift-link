@@ -271,6 +271,9 @@ async function handleBackendProxy(request: Request): Promise<Response | null> {
 
   if (!shouldProxy) return null;
 
+  const legacyStatsResponse = await handleLegacyClicksStatsProxy(request, url);
+  if (legacyStatsResponse) return legacyStatsResponse;
+
   const targetUrl = new URL(`${getBackendApiBase(request)}${url.pathname}${url.search}`);
   const headers = new Headers(request.headers);
   headers.delete("connection");
@@ -303,6 +306,73 @@ async function handleBackendProxy(request: Request): Promise<Response | null> {
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
+function isLegacyClicksStatsRequest(url: URL, method: string): boolean {
+  if (url.pathname !== "/rest/v1/clicks") return false;
+  if (method !== "GET" && method !== "HEAD") return false;
+  const select = decodeURIComponent(url.searchParams.get("select") || "").toLowerCase();
+  return select.includes("country") && select.includes("referer_host") && select.includes("links!inner");
+}
+
+function copyStatsFilter(src: URLSearchParams, dst: URLSearchParams, key: string) {
+  const value = src.get(key);
+  if (value) dst.set(key, value);
+}
+
+async function handleLegacyClicksStatsProxy(request: Request, url: URL): Promise<Response | null> {
+  const method = request.method.toUpperCase();
+  if (!isLegacyClicksStatsRequest(url, method)) return null;
+
+  const userFilter = url.searchParams.get("links.user_id") || url.searchParams.get("user_id");
+  if (!userFilter?.startsWith("eq.")) return null;
+
+  const rewritten = new URL(`${getBackendApiBase(request)}/rest/v1/traffic_logs`);
+  rewritten.searchParams.set("select", "decision,country,referer,created_at");
+  rewritten.searchParams.set("user_id", userFilter);
+  copyStatsFilter(url.searchParams, rewritten.searchParams, "created_at");
+  copyStatsFilter(url.searchParams, rewritten.searchParams, "limit");
+  copyStatsFilter(url.searchParams, rewritten.searchParams, "offset");
+  copyStatsFilter(url.searchParams, rewritten.searchParams, "order");
+
+  const headers = new Headers(request.headers);
+  headers.delete("connection");
+  headers.delete("content-length");
+  headers.delete("host");
+  headers.delete("accept-encoding");
+
+  const upstream = await fetch(rewritten, { method, headers, redirect: "manual" });
+  const responseHeaders = new Headers(upstream.headers);
+  responseHeaders.set("cache-control", "no-store");
+  responseHeaders.set("x-adspx-backend-proxy", "selfhost");
+  responseHeaders.set("x-adspx-legacy-clicks-stats", "traffic_logs");
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("content-length");
+
+  if (!upstream.ok || method === "HEAD") {
+    return new Response(method === "HEAD" ? null : upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  }
+
+  const data = await upstream.json().catch(() => []);
+  const rows = Array.isArray(data)
+    ? data.map((row: any) => ({
+        country: row.country ?? null,
+        referer_host: row.referer ?? null,
+        is_bot: row.decision !== "money",
+        created_at: row.created_at,
+      }))
+    : [];
+
+  responseHeaders.set("content-type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(rows), {
+    status: upstream.status,
+    statusText: upstream.statusText,
     headers: responseHeaders,
   });
 }
