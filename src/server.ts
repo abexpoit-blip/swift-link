@@ -349,7 +349,7 @@ const CHUNK_RECOVERY_SCRIPT = `<script id="adspx_chunk_reload">
   }
   function reloadOnce(){
     try {
-      var k = '__adspx_chunk_reload';
+      var k = '__adspx_reload_at';
       var last = Number(sessionStorage.getItem(k) || 0);
       var now = Date.now();
       if (now - last < 10000) return;
