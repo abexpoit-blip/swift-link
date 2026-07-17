@@ -77,7 +77,7 @@ echo "==> Verifying production server wrapper is bundled"
 if ! grep -Rqs "x-adspx-chunk-recovery" .output/server 2>/dev/null; then
   echo "!! Production server bundle does not include the AdsPx wrapper." >&2
   echo "!! Refusing deploy because HTML injection, /r safe routing, and backend proxy would not run." >&2
-  echo "!! Check vite.config.ts tanstackStart.server.entry points to src/server.ts." >&2
+  echo "!! Check vite.config.ts tanstackStart.server.entry points to the custom src/server.ts wrapper." >&2
   exit 1
 fi
 echo "Server wrapper bundle check: OK"
