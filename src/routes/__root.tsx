@@ -121,9 +121,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <script id="adspx_chunk_reload" dangerouslySetInnerHTML={{ __html: CHUNK_RECOVERY_JS }} />
         <HeadContent />
       </head>
+
       <body>
         <QueryClientProvider client={queryClient}>
           {children}
