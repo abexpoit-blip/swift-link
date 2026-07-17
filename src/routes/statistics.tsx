@@ -23,7 +23,6 @@ export const Route = createFileRoute("/statistics")({
 
 /* ────────────────────────── types ────────────────────────── */
 type TLog = { decision: string; country: string | null; referer: string | null; created_at: string };
-type ClickRow = { country: string | null; referer_host: string | null; is_bot: boolean; created_at: string };
 
 type DayPoint = { day: string; humans: number; bots: number; date: string };
 type CountryRow = { code: string; name: string; clicks: number; humans: number; bots: number };
@@ -80,7 +79,6 @@ function StatisticsPage() {
   const [signedIn, setSignedIn] = useState(false);
 
   const [tlogs, setTlogs] = useState<TLog[]>([]);
-  const [clicks, setClicks] = useState<ClickRow[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [linkClicks, setLinkClicks] = useState(0);
 
@@ -113,7 +111,7 @@ function StatisticsPage() {
       const userId = session.user.id;
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-      const [trafficTotalRes, trafficHumansRes, traffic, click, earnings, links] = await Promise.all([
+      const [trafficTotalRes, trafficHumansRes, traffic, earnings, links] = await Promise.all([
         // Accurate totals via HEAD count — not row-limited
         supabase.from("traffic_logs").select("id", { count: "exact", head: true })
           .eq("user_id", userId).gte("created_at", since),
@@ -122,13 +120,6 @@ function StatisticsPage() {
         fetchAll<TLog>((from, to) =>
           supabase.from("traffic_logs")
             .select("decision, country, referer, created_at")
-            .eq("user_id", userId)
-            .gte("created_at", since)
-            .order("created_at", { ascending: true })
-            .range(from, to)),
-        fetchAll<ClickRow>((from, to) =>
-          (supabase.from("clicks") as any)
-            .select("country, referer_host, is_bot, created_at")
             .eq("user_id", userId)
             .gte("created_at", since)
             .order("created_at", { ascending: true })
@@ -147,7 +138,6 @@ function StatisticsPage() {
         humans: Number(trafficHumansRes.count ?? 0),
       });
       setTlogs((traffic ?? []) as TLog[]);
-      setClicks((click ?? []) as unknown as ClickRow[]);
       setTotalEarnings((earnings.data ?? []).reduce((a, r: any) => a + Number(r.earnings_usd || 0), 0));
       setLinkClicks((links.data ?? []).reduce((a, r: any) => a + Number(r.clicks_count || 0) + Number(r.bot_clicks_count || 0), 0));
       if (showSpinner) setLoading(false);
@@ -169,7 +159,7 @@ function StatisticsPage() {
   }, []);
 
 
-  /* ── aggregations (traffic_logs primary, clicks fallback) ── */
+  /* ── aggregations from traffic_logs (single source of truth) ── */
   const trafficSeries = useMemo<DayPoint[]>(() => {
     const days = lastNDays(30);
     const idx = new Map(days.map((d, i) => [d.key, i]));
@@ -179,15 +169,8 @@ function StatisticsPage() {
       const i = idx.get(k); if (i === undefined) continue;
       if (t.decision === "money") out[i].humans++; else out[i].bots++;
     }
-    if (tlogs.length === 0) {
-      for (const c of clicks) {
-        const k = c.created_at.slice(0, 10);
-        const i = idx.get(k); if (i === undefined) continue;
-        if (c.is_bot) out[i].bots++; else out[i].humans++;
-      }
-    }
     return out;
-  }, [tlogs, clicks]);
+  }, [tlogs]);
 
   const countriesAll = useMemo<CountryRow[]>(() => {
     const m = new Map<string, { humans: number; bots: number }>();
@@ -199,40 +182,30 @@ function StatisticsPage() {
       m.set(c, row);
     };
     for (const t of tlogs) add(t.country, t.decision !== "money");
-    if (tlogs.length === 0) for (const c of clicks) add(c.country, c.is_bot);
     return [...m.entries()]
       .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + v.bots, humans: v.humans, bots: v.bots }))
       .sort((a, b) => b.clicks - a.clicks);
-  }, [tlogs, clicks]);
+  }, [tlogs]);
 
   const countries = useMemo(() => countriesAll.slice(0, 20), [countriesAll]);
   const countryTotal = useMemo(() => countriesAll.reduce((a, c) => a + c.clicks, 0) || 1, [countriesAll]);
 
   const sources = useMemo<SourceRow[]>(() => {
     const m = new Map<string, number>();
-    if (tlogs.length > 0) {
-      for (const t of tlogs) {
-        const bucket = bucketSource(t.referer);
-        m.set(bucket, (m.get(bucket) ?? 0) + 1);
-      }
-    } else {
-      for (const c of clicks) {
-        const bucket = bucketSource(c.referer_host);
-        m.set(bucket, (m.get(bucket) ?? 0) + 1);
-      }
+    for (const t of tlogs) {
+      const bucket = bucketSource(t.referer);
+      m.set(bucket, (m.get(bucket) ?? 0) + 1);
     }
     const total = [...m.values()].reduce((a, n) => a + n, 0) || 1;
     return [...m.entries()]
       .map(([name, n]) => ({ name, value: Math.round((n / total) * 1000) / 10, color: SRC_COLORS[name] ?? "#9CA3AF" }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6);
-  }, [tlogs, clicks]);
+  }, [tlogs]);
 
-  const clickHumans = clicks.filter(c => !c.is_bot).length;
-  const clickBots = clicks.length - clickHumans;
   // Prefer accurate HEAD counts (not row-limited). Fall back to fetched rows.
-  const totalHumans = totalCounts.total ? totalCounts.humans : (tlogs.length ? tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0) : clickHumans);
-  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length ? tlogs.length - totalHumans : clickBots);
+  const totalHumans = totalCounts.total ? totalCounts.humans : tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0);
+  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length - totalHumans);
   const evaluated   = totalCounts.total || (totalHumans + totalBots);
   const totalClicks = evaluated || linkClicks;
   const totalCountries = countriesAll.length;
@@ -268,7 +241,7 @@ function StatisticsPage() {
             body="Your AI-shield results and per-country breakdown are scoped to your account."
             cta={<button onClick={() => navigate({ to: "/login" })} className="rounded-md bg-primary-gradient text-primary-foreground px-4 py-2 text-sm font-medium">Sign in</button>}
           />
-        ) : tlogs.length === 0 && clicks.length === 0 ? (
+        ) : evaluated === 0 ? (
           <EmptyState
             title="No traffic yet"
             body="Create a smart link and start sending visitors — this page will fill in automatically as clicks come in."
@@ -277,7 +250,7 @@ function StatisticsPage() {
         ) : (
           <>
             <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Kpi icon={MousePointerClick} label="Clicks (30d)" value={totalClicks.toLocaleString()} sub={`${tlogs.length} evaluated`} />
+              <Kpi icon={MousePointerClick} label="Clicks (30d)" value={totalClicks.toLocaleString()} sub={`${evaluated.toLocaleString()} evaluated`} />
               <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} humans · ${totalBots} bots`} accent />
               <Kpi icon={Users} label="Countries seen" value={totalCountries.toString()} sub={totalCountries ? "across your traffic" : "none yet"} />
               <Kpi icon={TrendingUp} label="Earnings (lifetime)" value={`$${totalEarnings.toFixed(4)}`} sub="from earnings ledger" />
