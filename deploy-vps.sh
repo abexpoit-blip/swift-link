@@ -181,7 +181,7 @@ fi
 
 expected_entry="$(pwd)/.output/server/index.mjs"
 pm2_entry() {
-  PM2_APP_NAME="$APP_NAME" pm2 jlist 2>/dev/null | node -e '
+  pm2 jlist 2>/dev/null | PM2_APP_NAME="$APP_NAME" node -e '
 let input = "";
 process.stdin.on("data", (chunk) => { input += chunk; });
 process.stdin.on("end", () => {
@@ -192,6 +192,36 @@ process.stdin.on("end", () => {
 });
 '
 }
+
+delete_legacy_pm2_apps() {
+  local legacy_names
+  legacy_names="$(pm2 jlist 2>/dev/null | PM2_APP_NAME="$APP_NAME" node -e '
+let input = "";
+process.stdin.on("data", (chunk) => { input += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const base = process.env.PM2_APP_NAME;
+    const names = [...new Set(JSON.parse(input)
+      .map((item) => item?.name)
+      .filter((name) => typeof name === "string" && name.startsWith(`${base}-`) && /^\d+$/.test(name.slice(base.length + 1))))];
+    process.stdout.write(names.join("\n"));
+  } catch {}
+});
+' || true)"
+
+  if [[ -z "$legacy_names" ]]; then
+    echo "Legacy per-port PM2 apps: none"
+    return
+  fi
+
+  echo "==> Removing legacy per-port PM2 apps so port ${PORT} serves the fresh wrapper"
+  while IFS= read -r legacy_name; do
+    [[ -z "$legacy_name" ]] && continue
+    pm2 delete "$legacy_name" || true
+  done <<< "$legacy_names"
+}
+
+delete_legacy_pm2_apps
 
 current_entry="$(pm2_entry || true)"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
