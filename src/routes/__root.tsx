@@ -88,9 +88,44 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           {children}
           <Toaster richColors position="top-right" offset="72px" />
         </QueryClientProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  function isChunkErr(msg){
+    if(!msg) return false;
+    msg = String(msg);
+    return msg.indexOf('Failed to fetch dynamically imported module') !== -1
+        || msg.indexOf('Importing a module script failed') !== -1
+        || msg.indexOf('error loading dynamically imported module') !== -1
+        || /ChunkLoadError/i.test(msg);
+  }
+  function reloadOnce(){
+    try {
+      var k = '__adspx_chunk_reload';
+      var last = Number(sessionStorage.getItem(k) || 0);
+      var now = Date.now();
+      if (now - last < 10000) return; // avoid loops
+      sessionStorage.setItem(k, String(now));
+    } catch(e){}
+    location.reload();
+  }
+  window.addEventListener('error', function(e){
+    if (isChunkErr(e && (e.message || (e.error && e.error.message)))) reloadOnce();
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    var msg = r && (r.message || r);
+    if (isChunkErr(msg)) reloadOnce();
+  });
+})();
+`,
+          }}
+        />
         <Scripts />
       </body>
     </html>
   );
 }
+
 
