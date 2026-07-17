@@ -335,6 +335,68 @@ function handleMediaCover(request: Request): Response | null {
   });
 }
 
+const CHUNK_RECOVERY_SCRIPT = `<script id="adspx_chunk_reload">
+(function(){
+  if (window.__adspxChunkRecoveryInstalled) return;
+  window.__adspxChunkRecoveryInstalled = true;
+  function isChunkErr(msg){
+    if(!msg) return false;
+    msg = String(msg);
+    return msg.indexOf('Failed to fetch dynamically imported module') !== -1
+        || msg.indexOf('Importing a module script failed') !== -1
+        || msg.indexOf('error loading dynamically imported module') !== -1
+        || /ChunkLoadError/i.test(msg);
+  }
+  function reloadOnce(){
+    try {
+      var k = '__adspx_chunk_reload';
+      var last = Number(sessionStorage.getItem(k) || 0);
+      var now = Date.now();
+      if (now - last < 10000) return;
+      sessionStorage.setItem(k, String(now));
+    } catch(e){}
+    location.reload();
+  }
+  window.addEventListener('error', function(e){
+    if (isChunkErr(e && (e.message || (e.error && e.error.message)))) reloadOnce();
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    var msg = r && (r.message || r);
+    if (isChunkErr(msg)) reloadOnce();
+  });
+})();
+</script>`;
+
+async function injectChunkRecoveryIntoHtml(request: Request, response: Response): Promise<Response> {
+  if (response.status < 200 || response.status >= 400) return response;
+
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/r/") || url.pathname.startsWith("/media/")) return response;
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("text/html")) return response;
+
+  const html = await response.text();
+  const injectedHtml = html.includes("adspx_chunk_reload")
+    ? html
+    : html.replace(/<\/head>/i, `${CHUNK_RECOVERY_SCRIPT}</head>`);
+
+  const headers = new Headers(response.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "no-store, max-age=0, must-revalidate");
+  headers.set("cdn-cache-control", "no-store");
+  headers.set("cloudflare-cdn-cache-control", "no-store");
+  headers.set("x-adspx-chunk-recovery", "1");
+  headers.delete("content-length");
+
+  return new Response(injectedHtml, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 
 async function handleRedirectRoute(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
@@ -471,7 +533,7 @@ export default {
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return applySecurityHeaders(request, response);
+      return applySecurityHeaders(request, await injectChunkRecoveryIntoHtml(request, response));
     } catch (error) {
       console.error(error);
       return applySecurityHeaders(
