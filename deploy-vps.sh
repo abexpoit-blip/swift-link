@@ -74,8 +74,8 @@ echo "==> Building fresh output"
 bun run build
 
 echo "==> Verifying production server wrapper is bundled"
-if ! grep -Rqs "x-adspx-chunk-recovery" .output/server 2>/dev/null; then
-  echo "!! Production server bundle does not include the AdsPx wrapper." >&2
+if ! grep -qs "x-adspx-route" .output/server/index.mjs 2>/dev/null || ! grep -qs "handleBackendProxy" .output/server/index.mjs 2>/dev/null; then
+  echo "!! Production server entry is not the AdsPx wrapper." >&2
   echo "!! Refusing deploy because HTML injection, /r safe routing, and backend proxy would not run." >&2
   echo "!! Check vite.config.ts tanstackStart.server.entry points to the custom src/server.ts wrapper." >&2
   exit 1
@@ -140,29 +140,61 @@ export SUPABASE_PUBLISHABLE_KEY="${SELFHOST_PUBLISHABLE_KEY:-${SUPABASE_PUBLISHA
 export SUPABASE_SERVICE_ROLE_KEY="${SELFHOST_SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-${SERVICE_ROLE_KEY:-}}}"
 export HOST="${HOST:-0.0.0.0}"
 export PORT="${PORT:-3000}"
+export BACKEND_SUPABASE_URL="${SUPABASE_URL}"
 
 if [[ ! -f ".output/server/index.mjs" ]]; then
   echo "!! Missing .output/server/index.mjs. Build failed?" >&2
   exit 1
 fi
 
-# PM2 reload keeps the original process script/args forever. If the app was
-# first created from an older command, reload can keep serving the old TanStack
-# entry and bypass src/server.ts entirely (no x-adspx-route headers, no chunk
-# recovery injection, no /r wrapper). Recreate the process so PM2 always points
-# at the freshly built .output/server/index.mjs and current args.
+expected_entry="$(pwd)/.output/server/index.mjs"
+pm2_entry() {
+  PM2_APP_NAME="$APP_NAME" pm2 jlist 2>/dev/null | node -e '
+let input = "";
+process.stdin.on("data", (chunk) => { input += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const app = JSON.parse(input).find((item) => item?.name === process.env.PM2_APP_NAME);
+    process.stdout.write(app?.pm2_env?.pm_exec_path || "");
+  } catch {}
+});
+'
+}
+
+current_entry="$(pm2_entry || true)"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  echo "==> Recreating PM2 process with fresh server entry"
-  pm2 delete "$APP_NAME"
+  if [[ "$current_entry" == "$expected_entry" ]]; then
+    echo "==> Rolling reload with current server entry"
+    pm2 reload "$APP_NAME" --update-env
+  else
+    echo "==> PM2 points at old entry (${current_entry:-unknown}); recreating once"
+    pm2 delete "$APP_NAME"
+    echo "==> Starting cluster mode with current build"
+    pm2 start "$expected_entry" \
+      --name "$APP_NAME" \
+      --interpreter node \
+      -i max \
+      --update-env \
+      -- --host "$HOST" --port "$PORT"
+  fi
+else
+  echo "==> Starting cluster mode with current build"
+  pm2 start "$expected_entry" \
+    --name "$APP_NAME" \
+    --interpreter node \
+    -i max \
+    --update-env \
+    -- --host "$HOST" --port "$PORT"
 fi
 
-echo "==> Starting cluster mode with current build"
-pm2 start .output/server/index.mjs \
-  --name "$APP_NAME" \
-  --interpreter node \
-  -i max \
-  --update-env \
-  -- --host "$HOST" --port "$PORT"
+actual_entry="$(pm2_entry || true)"
+if [[ "$actual_entry" != "$expected_entry" ]]; then
+  echo "!! PM2 is not serving the fresh server entry." >&2
+  echo "Expected: $expected_entry" >&2
+  echo "Actual:   ${actual_entry:-unknown}" >&2
+  pm2 logs "$APP_NAME" --lines 80 --nostream
+  exit 1
+fi
 
 
 
@@ -210,6 +242,7 @@ rm -f "$recovery_headers" "$recovery_body"
 
 echo "==> Verifying same-origin backend proxy"
 proxy_headers="$(curl -sS -X GET -D - -o /dev/null \
+  -H "Host: adspx.com" \
   -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   http://127.0.0.1:3000/auth/v1/settings || true)"
@@ -219,8 +252,8 @@ if ! grep -qi "x-adspx-backend-proxy: selfhost" <<<"$proxy_headers"; then
   pm2 logs "$APP_NAME" --lines 80 --nostream
   exit 1
 fi
-if ! grep -qiE "^HTTP/[0-9.]+ 2[0-9][0-9]" <<<"$proxy_headers"; then
-  echo "!! Same-origin backend proxy did not return HTTP 2xx for /auth/v1/settings" >&2
+if ! grep -qiE "^HTTP/[0-9.]+ (2[0-9][0-9]|401)" <<<"$proxy_headers"; then
+  echo "!! Same-origin backend proxy returned an unexpected status for /auth/v1/settings" >&2
   echo "$proxy_headers" >&2
   pm2 logs "$APP_NAME" --lines 80 --nostream
   exit 1
