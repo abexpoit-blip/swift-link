@@ -127,7 +127,7 @@ function StatisticsPage() {
             .order("created_at", { ascending: true })
             .range(from, to)),
         fetchAll<ClickRow>((from, to) =>
-          supabase.from("clicks")
+          (supabase.from("clicks") as any)
             .select("country, referer_host, is_bot, created_at")
             .eq("user_id", userId)
             .gte("created_at", since)
