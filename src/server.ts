@@ -542,18 +542,24 @@ function applySecurityHeaders(request: Request, response: Response): Response {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const tag = (r: Response, source: string): Response => {
+      const h = new Headers(r.headers);
+      h.set("x-adspx-route", source);
+      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+    };
     try {
       await loadLocalEnvFile();
       const backendProxyResponse = await handleBackendProxy(request);
-      if (backendProxyResponse) return applySecurityHeaders(request, backendProxyResponse);
+      if (backendProxyResponse) return applySecurityHeaders(request, tag(backendProxyResponse, "proxy"));
       const mediaResponse = handleMediaCover(request);
-      if (mediaResponse) return applySecurityHeaders(request, mediaResponse);
+      if (mediaResponse) return applySecurityHeaders(request, tag(mediaResponse, "media"));
       const redirectResponse = await handleRedirectRoute(request);
-      if (redirectResponse) return applySecurityHeaders(request, redirectResponse);
+      if (redirectResponse) return applySecurityHeaders(request, tag(redirectResponse, "redirect"));
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return applySecurityHeaders(request, await injectChunkRecoveryIntoHtml(request, response));
+      return applySecurityHeaders(request, tag(await injectChunkRecoveryIntoHtml(request, response), "ssr"));
+
     } catch (error) {
       console.error(error);
       return applySecurityHeaders(
