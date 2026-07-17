@@ -73,6 +73,15 @@ bun install --frozen-lockfile
 echo "==> Building fresh output"
 bun run build
 
+echo "==> Verifying production server wrapper is bundled"
+if ! grep -Rqs "x-adspx-chunk-recovery" .output/server 2>/dev/null; then
+  echo "!! Production server bundle does not include the AdsPx wrapper." >&2
+  echo "!! Refusing deploy because HTML injection, /r safe routing, and backend proxy would not run." >&2
+  echo "!! Check vite.config.ts tanstackStart.server.entry points to src/server.ts." >&2
+  exit 1
+fi
+echo "Server wrapper bundle check: OK"
+
 echo "==> Verifying every SSR-referenced asset chunk exists on disk"
 missing_chunks="$(node - <<'JS'
 const { readFileSync, readdirSync, statSync, existsSync } = require('node:fs');
@@ -173,12 +182,30 @@ for i in {1..20}; do
 done
 
 echo "==> Verifying chunk-recovery script is served from origin"
-recovery_count="$(curl -sS -H "Host: adspx.com" "http://127.0.0.1:3000/?deploy_check=$(date +%s)" | grep -a -c "adspx_chunk_reload" || true)"
-if [[ "$recovery_count" != "1" ]]; then
-  echo "!! WARN: Origin HTML does not include adspx_chunk_reload (count=$recovery_count). Continuing deploy for diagnostics." >&2
+recovery_headers="$(mktemp)"
+recovery_body="$(mktemp)"
+curl -sS -D "$recovery_headers" -H "Host: adspx.com" "http://127.0.0.1:3000/?deploy_check=$(date +%s)" -o "$recovery_body" || true
+recovery_count="$(grep -a -c "adspx_chunk_reload" "$recovery_body" || true)"
+if ! grep -qi "x-adspx-route: ssr" "$recovery_headers"; then
+  echo "!! Origin request is not passing through AdsPx SSR wrapper. Headers:" >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  exit 1
+fi
+if ! grep -qi "x-adspx-chunk-recovery: 1" "$recovery_headers"; then
+  echo "!! AdsPx wrapper ran, but chunk recovery injection did not complete. Headers:" >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  echo "Body marker count: $recovery_count" >&2
+  exit 1
+fi
+if [[ "$recovery_count" -lt "1" ]]; then
+  echo "!! Origin HTML does not include adspx_chunk_reload (count=$recovery_count). Refusing deploy." >&2
+  grep -iE 'http/|content-type|x-adspx|server|location' "$recovery_headers" >&2 || true
+  head -c 500 "$recovery_body" >&2 || true
+  exit 1
 else
   echo "Chunk recovery check: OK"
 fi
+rm -f "$recovery_headers" "$recovery_body"
 
 
 echo "==> Verifying same-origin backend proxy"
