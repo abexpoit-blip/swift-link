@@ -161,6 +161,12 @@ export function TopBar({
             <span className="font-medium tracking-tight">{title}</span>
           </div>
         )}
+        <span
+          title="AdsPx has been running for 1 year — thank you!"
+          className="hidden md:inline-flex items-center gap-1 rounded-full border border-primary/30 bg-gradient-to-r from-amber-500/10 via-primary/10 to-fuchsia-500/10 px-2 py-0.5 text-[11px] font-semibold text-primary shadow-sm"
+        >
+          🎂 1 Year
+        </span>
 
         <button
           type="button"

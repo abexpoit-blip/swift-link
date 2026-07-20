@@ -143,8 +143,8 @@ function StatisticsPage() {
       if (showSpinner) setLoading(false);
     }
 
+    // Refresh-based only (zero VPS pressure): load once on mount, again only on manual reload / tab-return.
     loadOnce(true);
-    timer = setInterval(() => { loadOnce(false); }, 15000);
     const onFocus = () => loadOnce(false);
     const onVis = () => { if (document.visibilityState === "visible") loadOnce(false); };
     window.addEventListener("focus", onFocus);
