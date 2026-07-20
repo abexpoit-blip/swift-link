@@ -7,3 +7,5 @@ User deploys manually on VPS. Always give exact deploy + log-check commands afte
 Explanations in Bangla, beginner-friendly step-by-step.
 
 ## Memories
+- [VPS specs](mem://infra/vps-specs) — 12 core / 48GB RAM, PM2 fork 4 workers ports 3000-3003, self-hosted Supabase `supabase-db` container
+
