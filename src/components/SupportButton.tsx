@@ -16,7 +16,7 @@ export function SupportButton() {
       const { data: sess } = await supabase.auth.getSession();
       const uid = sess.session?.user?.id;
       if (!uid) return;
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from("support_tickets")
         .select("id", { count: "exact", head: true })
         .eq("user_id", uid)

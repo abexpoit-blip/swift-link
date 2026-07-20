@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AdspxMark } from "@/components/AdspxLogo";
 import { TopBar } from "@/components/TopBar";
+import { SupportButton } from "@/components/SupportButton";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
@@ -39,6 +40,7 @@ import {
   Link2,
   Settings,
   ArrowRight,
+  LifeBuoy,
 } from "lucide-react";
 
 type NavChild = { title: string; to: string; search?: Record<string, string>; icon: any };
@@ -125,7 +127,10 @@ function AppSidebar({
     },
     {
       label: "Communication",
-      items: [{ title: "Messages", to: "/inbox", icon: Inbox }],
+      items: [
+        { title: "Messages", to: "/inbox", icon: Inbox },
+        { title: "Support", to: "/support", icon: LifeBuoy },
+      ],
     },
     {
       label: "Account",
@@ -305,6 +310,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <TopBar email={email} fullName={fullName} isAdmin={isAdmin} />
           <main className="flex-1 min-w-0">{children}</main>
         </div>
+        <SupportButton />
       </div>
     </SidebarProvider>
   );
