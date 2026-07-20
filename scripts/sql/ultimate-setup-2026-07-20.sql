@@ -86,7 +86,7 @@ BEGIN
          WHERE created_at > now() - interval '7 days'
            AND (_user_id IS NULL OR user_id = _user_id)
            AND COALESCE(country,'') <> ''
-         GROUP BY user_id, UPPER(country)
+         GROUP BY user_id, UPPER(COALESCE(country,''))
       ) x
      GROUP BY user_id
   ),
