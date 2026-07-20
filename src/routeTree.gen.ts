@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
@@ -31,6 +32,11 @@ import { Route as ApiPublicBehaviorCheckRouteImport } from './routes/api/public/
 const WithdrawRoute = WithdrawRouteImport.update({
   id: '/withdraw',
   path: '/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatisticsRoute = StatisticsRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistics': typeof StatisticsRoute
+  '/support': typeof SupportRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistics': typeof StatisticsRoute
+  '/support': typeof SupportRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistics': typeof StatisticsRoute
+  '/support': typeof SupportRoute
   '/withdraw': typeof WithdrawRoute
   '/r/$slug': typeof RSlugRoute
   '/api/public/behavior-check': typeof ApiPublicBehaviorCheckRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/statistics'
+    | '/support'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/statistics'
+    | '/support'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/statistics'
+    | '/support'
     | '/withdraw'
     | '/r/$slug'
     | '/api/public/behavior-check'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatisticsRoute: typeof StatisticsRoute
+  SupportRoute: typeof SupportRoute
   WithdrawRoute: typeof WithdrawRoute
   RSlugRoute: typeof RSlugRoute
   ApiPublicBehaviorCheckRoute: typeof ApiPublicBehaviorCheckRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       path: '/withdraw'
       fullPath: '/withdraw'
       preLoaderRoute: typeof WithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/statistics': {
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatisticsRoute: StatisticsRoute,
+  SupportRoute: SupportRoute,
   WithdrawRoute: WithdrawRoute,
   RSlugRoute: RSlugRoute,
   ApiPublicBehaviorCheckRoute: ApiPublicBehaviorCheckRoute,
