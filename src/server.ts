@@ -15,7 +15,7 @@ const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 
 const SNIPPET_TTL_MS = 120_000;
 
 const HARD_BOT_UA =
-  /facebookexternalhit|facebookcatalog|meta-externalagent|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
+  /facebookexternalhit|facebookcatalog|facebot|meta-externalagent|meta-externalfetcher|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
 const META_ASNS = new Set(["32934", "63293", "54115", "149642"]);
 const DC_ASNS = new Set([
   "16509",
