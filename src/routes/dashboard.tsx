@@ -205,7 +205,7 @@ function DashboardPage() {
   }
 
   function copyShort(code: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/r/${code}`);
+    navigator.clipboard.writeText(`https://adswapx.com/r/${code}`);
     toast.success("Copied");
   }
 
