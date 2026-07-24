@@ -224,7 +224,6 @@ process.stdin.on("end", () => {
     PORT="$port" HOST="$HOST" pm2 start "$expected_entry" \
       --name "$name" \
       --interpreter node \
-      --exec-mode fork \
       --max-memory-restart 800M \
       --update-env
   fi
