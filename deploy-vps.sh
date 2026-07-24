@@ -180,83 +180,87 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
 fi
 
 expected_entry="$(pwd)/.output/server/index.mjs"
-pm2_entry() {
-  pm2 jlist 2>/dev/null | PM2_APP_NAME="$APP_NAME" node -e '
-let input = "";
-process.stdin.on("data", (chunk) => { input += chunk; });
-process.stdin.on("end", () => {
-  try {
-    const app = JSON.parse(input).find((item) => item?.name === process.env.PM2_APP_NAME);
-    process.stdout.write(app?.pm2_env?.pm_exec_path || "");
-  } catch {}
-});
-'
-}
 
-delete_legacy_pm2_apps() {
-  local legacy_names
-  legacy_names="$(pm2 jlist 2>/dev/null | PM2_APP_NAME="$APP_NAME" node -e '
+# --- Multi-instance FORK mode (Nitro is NOT cluster-safe) ---------------------
+# Previously we ran `pm2 -i max` in cluster_mode. Nitro/h3 workers do NOT
+# handle Node cluster's shared-socket model — workers race on the same port
+# and crash with repeated "Server closed successfully" messages, causing
+# unstable behavior under heavy traffic. Fix: run 4 independent fork-mode
+# processes on ports 3000-3003; Nginx upstream `adspx_backend` load-balances
+# across them (least_conn). Each worker owns its own socket → zero races.
+INSTANCE_PORTS=(3000 3001 3002 3003)
+
+# Remove any single-app "adspx" (old cluster) that would fight for port 3000
+if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+  echo "==> Removing legacy single-app cluster PM2 process ($APP_NAME)"
+  pm2 delete "$APP_NAME" || true
+fi
+
+start_or_reload_instance() {
+  local port="$1"
+  local name="${APP_NAME}-${port}"
+  local current_exec
+  current_exec="$(pm2 jlist 2>/dev/null | PM2_APP_NAME="$name" node -e '
 let input = "";
-process.stdin.on("data", (chunk) => { input += chunk; });
+process.stdin.on("data", (c) => { input += c; });
 process.stdin.on("end", () => {
   try {
-    const base = process.env.PM2_APP_NAME;
-    const names = [...new Set(JSON.parse(input)
-      .map((item) => item?.name)
-      .filter((name) => typeof name === "string" && name.startsWith(`${base}-`) && /^\d+$/.test(name.slice(base.length + 1))))];
-    process.stdout.write(names.join("\n"));
+    const app = JSON.parse(input).find((i) => i?.name === process.env.PM2_APP_NAME);
+    process.stdout.write(app?.pm2_env?.pm_exec_path || "");
   } catch {}
 });
 ' || true)"
 
-  if [[ -z "$legacy_names" ]]; then
-    echo "Legacy per-port PM2 apps: none"
-    return
+  if pm2 describe "$name" >/dev/null 2>&1 && [[ "$current_exec" == "$expected_entry" ]]; then
+    echo "==> Reloading $name (port $port)"
+    PORT="$port" HOST="$HOST" pm2 reload "$name" --update-env
+  else
+    if pm2 describe "$name" >/dev/null 2>&1; then
+      echo "==> Recreating $name (entry changed: ${current_exec:-none} → $expected_entry)"
+      pm2 delete "$name" || true
+    else
+      echo "==> Starting $name (port $port, fork mode)"
+    fi
+    PORT="$port" HOST="$HOST" pm2 start "$expected_entry" \
+      --name "$name" \
+      --interpreter node \
+      --exec-mode fork \
+      --max-memory-restart 800M \
+      --update-env
   fi
-
-  echo "==> Removing legacy per-port PM2 apps so port ${PORT} serves the fresh wrapper"
-  while IFS= read -r legacy_name; do
-    [[ -z "$legacy_name" ]] && continue
-    pm2 delete "$legacy_name" || true
-  done <<< "$legacy_names"
 }
 
-delete_legacy_pm2_apps
+for port in "${INSTANCE_PORTS[@]}"; do
+  start_or_reload_instance "$port"
+done
 
-current_entry="$(pm2_entry || true)"
-if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  if [[ "$current_entry" == "$expected_entry" ]]; then
-    echo "==> Rolling reload with current server entry"
-    pm2 reload "$APP_NAME" --update-env
+# Verify at least one instance is serving the fresh entry
+serving_ok=0
+for port in "${INSTANCE_PORTS[@]}"; do
+  name="${APP_NAME}-${port}"
+  actual="$(pm2 jlist 2>/dev/null | PM2_APP_NAME="$name" node -e '
+let input = "";
+process.stdin.on("data", (c) => { input += c; });
+process.stdin.on("end", () => {
+  try {
+    const app = JSON.parse(input).find((i) => i?.name === process.env.PM2_APP_NAME);
+    process.stdout.write(app?.pm2_env?.pm_exec_path || "");
+  } catch {}
+});
+' || true)"
+  if [[ "$actual" == "$expected_entry" ]]; then
+    serving_ok=$((serving_ok + 1))
   else
-    echo "==> PM2 points at old entry (${current_entry:-unknown}); recreating once"
-    pm2 delete "$APP_NAME"
-    echo "==> Starting cluster mode with current build"
-    pm2 start "$expected_entry" \
-      --name "$APP_NAME" \
-      --interpreter node \
-      -i max \
-      --update-env \
-      -- --host "$HOST" --port "$PORT"
+    echo "!! $name is not serving fresh entry (got: ${actual:-unknown})" >&2
   fi
-else
-  echo "==> Starting cluster mode with current build"
-  pm2 start "$expected_entry" \
-    --name "$APP_NAME" \
-    --interpreter node \
-    -i max \
-    --update-env \
-    -- --host "$HOST" --port "$PORT"
-fi
-
-actual_entry="$(pm2_entry || true)"
-if [[ "$actual_entry" != "$expected_entry" ]]; then
-  echo "!! PM2 is not serving the fresh server entry." >&2
-  echo "Expected: $expected_entry" >&2
-  echo "Actual:   ${actual_entry:-unknown}" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+done
+if [[ "$serving_ok" -eq 0 ]]; then
+  echo "!! No PM2 instance is serving the fresh entry. Aborting." >&2
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
+echo "==> ${serving_ok}/${#INSTANCE_PORTS[@]} instances serving fresh build"
+
 
 
 
@@ -269,7 +273,7 @@ for i in {1..20}; do
   fi
   if [[ "$i" -eq 20 ]]; then
     echo "!! Local app did not become healthy. Last HTTP: ${health_status}"
-    pm2 logs "$APP_NAME" --lines 80 --nostream
+    pm2 logs --lines 80 --nostream
     exit 1
   fi
   sleep 1
@@ -311,20 +315,20 @@ proxy_headers="$(curl -sS -X GET -D - -o /dev/null \
 if ! grep -qi "x-adspx-backend-proxy: selfhost" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy is not active. Expected x-adspx-backend-proxy: selfhost" >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 if ! grep -qiE "^HTTP/[0-9.]+ (2[0-9][0-9]|401)" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy returned an unexpected status for /auth/v1/settings" >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 if grep -qiE "^content-(encoding|length):" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy is forwarding stale compression headers." >&2
   echo "!! This causes browser auth to fail with TypeError: Failed to fetch." >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 echo "Backend proxy check: OK"
@@ -333,4 +337,4 @@ echo "==> Saving PM2 process list"
 pm2 save
 
 echo "==> Recent logs"
-pm2 logs "$APP_NAME" --lines 30 --nostream
+pm2 logs --lines 30 --nostream
