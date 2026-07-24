@@ -270,12 +270,12 @@ function CreateLinkPage() {
                           <span className="font-display font-semibold truncate">{l.title || l.short_code}</span>
                           {!l.is_active && <span className="rounded-full bg-muted text-muted-foreground text-[10px] px-2 py-0.5">paused</span>}
                         </div>
-                        <div className="font-mono text-xs text-primary truncate">/r/{l.short_code}</div>
+                        <div className="font-mono text-xs text-primary truncate">adswapx.com/r/{l.short_code}</div>
                         <div className="font-mono text-[11px] text-muted-foreground truncate">→ {l.adsterra_url}</div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Button size="sm" variant="outline" onClick={() => copyShort(l.short_code)}><Copy className="h-3.5 w-3.5 mr-1" />Copy</Button>
-                        <Button size="sm" variant="outline" asChild><a href={`/r/${l.short_code}`} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
+                        <Button size="sm" variant="outline" asChild><a href={`https://adswapx.com/r/${l.short_code}`} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
                         <Button size="sm" variant="ghost" onClick={() => { const next = expanded ? null : l.id; setExpandedLink(next); if (next && !cloakByLink[l.id]) loadCloak(l.id); }}>
                           <Settings2 className="h-3.5 w-3.5" />
                         </Button>
