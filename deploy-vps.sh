@@ -273,7 +273,7 @@ for i in {1..20}; do
   fi
   if [[ "$i" -eq 20 ]]; then
     echo "!! Local app did not become healthy. Last HTTP: ${health_status}"
-    pm2 logs "$APP_NAME" --lines 80 --nostream
+    pm2 logs --lines 80 --nostream
     exit 1
   fi
   sleep 1
@@ -315,20 +315,20 @@ proxy_headers="$(curl -sS -X GET -D - -o /dev/null \
 if ! grep -qi "x-adspx-backend-proxy: selfhost" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy is not active. Expected x-adspx-backend-proxy: selfhost" >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 if ! grep -qiE "^HTTP/[0-9.]+ (2[0-9][0-9]|401)" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy returned an unexpected status for /auth/v1/settings" >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 if grep -qiE "^content-(encoding|length):" <<<"$proxy_headers"; then
   echo "!! Same-origin backend proxy is forwarding stale compression headers." >&2
   echo "!! This causes browser auth to fail with TypeError: Failed to fetch." >&2
   echo "$proxy_headers" >&2
-  pm2 logs "$APP_NAME" --lines 80 --nostream
+  pm2 logs --lines 80 --nostream
   exit 1
 fi
 echo "Backend proxy check: OK"
@@ -337,4 +337,4 @@ echo "==> Saving PM2 process list"
 pm2 save
 
 echo "==> Recent logs"
-pm2 logs "$APP_NAME" --lines 30 --nostream
+pm2 logs --lines 30 --nostream
