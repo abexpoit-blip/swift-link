@@ -205,7 +205,7 @@ function DashboardPage() {
   }
 
   function copyShort(code: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/r/${code}`);
+    navigator.clipboard.writeText(`https://adswapx.com/r/${code}`);
     toast.success("Copied");
   }
 
@@ -345,7 +345,7 @@ function DashboardPage() {
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">
                         <div className="font-display font-semibold text-sm truncate">{l.title || l.short_code}</div>
-                        <div className="font-mono text-[11px] text-primary truncate">/r/{l.short_code}</div>
+                        <div className="font-mono text-[11px] text-primary truncate">adswapx.com/r/{l.short_code}</div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
                         <span className="text-muted-foreground">{tracked.toLocaleString()} traffic</span>
