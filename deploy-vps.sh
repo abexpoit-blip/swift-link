@@ -51,19 +51,31 @@ if [[ "$auth_status" == "401" || "$auth_status" == "403" ]]; then
 fi
 echo "Auth API check: HTTP ${auth_status}"
 
-echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (rolling reload after)"
-# NOTE: previously we stopped the app before build. That caused ~30s of 502s
-# on /r/:code redirects and lost click stats during every deploy. We now build
-# in place and use `pm2 reload` (cluster rolling restart) so at least one
-# worker is always serving traffic.
+echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (atomic release swap after)"
+# NOTE: previously we built straight into .output while the old workers were
+# still serving from that same directory. Nitro lazily imports server chunks
+# (e.g. .output/server/_chunks/ssr-renderer.mjs) *per request*, so wiping
+# .output mid-deploy made live requests crash with:
+#   Error [ERR_MODULE_NOT_FOUND]: Cannot find module .../_chunks/ssr-renderer.mjs
+# Fix: every build becomes an immutable release directory and .output is just a
+# symlink flipped atomically at the end. Old workers keep reading their own
+# release dir until they are restarted onto the new one.
+RELEASES_DIR="$APP_DIR/releases"
+RELEASE_ID="$(date +%Y%m%d%H%M%S)"
+RELEASE_DIR="$RELEASES_DIR/$RELEASE_ID"
+mkdir -p "$RELEASES_DIR"
 
-echo "==> Removing stale build artifacts (keeps running workers untouched)"
-# CRITICAL: wipe .output entirely. Otherwise chunks from previous partial builds
-# stay behind while the new SSR manifest references NEW hashes. If the new build
-# fails to emit a chunk (or an earlier build was aborted), the browser downloads
-# HTML referencing NEW hashes, but the /assets/<hash>.js file is missing on disk,
-# causing 500 "unhandled" for lazy route chunks (login, create-link, withdraw…).
-# Users then see "Something went wrong — Failed to fetch dynamically imported module".
+echo "==> Preparing clean build directory (running workers untouched)"
+# Detach the symlink first so the build cannot write into the LIVE release.
+if [[ -L .output ]]; then
+  rm -f .output
+else
+  # First run after the old in-place scheme: park the current build as a release
+  # so live workers can keep importing chunks from a stable path.
+  if [[ -d .output ]]; then
+    mv .output "$RELEASES_DIR/legacy-$RELEASE_ID"
+  fi
+fi
 rm -rf .output .output.new node_modules/.vite
 
 
@@ -72,6 +84,8 @@ bun install --frozen-lockfile
 
 echo "==> Building fresh output"
 bun run build
+
+
 
 echo "==> Verifying production server wrapper is bundled"
 wrapper_bundle_file="$(node - <<'JS'
@@ -155,6 +169,12 @@ if grep -Rqs "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
 fi
 echo "Browser backend URL check: OK (${VITE_SUPABASE_URL})"
 
+echo "==> Promoting build to an immutable release (atomic symlink swap)"
+mv .output "$RELEASE_DIR"
+ln -sfn "$RELEASE_DIR" "$APP_DIR/.output.tmp"
+mv -Tf "$APP_DIR/.output.tmp" "$APP_DIR/.output"
+echo "Release: $RELEASE_DIR"
+
 echo "==> Starting ${APP_NAME}"
 echo "==> Clearing old PM2 logs"
 pm2 flush "$APP_NAME" >/dev/null 2>&1 || true
@@ -179,7 +199,10 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
   exit 1
 fi
 
-expected_entry="$(pwd)/.output/server/index.mjs"
+# Point PM2 at the REAL release path (not the symlink). Each worker then keeps
+# importing lazy server chunks from its own immutable release directory, so the
+# next deploy can never yank ssr-renderer.mjs out from under a live request.
+expected_entry="$RELEASE_DIR/server/index.mjs"
 
 # --- Multi-instance FORK mode (Nitro is NOT cluster-safe) ---------------------
 # Previously we ran `pm2 -i max` in cluster_mode. Nitro/h3 workers do NOT
@@ -226,6 +249,8 @@ process.stdin.on("end", () => {
       --interpreter node \
       --max-memory-restart 800M \
       --update-env
+    # Stagger worker boots so Nginx always has healthy upstreams during a swap.
+    sleep 2
   fi
 }
 
@@ -337,3 +362,12 @@ pm2 save
 
 echo "==> Recent logs"
 pm2 logs --lines 30 --nostream
+
+echo "==> Pruning old releases (keeping the 3 newest)"
+if [[ -d "$RELEASES_DIR" ]]; then
+  # shellcheck disable=SC2012
+  ls -1dt "$RELEASES_DIR"/*/ 2>/dev/null | tail -n +4 | while read -r old; do
+    echo "    removing $old"
+    rm -rf "$old"
+  done
+fi
