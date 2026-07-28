@@ -249,6 +249,8 @@ process.stdin.on("end", () => {
       --interpreter node \
       --max-memory-restart 800M \
       --update-env
+    # Stagger worker boots so Nginx always has healthy upstreams during a swap.
+    sleep 2
   fi
 }
 
@@ -360,3 +362,12 @@ pm2 save
 
 echo "==> Recent logs"
 pm2 logs --lines 30 --nostream
+
+echo "==> Pruning old releases (keeping the 3 newest)"
+if [[ -d "$RELEASES_DIR" ]]; then
+  # shellcheck disable=SC2012
+  ls -1dt "$RELEASES_DIR"/*/ 2>/dev/null | tail -n +4 | while read -r old; do
+    echo "    removing $old"
+    rm -rf "$old"
+  done
+fi
