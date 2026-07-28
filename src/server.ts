@@ -573,7 +573,23 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
       _is_datacenter: !!asn && DC_ASNS.has(asn),
       _coherence_score: coherenceScore(ua, acceptLang, secChUa, secChMobile),
     };
-    const rpcResult = await supabasePublic.rpc("resolve_public_redirect", rpcArgs);
+    // Transient upstream failures (502/504/network blips from the DB proxy) must not
+    // silently downgrade a real human to the safe article -> that is real traffic loss.
+    // Retry quickly a couple of times before giving up.
+    const isTransient = (e: unknown) => {
+      const m = String((e as { message?: string } | null)?.message ?? e ?? "");
+      return /50[234]|timeout|timed out|fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|upstream/i.test(m);
+    };
+
+    let rpcResult = await supabasePublic.rpc("resolve_public_redirect", rpcArgs);
+    for (let attempt = 1; attempt <= 2 && rpcResult.error && isTransient(rpcResult.error); attempt++) {
+      await new Promise((r) => setTimeout(r, attempt * 120));
+      rpcResult = await supabasePublic.rpc("resolve_public_redirect", rpcArgs);
+      if (!rpcResult.error) {
+        console.warn(`[server:/r] resolve_public_redirect recovered on retry ${attempt}`);
+      }
+    }
+
     const data = rpcResult.data as RedirectDecision | null;
     const error = rpcResult.error;
 
@@ -582,9 +598,10 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     }
 
     if (error) {
-      console.error("[server:/r] resolve_public_redirect failed", error);
+      console.error("[server:/r] resolve_public_redirect failed (after retries)", error);
       return renderEntrySafe(request, slug);
     }
+
 
     if (!data || data.found === false || data.decision !== "money") {
       if (data?.safe_url) {
