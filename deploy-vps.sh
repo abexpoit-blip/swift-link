@@ -74,8 +74,6 @@ else
   # so live workers can keep importing chunks from a stable path.
   if [[ -d .output ]]; then
     mv .output "$RELEASES_DIR/legacy-$RELEASE_ID"
-    ln -sfn "$RELEASES_DIR/legacy-$RELEASE_ID" .output
-    rm -f .output
   fi
 fi
 rm -rf .output .output.new node_modules/.vite
@@ -171,6 +169,12 @@ if grep -Rqs "https://api\.adspx\.com" .output/public/assets 2>/dev/null; then
 fi
 echo "Browser backend URL check: OK (${VITE_SUPABASE_URL})"
 
+echo "==> Promoting build to an immutable release (atomic symlink swap)"
+mv .output "$RELEASE_DIR"
+ln -sfn "$RELEASE_DIR" "$APP_DIR/.output.tmp"
+mv -Tf "$APP_DIR/.output.tmp" "$APP_DIR/.output"
+echo "Release: $RELEASE_DIR"
+
 echo "==> Starting ${APP_NAME}"
 echo "==> Clearing old PM2 logs"
 pm2 flush "$APP_NAME" >/dev/null 2>&1 || true
@@ -195,7 +199,10 @@ if [[ ! -f ".output/server/index.mjs" ]]; then
   exit 1
 fi
 
-expected_entry="$(pwd)/.output/server/index.mjs"
+# Point PM2 at the REAL release path (not the symlink). Each worker then keeps
+# importing lazy server chunks from its own immutable release directory, so the
+# next deploy can never yank ssr-renderer.mjs out from under a live request.
+expected_entry="$RELEASE_DIR/server/index.mjs"
 
 # --- Multi-instance FORK mode (Nitro is NOT cluster-safe) ---------------------
 # Previously we ran `pm2 -i max` in cluster_mode. Nitro/h3 workers do NOT
