@@ -146,7 +146,11 @@ function isHardcodedBot(ua: string, ip: string): boolean {
 }
 
 function fingerprintHash(ua: string, ip: string, acceptLang: string): string {
-  const value = `${ua}|${ip.split(".").slice(0, 3).join(".")}|${acceptLang}`;
+  // Use the FULL client IP, not the /24 block. On mobile carriers (CGNAT) thousands
+  // of real users share a /24 with an identical in-app UA, which collapsed them into
+  // one fingerprint and triggered false velocity_lock / learned_bot blocks.
+  const value = `${ua}|${ip}|${acceptLang}`;
+
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index);
