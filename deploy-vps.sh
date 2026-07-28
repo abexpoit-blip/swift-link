@@ -51,19 +51,33 @@ if [[ "$auth_status" == "401" || "$auth_status" == "403" ]]; then
 fi
 echo "Auth API check: HTTP ${auth_status}"
 
-echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (rolling reload after)"
-# NOTE: previously we stopped the app before build. That caused ~30s of 502s
-# on /r/:code redirects and lost click stats during every deploy. We now build
-# in place and use `pm2 reload` (cluster rolling restart) so at least one
-# worker is always serving traffic.
+echo "==> Zero-downtime deploy: keeping ${APP_NAME} running during build (atomic release swap after)"
+# NOTE: previously we built straight into .output while the old workers were
+# still serving from that same directory. Nitro lazily imports server chunks
+# (e.g. .output/server/_chunks/ssr-renderer.mjs) *per request*, so wiping
+# .output mid-deploy made live requests crash with:
+#   Error [ERR_MODULE_NOT_FOUND]: Cannot find module .../_chunks/ssr-renderer.mjs
+# Fix: every build becomes an immutable release directory and .output is just a
+# symlink flipped atomically at the end. Old workers keep reading their own
+# release dir until they are restarted onto the new one.
+RELEASES_DIR="$APP_DIR/releases"
+RELEASE_ID="$(date +%Y%m%d%H%M%S)"
+RELEASE_DIR="$RELEASES_DIR/$RELEASE_ID"
+mkdir -p "$RELEASES_DIR"
 
-echo "==> Removing stale build artifacts (keeps running workers untouched)"
-# CRITICAL: wipe .output entirely. Otherwise chunks from previous partial builds
-# stay behind while the new SSR manifest references NEW hashes. If the new build
-# fails to emit a chunk (or an earlier build was aborted), the browser downloads
-# HTML referencing NEW hashes, but the /assets/<hash>.js file is missing on disk,
-# causing 500 "unhandled" for lazy route chunks (login, create-link, withdraw…).
-# Users then see "Something went wrong — Failed to fetch dynamically imported module".
+echo "==> Preparing clean build directory (running workers untouched)"
+# Detach the symlink first so the build cannot write into the LIVE release.
+if [[ -L .output ]]; then
+  rm -f .output
+else
+  # First run after the old in-place scheme: park the current build as a release
+  # so live workers can keep importing chunks from a stable path.
+  if [[ -d .output ]]; then
+    mv .output "$RELEASES_DIR/legacy-$RELEASE_ID"
+    ln -sfn "$RELEASES_DIR/legacy-$RELEASE_ID" .output
+    rm -f .output
+  fi
+fi
 rm -rf .output .output.new node_modules/.vite
 
 
@@ -72,6 +86,8 @@ bun install --frozen-lockfile
 
 echo "==> Building fresh output"
 bun run build
+
+
 
 echo "==> Verifying production server wrapper is bundled"
 wrapper_bundle_file="$(node - <<'JS'
