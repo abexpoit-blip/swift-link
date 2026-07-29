@@ -291,9 +291,10 @@ function DashboardPage() {
             />
           </div>
           <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
-            <Mini label="Total" value={liveStats.total.toLocaleString()} />
-            <Mini label="Humans" value={liveStats.humans.toLocaleString()} sub="passed" />
-            <Mini label="Bots filtered" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}%`} />
+            <Mini label="Total requests" value={liveStats.total.toLocaleString()} />
+            <Mini label="Delivered humans" value={liveStats.humans.toLocaleString()} sub="passed" />
+            <Mini label="Bot Traffic fetch" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
+
           </div>
         </section>
 
