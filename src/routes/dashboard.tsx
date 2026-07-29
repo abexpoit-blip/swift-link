@@ -215,7 +215,6 @@ function DashboardPage() {
     navigate({ to: "/" });
   }
 
-  const totalTrackedClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0) + Number(link.bot_clicks_count || 0), 0);
   const totalHumanClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0), 0);
   const totalFilteredClicks = links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0);
   const monetizedClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
@@ -236,10 +235,23 @@ function DashboardPage() {
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
-          <MetricCard icon={MousePointerClick} label="Total Traffic" value={totalTrackedClicks.toLocaleString()} sub={`${totalHumanClicks.toLocaleString()} human · ${totalFilteredClicks.toLocaleString()} filtered`} />
+          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} bot traffic fetch (not yours)`} />
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent · ${monetizedClicks.toLocaleString()} paid`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
         </section>
+
+        {/* Bot traffic fetch explainer — prevents "traffic loss" confusion */}
+        <section className="rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3 flex items-start gap-3 text-sm">
+          <Bot className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+          <div className="text-muted-foreground">
+            <span className="font-semibold text-foreground">Bot Traffic fetch</span> counts automated preview
+            requests from Facebook, WhatsApp, Telegram and other platform crawlers that fetch your link
+            when it is shared. These are <span className="font-semibold text-foreground">not visitors you sent</span> and
+            are not lost traffic — blocking them is what keeps your domain safe.
+            Your real audience is shown as <span className="font-semibold text-foreground">Delivered Human Clicks</span>.
+          </div>
+        </section>
+
 
         {/* Monitor-mode banner (7-day observation window) */}
         {monitorMode.on && (
@@ -278,9 +290,10 @@ function DashboardPage() {
             />
           </div>
           <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
-            <Mini label="Total" value={liveStats.total.toLocaleString()} />
-            <Mini label="Humans" value={liveStats.humans.toLocaleString()} sub="passed" />
-            <Mini label="Bots filtered" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}%`} />
+            <Mini label="Total requests" value={liveStats.total.toLocaleString()} />
+            <Mini label="Delivered humans" value={liveStats.humans.toLocaleString()} sub="passed" />
+            <Mini label="Bot Traffic fetch" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
+
           </div>
         </section>
 
@@ -340,7 +353,8 @@ function DashboardPage() {
               <div className="space-y-2">
                 {links.slice(0, 5).map((l) => {
                   const e = earningsByLink[l.id];
-                  const tracked = Number(l.clicks_count || 0) + Number(l.bot_clicks_count || 0);
+                  const humanClicks = Number(l.clicks_count || 0);
+                  const botFetch = Number(l.bot_clicks_count || 0);
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">
@@ -348,8 +362,9 @@ function DashboardPage() {
                         <div className="font-mono text-[11px] text-primary truncate">adswapx.com/r/{l.short_code}</div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
-                        <span className="text-muted-foreground">{tracked.toLocaleString()} traffic</span>
-                        <span className="text-muted-foreground">{Number(l.bot_clicks_count || 0).toLocaleString()} filtered</span>
+                        <span className="text-emerald-500 font-medium">{humanClicks.toLocaleString()} human</span>
+                        <span className="text-muted-foreground" title="Platform crawler / link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} bot fetch</span>
+
                         <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
                       </div>
                     </div>

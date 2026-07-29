@@ -250,8 +250,8 @@ function StatisticsPage() {
         ) : (
           <>
             <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Kpi icon={MousePointerClick} label="Clicks (30d)" value={totalClicks.toLocaleString()} sub={`${evaluated.toLocaleString()} evaluated`} />
-              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} humans · ${totalBots} bots`} accent />
+              <Kpi icon={MousePointerClick} label="Delivered human clicks" value={totalHumans.toLocaleString()} sub={`${totalBots.toLocaleString()} bot traffic fetch`} />
+              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} human · ${totalBots} bot fetch`} accent />
               <Kpi icon={Users} label="Countries seen" value={totalCountries.toString()} sub={totalCountries ? "across your traffic" : "none yet"} />
               <Kpi icon={TrendingUp} label="Earnings (lifetime)" value={`$${totalEarnings.toFixed(4)}`} sub="from earnings ledger" />
             </section>
@@ -260,11 +260,11 @@ function StatisticsPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="font-display text-xl font-semibold">Daily traffic (30 days)</h2>
-                  <p className="text-xs text-muted-foreground">Verified humans vs bots — straight from <code className="font-mono">traffic_logs</code>.</p>
+                  <p className="text-xs text-muted-foreground">Delivered humans vs bot traffic fetch — straight from <code className="font-mono">traffic_logs</code>.</p>
                 </div>
                 <div className="hidden md:flex items-center gap-4 text-xs">
                   <Legend2 color="hsl(var(--primary))" label="Humans" />
-                  <Legend2 color="#FF3D71" label="Bots blocked" />
+                  <Legend2 color="#FF3D71" label="Bot Traffic fetch" />
                 </div>
               </div>
               <div className="h-72">
@@ -330,7 +330,7 @@ function StatisticsPage() {
                           <tr>
                             <th className="text-left px-3 py-2">Country</th>
                             <th className="text-right px-3 py-2">Clicks</th>
-                            <th className="text-right px-3 py-2">Humans / Bots</th>
+                            <th className="text-right px-3 py-2">Human / Bot fetch</th>
                             <th className="text-right px-3 py-2">Share</th>
                           </tr>
                         </thead>
@@ -410,7 +410,7 @@ function StatisticsPage() {
             <section className="rounded-2xl glass-card p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-xl font-semibold">Bots blocked — last 30 days</h2>
+                <h2 className="font-display text-xl font-semibold">Bot Traffic fetch — last 30 days</h2>
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
