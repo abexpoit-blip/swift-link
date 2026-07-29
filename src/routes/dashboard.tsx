@@ -236,10 +236,23 @@ function DashboardPage() {
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
-          <MetricCard icon={MousePointerClick} label="Total Traffic" value={totalTrackedClicks.toLocaleString()} sub={`${totalHumanClicks.toLocaleString()} human · ${totalFilteredClicks.toLocaleString()} filtered`} />
+          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} bot traffic fetch (not yours)`} />
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent · ${monetizedClicks.toLocaleString()} paid`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
         </section>
+
+        {/* Bot traffic fetch explainer — prevents "traffic loss" confusion */}
+        <section className="rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3 flex items-start gap-3 text-sm">
+          <Bot className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+          <div className="text-muted-foreground">
+            <span className="font-semibold text-foreground">Bot Traffic fetch</span> counts automated preview
+            requests from Facebook, WhatsApp, Telegram and other platform crawlers that fetch your link
+            when it is shared. These are <span className="font-semibold text-foreground">not visitors you sent</span> and
+            are not lost traffic — blocking them is what keeps your domain safe.
+            Your real audience is shown as <span className="font-semibold text-foreground">Delivered Human Clicks</span>.
+          </div>
+        </section>
+
 
         {/* Monitor-mode banner (7-day observation window) */}
         {monitorMode.on && (
