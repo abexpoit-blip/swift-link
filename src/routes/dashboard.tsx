@@ -215,7 +215,6 @@ function DashboardPage() {
     navigate({ to: "/" });
   }
 
-  const totalTrackedClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0) + Number(link.bot_clicks_count || 0), 0);
   const totalHumanClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0), 0);
   const totalFilteredClicks = links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0);
   const monetizedClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
