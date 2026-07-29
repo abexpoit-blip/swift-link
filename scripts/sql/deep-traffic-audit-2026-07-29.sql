@@ -32,9 +32,9 @@ WITH t AS (
 )
 SELECT device_class,
        count(*) AS hits,
-       count(*) FILTER (WHERE decision = 'offer')  AS delivered,
-       count(*) FILTER (WHERE decision <> 'offer') AS filtered,
-       round(100.0 * count(*) FILTER (WHERE decision = 'offer') / NULLIF(count(*),0), 2) AS delivery_pct
+       count(*) FILTER (WHERE decision = 'money')  AS delivered,
+       count(*) FILTER (WHERE decision <> 'money') AS filtered,
+       round(100.0 * count(*) FILTER (WHERE decision = 'money') / NULLIF(count(*),0), 2) AS delivery_pct
 FROM t GROUP BY 1 ORDER BY hits DESC;
 
 \echo ''
@@ -52,7 +52,7 @@ WITH t AS (
 )
 SELECT device_class, r AS reason, count(*) AS blocked_humans
 FROM t, unnest(CASE WHEN reasons IS NULL OR cardinality(reasons)=0 THEN ARRAY['(none)'] ELSE reasons END) AS r
-WHERE device_class <> 'crawler' AND decision <> 'offer'
+WHERE device_class <> 'crawler' AND decision <> 'money'
 GROUP BY 1,2 ORDER BY blocked_humans DESC LIMIT 40;
 
 \echo ''
@@ -71,15 +71,15 @@ WITH t AS (
 SELECT created_at, device_class, decision, reasons, coherence_score, bot_score,
        country, asn, left(ua, 90) AS ua_short, left(fingerprint_hash, 12) AS fp
 FROM t
-WHERE device_class <> 'crawler' AND decision <> 'offer'
+WHERE device_class <> 'crawler' AND decision <> 'money'
 ORDER BY created_at DESC LIMIT 30;
 
 \echo ''
 \echo '===== §4 FACEBOOK IN-APP BROWSER (real users from FB app) ====='
 SELECT count(*) AS fb_inapp_hits,
-       count(*) FILTER (WHERE decision='offer') AS delivered,
-       count(*) FILTER (WHERE decision<>'offer') AS blocked,
-       round(100.0*count(*) FILTER (WHERE decision='offer')/NULLIF(count(*),0),2) AS delivery_pct
+       count(*) FILTER (WHERE decision='money') AS delivered,
+       count(*) FILTER (WHERE decision<>'money') AS blocked,
+       round(100.0*count(*) FILTER (WHERE decision='money')/NULLIF(count(*),0),2) AS delivery_pct
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
   AND ua ~* '(FBAV|FBAN|FB_IAB|FBIOS|Instagram)'
@@ -91,15 +91,15 @@ SELECT r AS reason, count(*) FROM traffic_logs,
 WHERE created_at > now() - interval '24 hours'
   AND ua ~* '(FBAV|FBAN|FB_IAB|FBIOS|Instagram)'
   AND ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot)'
-  AND decision <> 'offer'
+  AND decision <> 'money'
 GROUP BY 1 ORDER BY 2 DESC;
 
 \echo ''
 \echo '===== §5 DESKTOP REAL USERS — are we killing them? ====='
 SELECT count(*) AS desktop_hits,
-       count(*) FILTER (WHERE decision='offer') AS delivered,
-       count(*) FILTER (WHERE decision<>'offer') AS blocked,
-       round(100.0*count(*) FILTER (WHERE decision='offer')/NULLIF(count(*),0),2) AS delivery_pct
+       count(*) FILTER (WHERE decision='money') AS delivered,
+       count(*) FILTER (WHERE decision<>'money') AS blocked,
+       round(100.0*count(*) FILTER (WHERE decision='money')/NULLIF(count(*),0),2) AS delivery_pct
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
   AND NOT is_mobile
@@ -109,7 +109,7 @@ WHERE created_at > now() - interval '24 hours'
 SELECT left(ua,80) AS ua_short, reasons, country, count(*) AS n
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
-  AND NOT is_mobile AND decision <> 'offer'
+  AND NOT is_mobile AND decision <> 'money'
   AND ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|bot|crawler|spider|curl/|wget|python|okhttp|headless)'
 GROUP BY 1,2,3 ORDER BY n DESC LIMIT 25;
 
@@ -118,21 +118,21 @@ GROUP BY 1,2,3 ORDER BY n DESC LIMIT 25;
 SELECT count(*) AS true_potential_loss
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
-  AND decision <> 'offer'
-  AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter','meta_ip','hard_bot']);
+  AND decision <> 'money'
+  AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter_asn','bot_country','blacklist','learned_bot','referer_mismatch']);
 
 SELECT reasons, is_mobile, country, count(*) AS n, left(min(ua),80) AS sample_ua
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
-  AND decision <> 'offer'
-  AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter','meta_ip','hard_bot'])
+  AND decision <> 'money'
+  AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter_asn','bot_country','blacklist','learned_bot','referer_mismatch'])
 GROUP BY 1,2,3 ORDER BY n DESC LIMIT 30;
 
 \echo ''
 \echo '===== §7 FINGERPRINT COLLISION CHECK (many distinct UA on one fp = collision) ====='
 SELECT left(fingerprint_hash,12) AS fp, count(*) AS hits,
        count(DISTINCT ua) AS distinct_ua, count(DISTINCT country) AS countries,
-       count(*) FILTER (WHERE decision<>'offer') AS blocked,
+       count(*) FILTER (WHERE decision<>'money') AS blocked,
        left(min(ua),70) AS sample_ua
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours' AND fingerprint_hash IS NOT NULL
@@ -144,8 +144,8 @@ ORDER BY hits DESC LIMIT 25;
 \echo '===== §8 COHERENCE SCORE distribution for NON-crawler traffic ====='
 SELECT width_bucket(coalesce(coherence_score,0), 0, 100, 10) * 10 AS score_bucket,
        count(*) AS hits,
-       count(*) FILTER (WHERE decision='offer') AS delivered,
-       count(*) FILTER (WHERE decision<>'offer') AS blocked
+       count(*) FILTER (WHERE decision='money') AS delivered,
+       count(*) FILTER (WHERE decision<>'money') AS blocked
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
   AND ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|bot|crawler|spider|curl/|wget|python|okhttp|headless)'
@@ -155,7 +155,7 @@ GROUP BY 1 ORDER BY 1;
 \echo '===== §9 HOURLY TREND (human delivery over time) ====='
 SELECT date_trunc('hour', created_at) AS hr,
        count(*) FILTER (WHERE ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|bot|crawler|spider)') AS human_hits,
-       count(*) FILTER (WHERE decision='offer' AND ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|bot|crawler|spider)') AS human_delivered
+       count(*) FILTER (WHERE decision='money' AND ua !~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|bot|crawler|spider)') AS human_delivered
 FROM traffic_logs
 WHERE created_at > now() - interval '24 hours'
 GROUP BY 1 ORDER BY 1;
@@ -187,6 +187,6 @@ WITH t AS (
 SELECT
   count(*) AS total_hits,
   count(*) FILTER (WHERE ua ~* '(facebookexternalhit|meta-external|facebookcatalog|facebot|whatsapp|telegrambot|twitterbot|slackbot|discordbot|bingbot|googlebot|applebot|linkedinbot|pinterest|semrush|ahrefs|petalbot|yandex|bytespider)') AS platform_crawler_hits,
-  count(*) FILTER (WHERE decision='offer') AS delivered,
-  count(*) FILTER (WHERE decision<>'offer' AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter','meta_ip','hard_bot'])) AS suspicious_human_blocks
+  count(*) FILTER (WHERE decision='money') AS delivered,
+  count(*) FILTER (WHERE decision<>'money' AND NOT (reasons && ARRAY['hardcoded_crawler','datacenter_asn','bot_country','blacklist','learned_bot','referer_mismatch'])) AS suspicious_human_blocks
 FROM t;
