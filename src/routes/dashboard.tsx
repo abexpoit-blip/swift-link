@@ -354,7 +354,8 @@ function DashboardPage() {
               <div className="space-y-2">
                 {links.slice(0, 5).map((l) => {
                   const e = earningsByLink[l.id];
-                  const tracked = Number(l.clicks_count || 0) + Number(l.bot_clicks_count || 0);
+                  const humanClicks = Number(l.clicks_count || 0);
+                  const botFetch = Number(l.bot_clicks_count || 0);
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">
@@ -362,8 +363,9 @@ function DashboardPage() {
                         <div className="font-mono text-[11px] text-primary truncate">adswapx.com/r/{l.short_code}</div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
-                        <span className="text-muted-foreground">{tracked.toLocaleString()} traffic</span>
-                        <span className="text-muted-foreground">{Number(l.bot_clicks_count || 0).toLocaleString()} filtered</span>
+                        <span className="text-emerald-500 font-medium">{humanClicks.toLocaleString()} human</span>
+                        <span className="text-muted-foreground" title="Platform crawler / link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} bot fetch</span>
+
                         <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
                       </div>
                     </div>
