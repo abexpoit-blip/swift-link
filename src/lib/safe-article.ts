@@ -181,8 +181,9 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    headline: opts.title,
-    description: opts.description,
+    headline: titleText,
+    description: descText,
+
     articleSection: opts.section,
     keywords: kw.join(", "),
     wordCount,
