@@ -726,7 +726,9 @@ export function renderSafeArticle(
   ctx?: { slug?: string; ua?: string },
 ): string {
   setSafeArticleImageHost(imageHost ?? null);
+  setSafeArticleSeed(ctx?.slug ?? null);
   try {
+
     const picks = pickSnippets(snippets);
     const year = new Date().getFullYear();
     const templates = [
