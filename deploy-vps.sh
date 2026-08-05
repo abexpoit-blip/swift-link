@@ -337,6 +337,30 @@ process.stdin.on("end", () => {
 });
 ')
 
+echo "==> Verifying public short domain reaches the fresh stable workers"
+public_hashes="$(for _ in 1 2 3 4 5 6 7 8; do
+  curl -fsS -A "facebookexternalhit/1.1" \
+    "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" | md5sum | awk '{print $1}'
+done | sort -u)"
+public_hash_count="$(wc -l <<<"$public_hashes" | tr -d ' ')"
+public_body="$(mktemp)"
+curl -fsS -A "facebookexternalhit/1.1" \
+  "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" -o "$public_body"
+if ! grep -q 'name="adspx-safe-renderer" content="stable-v3"' "$public_body"; then
+  echo "!! adswapx.com is still routing crawler traffic to an old app build." >&2
+  echo "!! Check the adswapx.com Nginx server block/upstream; expected ports: ${INSTANCE_PORTS[*]}." >&2
+  rm -f "$public_body"
+  exit 1
+fi
+rm -f "$public_body"
+if [[ "$public_hash_count" -ne 1 ]]; then
+  echo "!! Public crawler HTML is unstable although direct PM2 workers passed:" >&2
+  echo "$public_hashes" >&2
+  echo "!! Nginx/Cloudflare is mixing this release with stale origins or workers." >&2
+  exit 1
+fi
+echo "Public crawler stability: OK ($(head -n 1 <<<"$public_hashes"))"
+
 echo "==> Waiting for local app health"
 for i in {1..20}; do
   health_status="$(curl -sS -o /tmp/adspx-local-health.html -w "%{http_code}" http://127.0.0.1:3000/ || true)"
