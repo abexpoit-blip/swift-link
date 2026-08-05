@@ -730,19 +730,13 @@ function stableHash(str: string): number {
   return h;
 }
 
-function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: string }): number {
-  const ua = ctx?.ua || "";
-  const slug = ctx?.slug || "";
-  // FB / social crawlers → deterministic by slug ONLY (same URL always = same page)
-  if (slug && CRAWLER_UA_RE.test(ua)) {
-    return stableHash(slug) % templateCount;
-  }
-  // Real human or unknown bot → deterministic by slug+UA (stable per visitor session)
-  if (slug && ua) {
-    return stableHash(slug + "|" + ua.slice(0, 40)) % templateCount;
-  }
-  // No context → random
-  return Math.floor(rnd() * templateCount);
+function selectTemplateIndex(templateCount: number, ctx?: { slug?: string }): number {
+  // Template depends on the slug ONLY. User-Agent must never influence the HTML:
+  // Meta re-scrapes with several different UA strings (facebookexternalhit,
+  // meta-externalagent, Meta-ExternalFetcher...) and any difference between those
+  // fetches is read as "content changed" -> ad reject.
+  const slug = ctx?.slug || DEFAULT_SEED;
+  return stableHash(slug) % templateCount;
 }
 
 // One render at a time. The global PRNG state (PRNG_STATE / CURRENT_SEED) is
