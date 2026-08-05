@@ -310,10 +310,11 @@ ${kw.slice(0, 5).map((k) => `<meta property="article:tag" content="${escapeHtml(
 
 function tmplDailyReader(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
-  const tags = pickTags(5);
+  const author = pickAuthor("daily-author");
+  const iso = recentIsoDate("daily-date");
+  const readMin = READ_MINS("daily-read");
+  const tags = pickTags(5, "daily-tags");
+
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Daily Reader", siteHost: "dailyreader.co", section: "Essays", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#1a1a1a", faviconEmoji: "📖" })}
 <style>:root{--bg:#fafaf7;--ink:#1a1a1a;--muted:#666;--rule:#e6e6e0;--accent:#8b6f47}*{box-sizing:border-box}body{margin:0;font:17px/1.75 Georgia,"Times New Roman",serif;background:var(--bg);color:var(--ink)}
 header.site{padding:20px 24px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg);z-index:10}
@@ -391,9 +392,10 @@ ${footerSitemap("Daily Reader", year, [{ section: "Sections", items: ["Essays", 
 
 function tmplKitchenJournal(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
+  const author = pickAuthor("kitchen-author");
+  const iso = recentIsoDate("kitchen-date");
+  const readMin = READ_MINS("kitchen-read");
+
   const tags = ["cooking", "slow food", "seasonal", "home"];
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Kitchen Journal", siteHost: "thekitchenjournal.com", section: "Cooking", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#c0392b", faviconEmoji: "🍳" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;background:#fff8f0;color:#3a2a1a;line-height:1.7}
@@ -467,9 +469,10 @@ ${footerSitemap("The Kitchen Journal", year, [{ section: "Cook", items: ["Recipe
 
 function tmplTechWeekly(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
+  const author = pickAuthor("tech-author");
+  const iso = recentIsoDate("tech-date");
+  const readMin = READ_MINS("tech-read");
+
   const tags = ["culture", "attention", "product", "essay"];
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Tech Weekly", siteHost: "techweekly.io", section: "Technology", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#0e1117", faviconEmoji: "⚡" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.65}
@@ -548,9 +551,10 @@ ${footerSitemap("Tech Weekly", year, [{ section: "Read", items: ["Latest", "Essa
 
 function tmplWellnessMag(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
+  const author = pickAuthor("wellness-author");
+  const iso = recentIsoDate("wellness-date");
+  const readMin = READ_MINS("wellness-read");
+
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Bloom & Be", siteHost: "bloomandbe.com", section: "Wellness", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#a87b5c", faviconEmoji: "🌿" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:"Helvetica Neue",-apple-system,sans-serif;background:linear-gradient(180deg,#fef6f0,#fff 40%);color:#2d2438;line-height:1.75}
 .brand{text-align:center;padding:26px 20px 6px;font-size:11px;letter-spacing:.55em;color:#a87b5c;font-weight:700}
@@ -628,9 +632,10 @@ ${footerSitemap("Bloom & Be", year, [{ section: "Journal", items: ["Wellness", "
 
 function tmplTravelLog(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
+  const author = pickAuthor("travel-author");
+  const iso = recentIsoDate("travel-date");
+  const readMin = READ_MINS("travel-read");
+
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Wanderlines", siteHost: "wanderlines.travel", section: "Travel", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#1f3a3d", faviconEmoji: "✈️" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:Georgia,"Times New Roman",serif;background:#f5f1ea;color:#2a2a2a;line-height:1.75}
 .top{background:#1f3a3d;color:#f5f1ea;padding:18px 26px;letter-spacing:.28em;font-size:12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;font-family:"Helvetica Neue",sans-serif;font-weight:700}
@@ -774,14 +779,15 @@ export function renderSafeArticle(
 // ================ NEW TEMPLATE 1: Recipe Box ================
 function tmplRecipeBox(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
-  const prepMin = 10 + Math.floor(rnd() * 20);
-  const cookMin = 20 + Math.floor(rnd() * 40);
-  const servings = 2 + Math.floor(rnd() * 6);
-  const rating = (4.5 + rnd() * 0.4).toFixed(1);
-  const votes = 40 + Math.floor(rnd() * 800);
+  const author = pickAuthor("recipe-author");
+  const iso = recentIsoDate("recipe-date");
+  const readMin = READ_MINS("recipe-read");
+  const prepMin = 10 + Math.floor(srand("recipe-prep") * 20);
+  const cookMin = 20 + Math.floor(srand("recipe-cook") * 40);
+  const servings = 2 + Math.floor(srand("recipe-servings") * 6);
+  const rating = (4.5 + srand("recipe-rating") * 0.4).toFixed(1);
+  const votes = 40 + Math.floor(srand("recipe-votes") * 800);
+
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Weeknight Kitchen", siteHost: "weeknightkitchen.co", section: "Recipes", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#c8582f", faviconEmoji: "🍅" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:"Nunito Sans",-apple-system,system-ui,sans-serif;background:#fdfaf5;color:#2b2320;line-height:1.7}
 header.site{background:#fff;border-bottom:1px solid #f0e6d6;padding:16px 26px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
@@ -894,115 +900,10 @@ ${footerSitemap("The Weeknight Kitchen", year, [{ section: "Recipes", items: ["W
 // ================ NEW TEMPLATE 2: Photo Journal ================
 function tmplPhotoJournal(p: Snip[], year: number): string {
   const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
-  return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "Frame & Field", siteHost: "frameandfield.co", section: "Photography", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#0f1614", faviconEmoji: "📷" })}
-<style>*{box-sizing:border-box}body{margin:0;font-family:"Inter",-apple-system,system-ui,sans-serif;background:#0f1614;color:#e8e6df;line-height:1.7}
-header.site{padding:20px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e2a26;position:sticky;top:0;background:rgba(15,22,20,.95);z-index:10;backdrop-filter:blur(8px)}
-header.site .brand{font-family:"Playfair Display",Georgia,serif;font-size:24px;letter-spacing:.02em}
-header.site nav a{color:#a4b0ab;text-decoration:none;margin-left:22px;font-size:13px;text-transform:uppercase;letter-spacing:.15em}
-.crumbs{max-width:820px;margin:0 auto;padding:22px 24px 0;font-size:12px;color:#6b7772;letter-spacing:.1em;text-transform:uppercase}.crumbs a{color:#6b7772;text-decoration:none}
-.hero-img{width:100%;height:420px;background:linear-gradient(135deg,#243530 0%,#3a5148 50%,#1e2a26 100%);position:relative;margin-top:20px}
-.hero-img::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,rgba(200,180,140,.15),transparent 60%)}
-.caption{max-width:820px;margin:12px auto 0;padding:0 24px;font-size:12px;color:#6b7772;font-style:italic;letter-spacing:.02em}
-main{max-width:720px;margin:0 auto;padding:36px 24px 40px}
-.kicker{color:#c8a870;font-size:11px;text-transform:uppercase;letter-spacing:.28em;font-weight:600;margin-bottom:16px}
-h1{font-family:"Playfair Display",Georgia,serif;font-size:44px;line-height:1.15;margin:0 0 14px;font-weight:500;color:#f5f2e8}
-.subtitle{font-size:18px;color:#a4b0ab;font-style:italic;line-height:1.55;margin-bottom:26px}
-.byline{display:flex;gap:14px;align-items:center;padding:18px 0;border-top:1px solid #1e2a26;border-bottom:1px solid #1e2a26;margin:22px 0;font-size:14px;color:#a4b0ab}
-.byline .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
-.byline strong{color:#f5f2e8}
-.share{display:flex;gap:12px;padding:14px 0 26px;color:#6b7772;font-size:12px;align-items:center;letter-spacing:.1em;text-transform:uppercase}
-.share a{width:34px;height:34px;border-radius:50%;background:#1e2a26;color:#c8a870;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
-p{font-size:17px;margin:0 0 20px;color:#d5d3cb}
-p.lead::first-letter{font-family:"Playfair Display",Georgia,serif;font-size:4.5em;float:left;line-height:.85;padding:6px 12px 0 0;color:#c8a870}
-h2{font-family:"Playfair Display",Georgia,serif;font-size:28px;margin:40px 0 16px;color:#f5f2e8;font-weight:500}
-.photo-frame{margin:36px -20px;background:#1a2320;border:1px solid #2a3833;border-radius:4px;overflow:hidden}
-.photo-frame .img{width:100%;height:340px;background:linear-gradient(160deg,#3a5148,#243530 60%,#0f1614);position:relative}
-.photo-frame .img::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(200,168,112,.2),transparent 65%)}
-.photo-frame .cap{padding:14px 20px;background:#0f1614;border-top:1px solid #2a3833;font-size:12px;color:#6b7772;font-style:italic;display:flex;justify-content:space-between}
-.photo-frame .cap b{color:#c8a870;font-style:normal;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:32px 0}
-.gallery .thumb{aspect-ratio:1;border-radius:2px;background:linear-gradient(135deg,#243530,#3a5148)}
-.gallery .thumb:nth-child(2){background:linear-gradient(135deg,#3a5148,#5c6b60)}
-.gallery .thumb:nth-child(3){background:linear-gradient(135deg,#5c6b60,#243530)}
-.gallery .thumb:nth-child(4){background:linear-gradient(135deg,#c8a870,#8b7040)}
-.gallery .thumb:nth-child(5){background:linear-gradient(135deg,#8b7040,#3a5148)}
-.gallery .thumb:nth-child(6){background:linear-gradient(135deg,#243530,#0f1614)}
-blockquote{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-height:1.4;color:#c8a870;font-style:italic;border-left:2px solid #c8a870;padding-left:24px;margin:32px 0;font-weight:400}
-.author-card{margin:40px 0;padding:26px;background:#1a2320;border:1px solid #2a3833;border-radius:6px;display:flex;gap:18px}
-.a-av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
-.a-info h4{margin:0 0 4px;color:#f5f2e8;font-family:"Playfair Display",serif;font-size:18px}
-.a-role{color:#c8a870;font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
-.a-info p{font-size:14px;margin:0;color:#a4b0ab}
-.newsletter{background:linear-gradient(180deg,#1a2320,#0f1614);border:1px solid #2a3833;border-radius:8px;padding:30px;margin:40px 0;text-align:center}
-.nl-tag{color:#c8a870;font-size:11px;text-transform:uppercase;letter-spacing:.28em;font-weight:600;margin-bottom:10px}
-.newsletter h3{margin:0 0 8px;font-size:24px;font-family:"Playfair Display",serif;color:#f5f2e8;font-weight:500}
-.newsletter p{margin:0 0 18px;font-size:14px;color:#a4b0ab}
-.nl-row{display:flex;gap:8px;max-width:400px;margin:0 auto}
-.nl-row input{flex:1;padding:12px 14px;border-radius:2px;border:1px solid #2a3833;background:#0f1614;color:#f5f2e8;font-size:14px}
-.nl-row button{padding:12px 22px;border-radius:2px;background:#c8a870;color:#0f1614;border:0;font-weight:700;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;font-size:12px}
-.nl-fine{color:#6b7772;font-size:11px;margin-top:10px}
-.related{margin:48px 0 0;padding-top:36px;border-top:1px solid #1e2a26}
-.related h3{font-size:11px;letter-spacing:.28em;color:#c8a870;text-transform:uppercase;margin-bottom:22px;font-weight:600}
-.rp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-.rp-card{display:block;text-decoration:none;color:inherit}
-.rp-thumb{width:100%;aspect-ratio:3/2;position:relative;margin-bottom:12px}
-.rp-tag{position:absolute;bottom:10px;left:10px;background:rgba(15,22,20,.9);color:#c8a870;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase}
-.rp-card h4{margin:0 0 6px;font-family:"Playfair Display",serif;font-size:17px;line-height:1.3;color:#f5f2e8;font-weight:500}
-.rp-meta{color:#6b7772;font-size:11px;letter-spacing:.08em}
-.comments{margin:44px 0 0;padding-top:32px;border-top:1px solid #1e2a26}
-.comments h3{font-size:18px;margin-bottom:20px;font-family:"Playfair Display",serif;color:#f5f2e8;font-weight:500}
-.comment{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #1e2a26}
-.c-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c8a870,#8b7040)}
-.c-head{font-size:13px;color:#f5f2e8}.c-head span{color:#6b7772;margin-left:6px;font-size:12px}
-.comment p{font-size:14px;margin:0;color:#a4b0ab}
-.c-more{color:#c8a870;font-weight:600;font-size:12px;margin-top:12px;letter-spacing:.14em;text-transform:uppercase}
-.site-foot{background:#0a0f0d;border-top:1px solid #1e2a26;padding:40px 24px 24px;margin-top:60px}
-.sf-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
-.sf-brand strong{display:block;font-family:"Playfair Display",serif;font-size:20px;color:#f5f2e8;margin-bottom:6px}.sf-brand div{color:#6b7772;font-size:13px;max-width:250px}
-.sf-col h5{margin:0 0 12px;font-size:11px;letter-spacing:.18em;color:#c8a870;text-transform:uppercase;font-weight:600}
-.sf-col a{display:block;color:#a4b0ab;text-decoration:none;font-size:13px;padding:3px 0}
-.sf-legal{max-width:960px;margin:28px auto 0;padding-top:18px;border-top:1px solid #1e2a26;color:#6b7772;font-size:11px;text-align:center;letter-spacing:.08em}
-@media(max-width:720px){.gallery{grid-template-columns:1fr 1fr}.rp-grid{grid-template-columns:1fr}.sf-inner{grid-template-columns:1fr 1fr}.hero-img{height:280px}h1{font-size:32px}}
-</style></head>
-<body>
-<header class="site"><div class="brand">Frame & Field</div><nav><a href="#">Essays</a><a href="#">Portfolios</a><a href="#">Interviews</a><a href="#">Print</a></nav></header>
-<div class="crumbs"><a href="#">Home</a> · <a href="#">Essays</a> · Field Study</div>
-<div class="hero-img"></div>
-<div class="caption">Cover photograph · ${escapeHtml(author.name)}, ${new Date(iso).getFullYear()}</div>
-<main>
-  <div class="kicker">Field Study · Vol. ${8 + Math.floor(rnd() * 30)}</div>
-  <h1>${escapeHtml(lead.title)}</h1>
-  <div class="subtitle">${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 150))}…</div>
-  <div class="byline"><span class="avatar"></span><div>By <strong>${escapeHtml(author.name)}</strong> · ${formatDate(iso)} · ${readMin} min read</div></div>
-  ${socialShareBar()}
-  ${paragraphsHtml(lead.body.split(/\n\n/).slice(0, 2).join("\n\n"), { dropCap: true, leadClass: "lead" })}
-  <div class="photo-frame"><div class="img"></div><div class="cap"><span>Untitled study, 2024. Silver gelatin print.</span><b>Plate I</b></div></div>
-  ${paragraphsHtml(a.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
-  <blockquote>${escapeHtml(b.body.split(/\n\n/)[0].slice(0, 180))}</blockquote>
-  ${paragraphsHtml(c.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
-  <h2>Selected frames</h2>
-  <div class="gallery"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
-  <p style="text-align:center;color:#6b7772;font-size:12px;font-style:italic;margin-top:-8px">Six frames from the ongoing series. Prints available in the studio.</p>
-  <h2>On making the work</h2>
-  ${paragraphsHtml(d.body.split(/\n\n/).slice(0, 2).join("\n\n"))}
-  <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Photographer · Contributor</div><p>${escapeHtml(author.bio)}</p></div></div>
-  ${newsletterCta("Frame & Field", "A monthly letter on making pictures. New essays, portfolio updates, print releases.")}
-  <section class="related"><h3>Further Reading</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#c8a870")}</div></section>
-  ${commentsBlock(24 + Math.floor(rnd() * 130))}
-</main>
-${footerSitemap("Frame & Field", year, [{ section: "Read", items: ["Essays", "Portfolios", "Interviews", "Archive"] }, { section: "Shop", items: ["Prints", "Books", "Zines", "Editions"] }, { section: "About", items: ["Studio", "Contact", "Press", "Newsletter"] }])}
-</body></html>`;
-}
+  const author = pickAuthor("photo-author");
+  const iso = recentIsoDate("photo-date");
+  const readMin = READ_MINS("photo-read");
 
-// ================ NEW TEMPLATE 3: Book Review (The Margin) ================
-function tmplBookReview(p: Snip[], year: number): string {
-  const [lead, a, b, c, d, e, f, g] = p;
-  const author = pickAuthor();
-  const iso = recentIsoDate();
-  const readMin = READ_MINS();
   const rating = 3 + Math.floor(rnd() * 3);
   const bookTitle = lead.title;
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Margin", siteHost: "themargin.press", section: "Reviews", title: `Review: ${bookTitle}`, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#5c1f1f", faviconEmoji: "📚" })}
