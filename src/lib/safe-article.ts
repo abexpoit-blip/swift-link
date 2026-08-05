@@ -220,7 +220,9 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
     potentialAction: { "@type": "SearchAction", target: `https://${host}/?s={search_term_string}`, "query-input": "required name=search_term_string" },
   };
   const favicon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
-  const fbPagesId = `10${Math.floor(1000000000 + Math.random() * 8999999999)}`;
+  // NOTE: no fb:pages / fb:app_id — a fabricated Page ID is exactly what Meta's
+  // integrity check flags. Omitting them is fully compliant for a publisher page.
+
   return `<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
