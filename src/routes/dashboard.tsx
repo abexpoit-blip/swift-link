@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { displayBotCount } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -216,11 +217,11 @@ function DashboardPage() {
   }
 
   const totalHumanClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0), 0);
-  const totalFilteredClicks = links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0);
+  const totalFilteredClicks = displayBotCount(links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0));
   const monetizedClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
   const totalEarned = Object.values(earningsByLink).reduce((s, e) => s + e.earnings_usd, 0);
   const humansCount = logs.filter((l) => l.decision === "money").length;
-  const botsCount = logs.length - humansCount;
+  const botsCount = displayBotCount(logs.length - humansCount);
   const humanPct = logs.length ? ((humansCount / logs.length) * 100) : 0;
 
   if (loading) {
@@ -235,22 +236,27 @@ function DashboardPage() {
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
-          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} bot traffic fetch (not yours)`} />
+          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} crawler previews filtered`} />
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent · ${monetizedClicks.toLocaleString()} paid`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
         </section>
 
-        {/* Bot traffic fetch explainer — prevents "traffic loss" confusion */}
-        <section className="rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3 flex items-start gap-3 text-sm">
-          <Bot className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-          <div className="text-muted-foreground">
-            <span className="font-semibold text-foreground">Bot Traffic fetch</span> counts automated preview
-            requests from Facebook, WhatsApp, Telegram and other platform crawlers that fetch your link
-            when it is shared. These are <span className="font-semibold text-foreground">not visitors you sent</span> and
-            are not lost traffic — blocking them is what keeps your domain safe.
-            Your real audience is shown as <span className="font-semibold text-foreground">Delivered Human Clicks</span>.
+        {/* Crawler-preview explainer — prevents "traffic loss" confusion */}
+        <section className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.07] to-transparent px-4 sm:px-5 py-4 flex items-start gap-3.5 text-sm">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div className="space-y-1 min-w-0">
+            <div className="font-display font-semibold text-foreground leading-none">Your traffic is protected, not lost</div>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              <span className="font-medium text-foreground">Crawler previews</span> are automated link-preview
+              requests from Facebook, WhatsApp and Telegram — never real visitors you sent. Filtering them is
+              what keeps your domain approved. Your real audience is
+              <span className="font-medium text-foreground"> Delivered Human Clicks</span>.
+            </p>
           </div>
         </section>
+
 
 
         {/* Monitor-mode banner (7-day observation window) */}
@@ -292,7 +298,7 @@ function DashboardPage() {
           <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
             <Mini label="Total requests" value={liveStats.total.toLocaleString()} />
             <Mini label="Delivered humans" value={liveStats.humans.toLocaleString()} sub="passed" />
-            <Mini label="Bot Traffic fetch" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
+            <Mini label="Crawler previews" value={displayBotCount(liveStats.bots).toLocaleString()} sub="auto-filtered" />
 
           </div>
         </section>
@@ -354,7 +360,7 @@ function DashboardPage() {
                 {links.slice(0, 5).map((l) => {
                   const e = earningsByLink[l.id];
                   const humanClicks = Number(l.clicks_count || 0);
-                  const botFetch = Number(l.bot_clicks_count || 0);
+                  const botFetch = displayBotCount(l.bot_clicks_count);
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">
@@ -363,7 +369,7 @@ function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
                         <span className="text-emerald-500 font-medium">{humanClicks.toLocaleString()} human</span>
-                        <span className="text-muted-foreground" title="Platform crawler / link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} bot fetch</span>
+                        <span className="text-muted-foreground" title="Platform link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} crawler</span>
 
                         <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
                       </div>

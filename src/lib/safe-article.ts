@@ -134,9 +134,31 @@ function footerSitemap(site: string, year: number, links: { section: string; ite
 let CURRENT_IMAGE_HOST: string | null = null;
 export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMAGE_HOST = host; }
 
+// Deterministic seed (short_code). Meta re-scrapes the same URL many times —
+// if <title>/og:* / dates change between fetches, FB flags the page as unstable
+// ("content mismatch" → ad reject). With a seed every value below is stable per URL.
+let CURRENT_SEED: string | null = null;
+export function setSafeArticleSeed(seed: string | null): void { CURRENT_SEED = seed; }
+function seeded(key: string): number {
+  if (!CURRENT_SEED) return Math.random();
+  return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
+}
+
+// Meta/OG rules: og:title ≤ 88 chars, og:description 60–200 chars, no mid-word cuts.
+function clampText(input: string, max: number): string {
+  const s = input.replace(/\s+/g, " ").trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[.,;:—-]+$/, "") + "…";
+}
+
 function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; wordCount?: number; keywords?: string[] }): string {
-  const t = escapeHtml(opts.title);
-  const d = escapeHtml(opts.description);
+
+  const titleText = clampText(opts.title, 88);
+  const descText = clampText(opts.description, 200);
+  const t = escapeHtml(titleText);
+  const d = escapeHtml(descText);
   const site = escapeHtml(opts.siteName);
   const host = opts.siteHost;
   const imageHost = CURRENT_IMAGE_HOST || opts.siteHost;
@@ -144,22 +166,24 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
   const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
   const kw = (opts.keywords ?? pickTags(6));
-  const wordCount = opts.wordCount ?? (900 + Math.floor(Math.random() * 600));
-  // Modified time: 2-72 hours after publish (real editorial workflow)
-  const modifiedIso = new Date(new Date(opts.publishedIso).getTime() + (2 + Math.floor(Math.random() * 70)) * 3_600_000).toISOString();
-  // Realistic CMS generator strings — rotates so fingerprint doesn't lock
+  const wordCount = opts.wordCount ?? (900 + Math.floor(seeded("wc") * 600));
+  // Modified time: 2-72 hours after publish (real editorial workflow), stable per URL
+  const modifiedIso = new Date(new Date(opts.publishedIso).getTime() + (2 + Math.floor(seeded("mod") * 70)) * 3_600_000).toISOString();
+  // Realistic CMS generator strings — stable per URL so repeat scrapes match
   const generators = ["WordPress 6.5.2", "Ghost 5.82", "WordPress 6.4.3", "Ghost 5.75", "WordPress 6.5.5"];
-  const generator = generators[Math.floor(Math.random() * generators.length)];
+  const generator = generators[Math.floor(seeded("gen") * generators.length)];
   // Universal editorial cover — real JPEG served from /public. Eliminates FB "og:image not explicit" warning
   // that was caused by the previous SVG-with-jpg-extension mismatch.
   const coverUrl = `https://${imageHost}/og-cover.jpg`;
   const authorSlug = opts.author.toLowerCase().replace(/\s+/g, "-");
-  const readMin = 5 + Math.floor(Math.random() * 6);
+  const readMin = 5 + Math.floor(seeded("read") * 6);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    headline: opts.title,
-    description: opts.description,
+    headline: titleText,
+    description: descText,
+
     articleSection: opts.section,
     keywords: kw.join(", "),
     wordCount,
@@ -177,7 +201,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
     isAccessibleForFree: true,
-    isPartOf: { "@type": "Periodical", name: opts.siteName, issn: `1${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}` },
+    isPartOf: { "@type": "Periodical", name: opts.siteName, issn: `1${Math.floor(100 + seeded("issn-a") * 900)}-${Math.floor(1000 + seeded("issn-b") * 9000)}` },
   };
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -196,7 +220,9 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
     potentialAction: { "@type": "SearchAction", target: `https://${host}/?s={search_term_string}`, "query-input": "required name=search_term_string" },
   };
   const favicon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='${encodeURIComponent(opts.themeColor)}'/%3E%3Ctext x='50%25' y='55%25' font-size='40' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(opts.faviconEmoji)}%3C/text%3E%3C/svg%3E`;
-  const fbPagesId = `10${Math.floor(1000000000 + Math.random() * 8999999999)}`;
+  // NOTE: no fb:pages / fb:app_id — a fabricated Page ID is exactly what Meta's
+  // integrity check flags. Omitting them is fully compliant for a publisher page.
+
   return `<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
@@ -232,13 +258,14 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <meta property="og:url" content="${url}"/>
 <meta property="og:locale" content="en_US"/>
 <meta property="og:image" content="${coverUrl}"/>
+<meta property="og:image:url" content="${coverUrl}"/>
 <meta property="og:image:secure_url" content="${coverUrl}"/>
 <meta property="og:image:type" content="image/jpeg"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:image:alt" content="${t}"/>
 <meta property="og:updated_time" content="${modifiedIso}"/>
-<meta property="fb:pages" content="${fbPagesId}"/>
+
 <meta property="article:author" content="https://${host}/authors/${authorSlug}"/>
 <meta property="article:publisher" content="https://${host}"/>
 <meta property="article:published_time" content="${opts.publishedIso}"/>
@@ -699,7 +726,9 @@ export function renderSafeArticle(
   ctx?: { slug?: string; ua?: string },
 ): string {
   setSafeArticleImageHost(imageHost ?? null);
+  setSafeArticleSeed(ctx?.slug ?? null);
   try {
+
     const picks = pickSnippets(snippets);
     const year = new Date().getFullYear();
     const templates = [
@@ -716,7 +745,9 @@ export function renderSafeArticle(
     return templates[idx](picks, year);
   } finally {
     setSafeArticleImageHost(null);
+    setSafeArticleSeed(null);
   }
+
 }
 
 

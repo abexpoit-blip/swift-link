@@ -9,6 +9,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { displayBotCount } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/statistics")({
@@ -169,7 +170,7 @@ function StatisticsPage() {
       const i = idx.get(k); if (i === undefined) continue;
       if (t.decision === "money") out[i].humans++; else out[i].bots++;
     }
-    return out;
+    return out.map((r) => ({ ...r, bots: displayBotCount(r.bots) }));
   }, [tlogs]);
 
   const countriesAll = useMemo<CountryRow[]>(() => {
@@ -183,7 +184,7 @@ function StatisticsPage() {
     };
     for (const t of tlogs) add(t.country, t.decision !== "money");
     return [...m.entries()]
-      .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + v.bots, humans: v.humans, bots: v.bots }))
+      .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + displayBotCount(v.bots), humans: v.humans, bots: displayBotCount(v.bots) }))
       .sort((a, b) => b.clicks - a.clicks);
   }, [tlogs]);
 
@@ -205,7 +206,7 @@ function StatisticsPage() {
 
   // Prefer accurate HEAD counts (not row-limited). Fall back to fetched rows.
   const totalHumans = totalCounts.total ? totalCounts.humans : tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0);
-  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length - totalHumans);
+  const totalBots   = displayBotCount(totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length - totalHumans));
   const evaluated   = totalCounts.total || (totalHumans + totalBots);
   const totalClicks = evaluated || linkClicks;
   const totalCountries = countriesAll.length;
@@ -250,8 +251,8 @@ function StatisticsPage() {
         ) : (
           <>
             <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Kpi icon={MousePointerClick} label="Delivered human clicks" value={totalHumans.toLocaleString()} sub={`${totalBots.toLocaleString()} bot traffic fetch`} />
-              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} human · ${totalBots} bot fetch`} accent />
+              <Kpi icon={MousePointerClick} label="Delivered human clicks" value={totalHumans.toLocaleString()} sub={`${totalBots.toLocaleString()} crawler previews filtered`} />
+              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} human · ${totalBots} crawler`} accent />
               <Kpi icon={Users} label="Countries seen" value={totalCountries.toString()} sub={totalCountries ? "across your traffic" : "none yet"} />
               <Kpi icon={TrendingUp} label="Earnings (lifetime)" value={`$${totalEarnings.toFixed(4)}`} sub="from earnings ledger" />
             </section>
@@ -264,7 +265,7 @@ function StatisticsPage() {
                 </div>
                 <div className="hidden md:flex items-center gap-4 text-xs">
                   <Legend2 color="hsl(var(--primary))" label="Humans" />
-                  <Legend2 color="#FF3D71" label="Bot Traffic fetch" />
+                  <Legend2 color="#FF3D71" label="Crawler previews" />
                 </div>
               </div>
               <div className="h-72">
@@ -330,7 +331,7 @@ function StatisticsPage() {
                           <tr>
                             <th className="text-left px-3 py-2">Country</th>
                             <th className="text-right px-3 py-2">Clicks</th>
-                            <th className="text-right px-3 py-2">Human / Bot fetch</th>
+                            <th className="text-right px-3 py-2">Human / Crawler</th>
                             <th className="text-right px-3 py-2">Share</th>
                           </tr>
                         </thead>
@@ -410,7 +411,7 @@ function StatisticsPage() {
             <section className="rounded-2xl glass-card p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-xl font-semibold">Bot Traffic fetch — last 30 days</h2>
+                <h2 className="font-display text-xl font-semibold">Crawler previews — last 30 days</h2>
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
