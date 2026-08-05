@@ -172,6 +172,40 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
+// --- Known-human pass (sleepox parity) -------------------------------------
+// A visitor that already resolved to `money` gets a 6h pass cookie bound to their
+// fingerprint. Every later hit skips the SOFT filters (velocity, fbclid reuse,
+// reviewer-geo, cold-desktop), which is what fixed reload / duplicate-tab loss.
+const HUMAN_COOKIE = "_sxh";
+const HUMAN_TTL_SEC = 6 * 60 * 60;
+
+function readCookie(request: Request, name: string): string {
+  const raw = request.headers.get("cookie") || "";
+  for (const part of raw.split(";")) {
+    const [k, ...v] = part.trim().split("=");
+    if (k === name) return decodeURIComponent(v.join("="));
+  }
+  return "";
+}
+
+function humanPassCookie(fingerprint: string, secure: boolean): string {
+  return `${HUMAN_COOKIE}=${encodeURIComponent(fingerprint)}; Max-Age=${HUMAN_TTL_SEC}; Path=/; SameSite=Lax; HttpOnly${secure ? "; Secure" : ""}`;
+}
+
+// Cloudflare returns XX / T1 when it cannot geo-locate (Tor, unknown, some carriers).
+// Reviewer-geo rules must NEVER fire on an unconfident country.
+function isCountryConfident(country: string): boolean {
+  return /^[A-Z]{2}$/.test(country) && country !== "XX" && country !== "T1";
+}
+
+// Chrome-family UA that did NOT send sec-ch-ua = headless / spoofed automation signal.
+function isChromeWithoutClientHints(ua: string, secChUa: string): boolean {
+  if (!/chrome\/|edg\//i.test(ua)) return false;
+  if (/opr\/|yabrowser|samsungbrowser/i.test(ua)) return false;
+  return !secChUa;
+}
+
+
 function isBackendAllowed(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -552,9 +586,13 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const secChUa = request.headers.get("sec-ch-ua") || "";
     const secChMobile = request.headers.get("sec-ch-ua-mobile") || "";
     const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
+    const fingerprint = fingerprintHash(ua, ip, acceptLang);
+    const knownHuman = readCookie(request, HUMAN_COOKIE) === fingerprint && !!fingerprint;
+    const countryConfident = isCountryConfident(country);
+    const chromeNoHints = isChromeWithoutClientHints(ua, secChUa);
 
     if (process.env.DEBUG_REDIRECT === "1") {
-      console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
+      console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} known_human=${knownHuman} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
     }
 
     const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
@@ -562,7 +600,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const rpcArgs = {
       _short_code: slug,
       _fbclid: url.searchParams.get("fbclid"),
-      _fingerprint: fingerprintHash(ua, ip, acceptLang),
+      _fingerprint: fingerprint,
       _ip: ip,
       _country: country,
       _asn: asn,
@@ -572,7 +610,12 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
       _is_hard_bot: isHardcodedBot(ua, ip) || (!!asn && META_ASNS.has(asn)),
       _is_datacenter: !!asn && DC_ASNS.has(asn),
       _coherence_score: coherenceScore(ua, acceptLang, secChUa, secChMobile),
+      _known_human: knownHuman,
+      _country_confident: countryConfident,
+      _chrome_no_hints: chromeNoHints,
+      _asn_unknown: !asn,
     };
+
     // Transient upstream failures (502/504/network blips from the DB proxy) must not
     // silently downgrade a real human to the safe article -> that is real traffic loss.
     // Retry quickly a couple of times before giving up.
@@ -619,15 +662,16 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     }
 
     if (!data.money_url) return renderEntrySafe(request, slug);
-    return new Response(null, {
-      status: 302,
-      headers: {
-        location: data.money_url,
-        "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
-        "x-adspx-r-handler": "entry-money",
-      },
+    // Mint / refresh the 6h known-human pass so reloads and duplicate tabs from the
+    // same real visitor never fall back into the soft filters.
+    const moneyHeaders = new Headers({
+      location: data.money_url,
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-adspx-r-handler": "entry-money",
     });
+    moneyHeaders.append("set-cookie", humanPassCookie(fingerprint, url.protocol === "https:"));
+    return new Response(null, { status: 302, headers: moneyHeaders });
   } catch (error) {
     console.error("[server:/r] handler error", error);
     return renderEntrySafe(request);
