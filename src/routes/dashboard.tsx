@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { displayBotCount } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -216,11 +217,11 @@ function DashboardPage() {
   }
 
   const totalHumanClicks = links.reduce((s, link) => s + Number(link.clicks_count || 0), 0);
-  const totalFilteredClicks = links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0);
+  const totalFilteredClicks = displayBotCount(links.reduce((s, link) => s + Number(link.bot_clicks_count || 0), 0));
   const monetizedClicks = Object.values(earningsByLink).reduce((s, e) => s + e.total_clicks, 0);
   const totalEarned = Object.values(earningsByLink).reduce((s, e) => s + e.earnings_usd, 0);
   const humansCount = logs.filter((l) => l.decision === "money").length;
-  const botsCount = logs.length - humansCount;
+  const botsCount = displayBotCount(logs.length - humansCount);
   const humanPct = logs.length ? ((humansCount / logs.length) * 100) : 0;
 
   if (loading) {
@@ -292,7 +293,7 @@ function DashboardPage() {
           <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
             <Mini label="Total requests" value={liveStats.total.toLocaleString()} />
             <Mini label="Delivered humans" value={liveStats.humans.toLocaleString()} sub="passed" />
-            <Mini label="Bot Traffic fetch" value={liveStats.bots.toLocaleString()} sub={`${liveStats.total ? ((liveStats.bots / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
+            <Mini label="Bot Traffic fetch" value={displayBotCount(liveStats.bots).toLocaleString()} sub={`${liveStats.total ? ((displayBotCount(liveStats.bots) / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
 
           </div>
         </section>
@@ -354,7 +355,7 @@ function DashboardPage() {
                 {links.slice(0, 5).map((l) => {
                   const e = earningsByLink[l.id];
                   const humanClicks = Number(l.clicks_count || 0);
-                  const botFetch = Number(l.bot_clicks_count || 0);
+                  const botFetch = displayBotCount(l.bot_clicks_count);
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 rounded-lg surface-soft px-3 py-2.5">
                       <div className="min-w-0">

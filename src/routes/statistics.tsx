@@ -9,6 +9,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
 import { AdspxMark } from "@/components/AdspxLogo";
+import { displayBotCount } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/statistics")({
@@ -205,7 +206,7 @@ function StatisticsPage() {
 
   // Prefer accurate HEAD counts (not row-limited). Fall back to fetched rows.
   const totalHumans = totalCounts.total ? totalCounts.humans : tlogs.reduce((a, t) => a + (t.decision === "money" ? 1 : 0), 0);
-  const totalBots   = totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length - totalHumans);
+  const totalBots   = displayBotCount(totalCounts.total ? (totalCounts.total - totalCounts.humans) : (tlogs.length - totalHumans));
   const evaluated   = totalCounts.total || (totalHumans + totalBots);
   const totalClicks = evaluated || linkClicks;
   const totalCountries = countriesAll.length;
