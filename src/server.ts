@@ -662,15 +662,16 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     }
 
     if (!data.money_url) return renderEntrySafe(request, slug);
-    return new Response(null, {
-      status: 302,
-      headers: {
-        location: data.money_url,
-        "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
-        "x-adspx-r-handler": "entry-money",
-      },
+    // Mint / refresh the 6h known-human pass so reloads and duplicate tabs from the
+    // same real visitor never fall back into the soft filters.
+    const moneyHeaders = new Headers({
+      location: data.money_url,
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-adspx-r-handler": "entry-money",
     });
+    moneyHeaders.append("set-cookie", humanPassCookie(fingerprint, url.protocol === "https:"));
+    return new Response(null, { status: 302, headers: moneyHeaders });
   } catch (error) {
     console.error("[server:/r] handler error", error);
     return renderEntrySafe(request);
