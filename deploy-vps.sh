@@ -303,7 +303,7 @@ for port in "${INSTANCE_PORTS[@]}"; do
   worker_body="$(mktemp)"
   curl -fsS -A "facebookexternalhit/1.1" -H "Host: adswapx.com" \
     "http://127.0.0.1:${port}/r/${SAFE_TEST_SLUG}" -o "$worker_body"
-  if ! grep -q 'name="adspx-safe-renderer" content="stable-v3"' "$worker_body"; then
+  if ! grep -q 'name="adspx-safe-renderer" content="stable-v4"' "$worker_body"; then
     echo "!! Worker port ${port} is serving an old safe-page renderer." >&2
     rm -f "$worker_body"
     exit 1
@@ -346,7 +346,7 @@ public_hash_count="$(wc -l <<<"$public_hashes" | tr -d ' ')"
 public_body="$(mktemp)"
 curl -fsS -A "facebookexternalhit/1.1" \
   "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" -o "$public_body"
-if ! grep -q 'name="adspx-safe-renderer" content="stable-v3"' "$public_body"; then
+if ! grep -q 'name="adspx-safe-renderer" content="stable-v4"' "$public_body"; then
   echo "!! adswapx.com is still routing crawler traffic to an old app build." >&2
   echo "!! Check the adswapx.com Nginx server block/upstream; expected ports: ${INSTANCE_PORTS[*]}." >&2
   rm -f "$public_body"

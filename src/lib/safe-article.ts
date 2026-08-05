@@ -85,9 +85,10 @@ function pickAuthor() { return AUTHORS[Math.floor(rnd() * AUTHORS.length)]; }
 function recentIsoDate(): string {
   // Quantize to a 30-day bucket: Meta re-scrapes the same URL days apart, so a
   // day-quantized date would still shift between fetches -> "content changed".
-  const BUCKET = 30 * 86_400_000;
-  const bucket = Math.floor(Date.now() / BUCKET) * BUCKET;
-  return new Date(bucket - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
+  // Fixed epoch base (no Date.now()): any time dependency makes the page differ
+  // between Meta re-scrapes / workers -> "content changed" -> ad reject.
+  const BASE = Date.UTC(2026, 5, 1);
+  return new Date(BASE - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
 }
 function formatDate(iso: string): string { return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); }
 function pickTags(n = 4): string[] { return shuffle(TAGS_POOL).slice(0, n); }
@@ -249,7 +250,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   // integrity check flags. Omitting them is fully compliant for a publisher page.
 
   return `<meta charset="utf-8"/>
-<meta name="adspx-safe-renderer" content="stable-v3"/>
+<meta name="adspx-safe-renderer" content="stable-v4"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
 <meta name="color-scheme" content="light dark"/>
@@ -720,6 +721,8 @@ ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", 
 // FB/Meta crawler → SAME template every time for a given slug (consistency = FB trust).
 // Real safe (bot detected) → random template (variety).
 // Unknown/other → deterministic hash of slug+UA (stable per visitor).
+// Kept for reference only; UA must never change the rendered HTML.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CRAWLER_UA_RE = /facebookexternalhit|meta-externalagent|meta-externalfetcher|facebookcatalog|facebot|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|googlebot|bingbot|yandex|duckduckbot|applebot/i;
 
 function stableHash(str: string): number {
