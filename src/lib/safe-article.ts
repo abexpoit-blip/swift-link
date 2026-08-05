@@ -157,12 +157,12 @@ export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMA
 let CURRENT_SEED: string | null = null;
 export function setSafeArticleSeed(seed: string | null): void {
   CURRENT_SEED = seed;
-  PRNG_STATE = seed ? stableHash(seed) >>> 0 : null;
 }
 function seeded(key: string): number {
   if (!CURRENT_SEED) return Math.random();
   return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
 }
+
 
 // Meta/OG rules: og:title ≤ 88 chars, og:description 60–200 chars, no mid-word cuts.
 function clampText(input: string, max: number): string {
