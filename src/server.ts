@@ -309,6 +309,7 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
       "cache-control": "no-store",
       "referrer-policy": "no-referrer",
       "x-adspx-r-handler": "entry-safe",
+      "x-adspx-safe-renderer": "stable-v5",
     },
   });
 

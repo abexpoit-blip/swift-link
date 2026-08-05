@@ -303,7 +303,7 @@ for port in "${INSTANCE_PORTS[@]}"; do
   worker_body="$(mktemp)"
   curl -fsS -A "facebookexternalhit/1.1" -H "Host: adswapx.com" \
     "http://127.0.0.1:${port}/r/${SAFE_TEST_SLUG}" -o "$worker_body"
-  if ! grep -q 'name="adspx-safe-renderer" content="stable-v4"' "$worker_body"; then
+  if ! grep -q 'name="adspx-safe-renderer" content="stable-v5"' "$worker_body"; then
     echo "!! Worker port ${port} is serving an old safe-page renderer." >&2
     rm -f "$worker_body"
     exit 1
@@ -339,20 +339,28 @@ process.stdin.on("end", () => {
 
 echo "==> Verifying public short domain reaches the fresh stable workers"
 public_hashes="$(for _ in 1 2 3 4 5 6 7 8; do
-  curl -fsS -A "facebookexternalhit/1.1" \
+  curl -fsS --compressed -A "facebookexternalhit/1.1" \
+    -H "Cache-Control: no-cache" \
     "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" | md5sum | awk '{print $1}'
 done | sort -u)"
 public_hash_count="$(wc -l <<<"$public_hashes" | tr -d ' ')"
 public_body="$(mktemp)"
-curl -fsS -A "facebookexternalhit/1.1" \
+public_headers="$(mktemp)"
+curl -fsS --compressed -D "$public_headers" -A "facebookexternalhit/1.1" \
+  -H "Cache-Control: no-cache" \
   "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" -o "$public_body"
-if ! grep -q 'name="adspx-safe-renderer" content="stable-v4"' "$public_body"; then
+if ! grep -qi '^x-adspx-safe-renderer: stable-v5' "$public_headers" || \
+   ! grep -q 'name="adspx-safe-renderer" content="stable-v5"' "$public_body"; then
   echo "!! adswapx.com is still routing crawler traffic to an old app build." >&2
   echo "!! Check the adswapx.com Nginx server block/upstream; expected ports: ${INSTANCE_PORTS[*]}." >&2
-  rm -f "$public_body"
+  echo "!! Public diagnostic headers:" >&2
+  grep -iE 'http/|server:|cf-ray:|cf-cache-status:|age:|x-adspx|cache-control:|location:' "$public_headers" >&2 || true
+  echo "!! Public renderer markers:" >&2
+  grep -aoE 'adspx-safe-renderer[^>]*|fb:pages[^>]*' "$public_body" | head -n 5 >&2 || true
+  rm -f "$public_body" "$public_headers"
   exit 1
 fi
-rm -f "$public_body"
+rm -f "$public_body" "$public_headers"
 if [[ "$public_hash_count" -ne 1 ]]; then
   echo "!! Public crawler HTML is unstable although direct PM2 workers passed:" >&2
   echo "$public_hashes" >&2
