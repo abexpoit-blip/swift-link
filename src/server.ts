@@ -298,7 +298,6 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
         .from("safe_page_snippets")
         .select("title, body")
         .eq("is_active", true)
-        .order("title", { ascending: true })
         .limit(50);
       // Sort again locally: every PM2 worker MUST hold the exact same pool in the
       // exact same order, otherwise two scrapes hitting different workers render
