@@ -745,7 +745,9 @@ export function renderSafeArticle(
     return templates[idx](picks, year);
   } finally {
     setSafeArticleImageHost(null);
+    setSafeArticleSeed(null);
   }
+
 }
 
 
