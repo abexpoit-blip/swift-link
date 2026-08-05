@@ -28,8 +28,9 @@ const HARD_BOT_UA = new RegExp(
     "metainspector", "instagram\\s?bot", "whatsapp",
     // --- other social / messenger previewers ---
     "telegrambot", "slackbot", "slack-imgproxy", "discordbot", "twitterbot",
-    "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare", "viber",
-    "line-?podcast", "skypeuripreview", "snapchat", "tiktok", "bytedance",
+    "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare",
+    "viberurldownloader", "line-?podcast", "skypeuripreview",
+
     "quora link preview", "flipboard", "nuzzel", "outbrain", "taboola",
     "embedly", "iframely", "w3c_validator", "developers\\.google\\.com/\\+/web/snippet",
     // --- search engines ---
