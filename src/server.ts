@@ -324,7 +324,13 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
   // Deterministic template selection: FB / Meta crawlers get the SAME template every time
   // for a given slug (consistency = FB trust signal). Real safe traffic gets variety.
   const ua = request?.headers.get("user-agent") || undefined;
-  const safeHtml = await renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug: effectiveSlug, ua });
+  // Crawler responses must be identical across every PM2 worker. The database
+  // query is intentionally capped and PostgREST can return a different active
+  // subset to each worker before the local sort runs. Use the versioned,
+  // built-in snippet pool for crawlers; an empty array makes renderSafeArticle
+  // select FALLBACK_SNIPPETS deterministically from the slug seed.
+  const crawlerSnippets = ua && HARD_BOT_UA.test(ua) ? [] : SNIPPET_CACHE.items;
+  const safeHtml = await renderSafeArticle(crawlerSnippets, imageHost, { slug: effectiveSlug, ua });
   return new Response(safeHtml, {
     status: 200,
     headers: {
