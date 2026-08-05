@@ -258,13 +258,14 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
 <meta property="og:url" content="${url}"/>
 <meta property="og:locale" content="en_US"/>
 <meta property="og:image" content="${coverUrl}"/>
+<meta property="og:image:url" content="${coverUrl}"/>
 <meta property="og:image:secure_url" content="${coverUrl}"/>
 <meta property="og:image:type" content="image/jpeg"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:image:alt" content="${t}"/>
 <meta property="og:updated_time" content="${modifiedIso}"/>
-<meta property="fb:pages" content="${fbPagesId}"/>
+
 <meta property="article:author" content="https://${host}/authors/${authorSlug}"/>
 <meta property="article:publisher" content="https://${host}"/>
 <meta property="article:published_time" content="${opts.publishedIso}"/>
