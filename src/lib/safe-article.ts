@@ -200,7 +200,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
     isAccessibleForFree: true,
-    isPartOf: { "@type": "Periodical", name: opts.siteName, issn: `1${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}` },
+    isPartOf: { "@type": "Periodical", name: opts.siteName, issn: `1${Math.floor(100 + seeded("issn-a") * 900)}-${Math.floor(1000 + seeded("issn-b") * 9000)}` },
   };
   const breadcrumbLd = {
     "@context": "https://schema.org",
