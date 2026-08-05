@@ -170,7 +170,7 @@ function StatisticsPage() {
       const i = idx.get(k); if (i === undefined) continue;
       if (t.decision === "money") out[i].humans++; else out[i].bots++;
     }
-    return out;
+    return out.map((r) => ({ ...r, bots: displayBotCount(r.bots) }));
   }, [tlogs]);
 
   const countriesAll = useMemo<CountryRow[]>(() => {
@@ -184,7 +184,7 @@ function StatisticsPage() {
     };
     for (const t of tlogs) add(t.country, t.decision !== "money");
     return [...m.entries()]
-      .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + v.bots, humans: v.humans, bots: v.bots }))
+      .map(([code, v]) => ({ code, name: countryName(code) || code, clicks: v.humans + displayBotCount(v.bots), humans: v.humans, bots: displayBotCount(v.bots) }))
       .sort((a, b) => b.clicks - a.clicks);
   }, [tlogs]);
 
