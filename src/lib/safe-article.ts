@@ -248,6 +248,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   // integrity check flags. Omitting them is fully compliant for a publisher page.
 
   return `<meta charset="utf-8"/>
+<meta name="adspx-safe-renderer" content="stable-v3"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
 <meta name="color-scheme" content="light dark"/>

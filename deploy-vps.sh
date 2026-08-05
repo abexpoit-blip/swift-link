@@ -285,8 +285,81 @@ if [[ "$serving_ok" -eq 0 ]]; then
 fi
 echo "==> ${serving_ok}/${#INSTANCE_PORTS[@]} instances serving fresh build"
 
+echo "==> Verifying crawler safe page is current and byte-stable on every worker"
+SAFE_TEST_SLUG="${SAFE_TEST_SLUG:-e9k4v8tx}"
+expected_safe_hash=""
+for port in "${INSTANCE_PORTS[@]}"; do
+  worker_hashes="$(for _ in 1 2 3; do
+    curl -fsS -A "facebookexternalhit/1.1" -H "Host: adswapx.com" \
+      "http://127.0.0.1:${port}/r/${SAFE_TEST_SLUG}" | md5sum | awk '{print $1}'
+  done | sort -u)"
+  worker_hash_count="$(wc -l <<<"$worker_hashes" | tr -d ' ')"
+  if [[ "$worker_hash_count" -ne 1 ]]; then
+    echo "!! Crawler HTML changes between requests on worker port ${port}:" >&2
+    echo "$worker_hashes" >&2
+    exit 1
+  fi
 
+  worker_body="$(mktemp)"
+  curl -fsS -A "facebookexternalhit/1.1" -H "Host: adswapx.com" \
+    "http://127.0.0.1:${port}/r/${SAFE_TEST_SLUG}" -o "$worker_body"
+  if ! grep -q 'name="adspx-safe-renderer" content="stable-v3"' "$worker_body"; then
+    echo "!! Worker port ${port} is serving an old safe-page renderer." >&2
+    rm -f "$worker_body"
+    exit 1
+  fi
+  rm -f "$worker_body"
 
+  worker_hash="$(head -n 1 <<<"$worker_hashes")"
+  if [[ -z "$expected_safe_hash" ]]; then
+    expected_safe_hash="$worker_hash"
+  elif [[ "$worker_hash" != "$expected_safe_hash" ]]; then
+    echo "!! PM2 workers disagree on crawler HTML." >&2
+    echo "!! Expected ${expected_safe_hash}; port ${port} returned ${worker_hash}." >&2
+    exit 1
+  fi
+  echo "Crawler stability port ${port}: OK (${worker_hash})"
+done
+
+echo "==> Removing stale AdsPx PM2 processes outside the configured four workers"
+expected_names=" ${APP_NAME}-3000 ${APP_NAME}-3001 ${APP_NAME}-3002 ${APP_NAME}-3003 "
+while IFS= read -r stale_name; do
+  [[ -z "$stale_name" ]] && continue
+  if [[ "$stale_name" == "$APP_NAME" || ( "$stale_name" == "${APP_NAME}-"* && "$expected_names" != *" ${stale_name} "* ) ]]; then
+    echo "    deleting stale PM2 process: ${stale_name}"
+    pm2 delete "$stale_name" || true
+  fi
+done < <(pm2 jlist 2>/dev/null | node -e '
+let input = "";
+process.stdin.on("data", (c) => { input += c; });
+process.stdin.on("end", () => {
+  try { for (const app of JSON.parse(input)) console.log(app?.name || ""); } catch {}
+});
+')
+
+echo "==> Verifying public short domain reaches the fresh stable workers"
+public_hashes="$(for _ in 1 2 3 4 5 6 7 8; do
+  curl -fsS -A "facebookexternalhit/1.1" \
+    "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" | md5sum | awk '{print $1}'
+done | sort -u)"
+public_hash_count="$(wc -l <<<"$public_hashes" | tr -d ' ')"
+public_body="$(mktemp)"
+curl -fsS -A "facebookexternalhit/1.1" \
+  "https://adswapx.com/r/${SAFE_TEST_SLUG}?deploy_check=${RELEASE_ID}" -o "$public_body"
+if ! grep -q 'name="adspx-safe-renderer" content="stable-v3"' "$public_body"; then
+  echo "!! adswapx.com is still routing crawler traffic to an old app build." >&2
+  echo "!! Check the adswapx.com Nginx server block/upstream; expected ports: ${INSTANCE_PORTS[*]}." >&2
+  rm -f "$public_body"
+  exit 1
+fi
+rm -f "$public_body"
+if [[ "$public_hash_count" -ne 1 ]]; then
+  echo "!! Public crawler HTML is unstable although direct PM2 workers passed:" >&2
+  echo "$public_hashes" >&2
+  echo "!! Nginx/Cloudflare is mixing this release with stale origins or workers." >&2
+  exit 1
+fi
+echo "Public crawler stability: OK ($(head -n 1 <<<"$public_hashes"))"
 
 echo "==> Waiting for local app health"
 for i in {1..20}; do
