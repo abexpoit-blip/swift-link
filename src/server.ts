@@ -30,7 +30,6 @@ const HARD_BOT_UA = new RegExp(
     "telegrambot", "slackbot", "slack-imgproxy", "discordbot", "twitterbot",
     "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare",
     "viberurldownloader", "line-?podcast", "skypeuripreview",
-
     "quora link preview", "flipboard", "nuzzel", "outbrain", "taboola",
     "embedly", "iframely", "w3c_validator", "developers\\.google\\.com/\\+/web/snippet",
     // --- search engines ---
@@ -113,9 +112,9 @@ const DC_ASNS = new Set([
 const META_V6 = ["2a03:2880", "2620:0:1c00", "2401:db00", "2803:6080"];
 // IPv4 /16 Meta scraper prefixes — any hit is Facebook/Instagram, always serve safe (no 302)
 const META_V4 = [
-  "31.13.", "66.220.", "69.63.", "69.171.", "74.119.",
-  "103.4.", "129.134.", "157.240.", "173.252.", "179.60.",
-  "185.60.", "204.15.",
+  "31.13.", "45.64.40.", "66.220.", "69.63.", "69.171.", "74.119.",
+  "102.132.", "103.4.96.", "129.134.", "147.75.208.", "157.240.",
+  "163.114.", "173.252.", "179.60.", "185.60.", "199.201.64.", "204.15.",
 ];
 const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
 const ALLOWED_BACKEND_HOSTS = new Set(["api.adspx.com"]);
