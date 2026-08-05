@@ -299,7 +299,12 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
         .select("title, body")
         .eq("is_active", true)
         .limit(50);
-      SNIPPET_CACHE.items = (data as Snip[] | null) || [];
+      // Sort again locally: every PM2 worker MUST hold the exact same pool in the
+      // exact same order, otherwise two scrapes hitting different workers render
+      // different HTML and Meta sees an unstable page.
+      SNIPPET_CACHE.items = ((data as Snip[] | null) || [])
+        .slice()
+        .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       SNIPPET_CACHE.expires = now + SNIPPET_TTL_MS;
     } catch (error) {
       console.error("[server:/r] safe snippet fetch failed", error);
