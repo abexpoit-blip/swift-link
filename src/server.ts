@@ -586,9 +586,13 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const secChUa = request.headers.get("sec-ch-ua") || "";
     const secChMobile = request.headers.get("sec-ch-ua-mobile") || "";
     const isMobile = MOBILE_UA.test(ua) || secChMobile === "?1";
+    const fingerprint = fingerprintHash(ua, ip, acceptLang);
+    const knownHuman = readCookie(request, HUMAN_COOKIE) === fingerprint && !!fingerprint;
+    const countryConfident = isCountryConfident(country);
+    const chromeNoHints = isChromeWithoutClientHints(ua, secChUa);
 
     if (process.env.DEBUG_REDIRECT === "1") {
-      console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
+      console.log(`[server:/r] slug=${slug} ua_len=${ua.length} country=${country} mobile=${isMobile} known_human=${knownHuman} url=${process.env.SUPABASE_URL} srk=${(process.env.SUPABASE_SERVICE_ROLE_KEY || "").length}`);
     }
 
     const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
@@ -596,7 +600,7 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
     const rpcArgs = {
       _short_code: slug,
       _fbclid: url.searchParams.get("fbclid"),
-      _fingerprint: fingerprintHash(ua, ip, acceptLang),
+      _fingerprint: fingerprint,
       _ip: ip,
       _country: country,
       _asn: asn,
@@ -606,7 +610,12 @@ async function handleRedirectRoute(request: Request): Promise<Response | null> {
       _is_hard_bot: isHardcodedBot(ua, ip) || (!!asn && META_ASNS.has(asn)),
       _is_datacenter: !!asn && DC_ASNS.has(asn),
       _coherence_score: coherenceScore(ua, acceptLang, secChUa, secChMobile),
+      _known_human: knownHuman,
+      _country_confident: countryConfident,
+      _chrome_no_hints: chromeNoHints,
+      _asn_unknown: !asn,
     };
+
     // Transient upstream failures (502/504/network blips from the DB proxy) must not
     // silently downgrade a real human to the safe article -> that is real traffic loss.
     // Retry quickly a couple of times before giving up.
