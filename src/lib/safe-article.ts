@@ -81,9 +81,11 @@ function pickSnippets(snippets: Snip[]): Snip[] {
 const READ_MINS = () => 5 + Math.floor(rnd() * 6);
 function pickAuthor() { return AUTHORS[Math.floor(rnd() * AUTHORS.length)]; }
 function recentIsoDate(): string {
-  // Quantize to whole days so repeated scrapes of the same URL get the same date.
-  const day = Math.floor(Date.now() / 86_400_000) * 86_400_000;
-  return new Date(day - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
+  // Quantize to a 30-day bucket: Meta re-scrapes the same URL days apart, so a
+  // day-quantized date would still shift between fetches -> "content changed".
+  const BUCKET = 30 * 86_400_000;
+  const bucket = Math.floor(Date.now() / BUCKET) * BUCKET;
+  return new Date(bucket - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
 }
 function formatDate(iso: string): string { return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); }
 function pickTags(n = 4): string[] { return shuffle(TAGS_POOL).slice(0, n); }
