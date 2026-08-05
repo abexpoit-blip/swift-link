@@ -134,7 +134,27 @@ function footerSitemap(site: string, year: number, links: { section: string; ite
 let CURRENT_IMAGE_HOST: string | null = null;
 export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMAGE_HOST = host; }
 
+// Deterministic seed (short_code). Meta re-scrapes the same URL many times —
+// if <title>/og:* / dates change between fetches, FB flags the page as unstable
+// ("content mismatch" → ad reject). With a seed every value below is stable per URL.
+let CURRENT_SEED: string | null = null;
+export function setSafeArticleSeed(seed: string | null): void { CURRENT_SEED = seed; }
+function seeded(key: string): number {
+  if (!CURRENT_SEED) return Math.random();
+  return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
+}
+
+// Meta/OG rules: og:title ≤ 88 chars, og:description 60–200 chars, no mid-word cuts.
+function clampText(input: string, max: number): string {
+  const s = input.replace(/\s+/g, " ").trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[.,;:—-]+$/, "") + "…";
+}
+
 function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; wordCount?: number; keywords?: string[] }): string {
+
   const t = escapeHtml(opts.title);
   const d = escapeHtml(opts.description);
   const site = escapeHtml(opts.siteName);
