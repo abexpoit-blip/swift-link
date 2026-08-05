@@ -54,9 +54,11 @@ function escapeHtml(s: string): string {
 // counts) changes between fetches, FB marks the page unstable -> ad reject.
 // While a seed (short_code) is active every rnd() call is deterministic and
 // replays in the exact same order, so the rendered HTML is byte-identical.
-let PRNG_STATE: number | null = null;
+// Never fall back to Math.random(): a single unseeded call makes the whole page
+// differ between fetches/workers. Without a slug we use a fixed default seed.
+export const DEFAULT_SEED = "adspx-safe-default";
+let PRNG_STATE: number = 0;
 function rnd(): number {
-  if (PRNG_STATE === null) return Math.random();
   PRNG_STATE = (PRNG_STATE + 0x6d2b79f5) >>> 0;
   let t = PRNG_STATE;
   t = Math.imul(t ^ (t >>> 15), t | 1);
