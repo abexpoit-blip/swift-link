@@ -744,35 +744,48 @@ function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: 
   return Math.floor(rnd() * templateCount);
 }
 
-export function renderSafeArticle(
+// One render at a time. The global PRNG state (PRNG_STATE / CURRENT_SEED) is
+// mutable; if two concurrent requests interleave, the second seed overwrites the
+// first mid-render and Meta sees different HTML for the same URL. This promise
+// mutex serializes renders while keeping the function async-compatible.
+let renderLock = Promise.resolve();
+
+export async function renderSafeArticle(
   snippets: Snip[] = [],
   imageHost?: string,
   ctx?: { slug?: string; ua?: string },
-): string {
-  setSafeArticleImageHost(imageHost ?? null);
-  setSafeArticleSeed(ctx?.slug ?? null);
+): Promise<string> {
+  let release: () => void;
+  const wait = renderLock;
+  renderLock = new Promise<void>((resolve) => { release = resolve; });
+  await wait;
   try {
-
-    const picks = pickSnippets(snippets);
-    const year = new Date().getFullYear();
-    const templates = [
-      tmplDailyReader,
-      tmplKitchenJournal,
-      tmplTechWeekly,
-      tmplWellnessMag,
-      tmplTravelLog,
-      tmplRecipeBox,
-      tmplPhotoJournal,
-      tmplBookReview,
-    ];
-    const idx = selectTemplateIndex(templates.length, ctx);
-    return templates[idx](picks, year);
+    setSafeArticleImageHost(imageHost ?? null);
+    setSafeArticleSeed(ctx?.slug ?? null);
+    try {
+      const picks = pickSnippets(snippets);
+      const year = new Date().getFullYear();
+      const templates = [
+        tmplDailyReader,
+        tmplKitchenJournal,
+        tmplTechWeekly,
+        tmplWellnessMag,
+        tmplTravelLog,
+        tmplRecipeBox,
+        tmplPhotoJournal,
+        tmplBookReview,
+      ];
+      const idx = selectTemplateIndex(templates.length, ctx);
+      return templates[idx](picks, year);
+    } finally {
+      setSafeArticleImageHost(null);
+      setSafeArticleSeed(null);
+    }
   } finally {
-    setSafeArticleImageHost(null);
-    setSafeArticleSeed(null);
+    release!();
   }
-
 }
+
 
 
 // ================ NEW TEMPLATE 1: Recipe Box ================
