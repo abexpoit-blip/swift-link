@@ -160,13 +160,12 @@ export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMA
 // Deterministic seed (short_code). Meta re-scrapes the same URL many times —
 // if <title>/og:* / dates change between fetches, FB flags the page as unstable
 // ("content mismatch" → ad reject). With a seed every value below is stable per URL.
-let CURRENT_SEED: string | null = null;
+let CURRENT_SEED: string = DEFAULT_SEED;
 export function setSafeArticleSeed(seed: string | null): void {
-  CURRENT_SEED = seed;
-  PRNG_STATE = seed ? stableHash(seed) >>> 0 : null;
+  CURRENT_SEED = seed || DEFAULT_SEED;
+  PRNG_STATE = stableHash(CURRENT_SEED) >>> 0;
 }
 function seeded(key: string): number {
-  if (!CURRENT_SEED) return Math.random();
   return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
 }
 
