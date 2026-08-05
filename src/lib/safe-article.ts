@@ -49,25 +49,19 @@ function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
 
-// ---- Seeded PRNG ----------------------------------------------------------
+// ---- Deterministic pseudo-random by key ------------------------------------
 // Meta re-scrapes the same URL repeatedly. If ANY value (title, author, date,
 // counts) changes between fetches, FB marks the page unstable -> ad reject.
-// While a seed (short_code) is active every rnd() call is deterministic and
-// replays in the exact same order, so the rendered HTML is byte-identical.
-let PRNG_STATE: number | null = null;
-function rnd(): number {
-  if (PRNG_STATE === null) return Math.random();
-  PRNG_STATE = (PRNG_STATE + 0x6d2b79f5) >>> 0;
-  let t = PRNG_STATE;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
+// We do NOT use a mutable global PRNG (that gets clobbered by concurrent renders
+// and produces different HTML per request). Instead every value is derived from
+// stableHash(seed + "|" + key), so the same slug always renders byte-identical
+// HTML no matter how many requests interleave.
+function srand(key: string): number { return seeded(key); }
 
-function shuffle<T>(a: T[]): T[] {
+function shuffle<T>(a: T[], key: string): T[] {
   const arr = a.slice();
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1));
+    const j = Math.floor(srand(`${key}-shuffle-${i}`) * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -75,20 +69,21 @@ function shuffle<T>(a: T[]): T[] {
 
 function pickSnippets(snippets: Snip[]): Snip[] {
   const pool = snippets.length >= 4 ? snippets : [...snippets, ...FALLBACK_SNIPPETS];
-  return shuffle(pool).slice(0, 8);
+  return shuffle(pool, "snippets").slice(0, 8);
 }
 
-const READ_MINS = () => 5 + Math.floor(rnd() * 6);
-function pickAuthor() { return AUTHORS[Math.floor(rnd() * AUTHORS.length)]; }
-function recentIsoDate(): string {
+const READ_MINS = (key = "read") => 5 + Math.floor(srand(key) * 6);
+function pickAuthor(key = "author") { return AUTHORS[Math.floor(srand(key) * AUTHORS.length)]; }
+function recentIsoDate(key = "date"): string {
   // Quantize to a 30-day bucket: Meta re-scrapes the same URL days apart, so a
   // day-quantized date would still shift between fetches -> "content changed".
   const BUCKET = 30 * 86_400_000;
   const bucket = Math.floor(Date.now() / BUCKET) * BUCKET;
-  return new Date(bucket - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
+  return new Date(bucket - (1 + Math.floor(srand(key) * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
 }
 function formatDate(iso: string): string { return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); }
-function pickTags(n = 4): string[] { return shuffle(TAGS_POOL).slice(0, n); }
+function pickTags(n = 4, key = "tags"): string[] { return shuffle(TAGS_POOL, key).slice(0, n); }
+
 
 function paragraphsHtml(body: string, opts?: { dropCap?: boolean; leadClass?: string }): string {
   const parts = body.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
