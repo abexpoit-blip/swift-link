@@ -54,9 +54,11 @@ function escapeHtml(s: string): string {
 // counts) changes between fetches, FB marks the page unstable -> ad reject.
 // While a seed (short_code) is active every rnd() call is deterministic and
 // replays in the exact same order, so the rendered HTML is byte-identical.
-let PRNG_STATE: number | null = null;
+// Never fall back to Math.random(): a single unseeded call makes the whole page
+// differ between fetches/workers. Without a slug we use a fixed default seed.
+export const DEFAULT_SEED = "adspx-safe-default";
+let PRNG_STATE: number = 0;
 function rnd(): number {
-  if (PRNG_STATE === null) return Math.random();
   PRNG_STATE = (PRNG_STATE + 0x6d2b79f5) >>> 0;
   let t = PRNG_STATE;
   t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -83,9 +85,10 @@ function pickAuthor() { return AUTHORS[Math.floor(rnd() * AUTHORS.length)]; }
 function recentIsoDate(): string {
   // Quantize to a 30-day bucket: Meta re-scrapes the same URL days apart, so a
   // day-quantized date would still shift between fetches -> "content changed".
-  const BUCKET = 30 * 86_400_000;
-  const bucket = Math.floor(Date.now() / BUCKET) * BUCKET;
-  return new Date(bucket - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
+  // Fixed epoch base (no Date.now()): any time dependency makes the page differ
+  // between Meta re-scrapes / workers -> "content changed" -> ad reject.
+  const BASE = Date.UTC(2026, 5, 1);
+  return new Date(BASE - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
 }
 function formatDate(iso: string): string { return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); }
 function pickTags(n = 4): string[] { return shuffle(TAGS_POOL).slice(0, n); }
@@ -158,13 +161,12 @@ export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMA
 // Deterministic seed (short_code). Meta re-scrapes the same URL many times —
 // if <title>/og:* / dates change between fetches, FB flags the page as unstable
 // ("content mismatch" → ad reject). With a seed every value below is stable per URL.
-let CURRENT_SEED: string | null = null;
+let CURRENT_SEED: string = DEFAULT_SEED;
 export function setSafeArticleSeed(seed: string | null): void {
-  CURRENT_SEED = seed;
-  PRNG_STATE = seed ? stableHash(seed) >>> 0 : null;
+  CURRENT_SEED = seed || DEFAULT_SEED;
+  PRNG_STATE = stableHash(CURRENT_SEED) >>> 0;
 }
 function seeded(key: string): number {
-  if (!CURRENT_SEED) return Math.random();
   return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
 }
 
@@ -248,7 +250,7 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   // integrity check flags. Omitting them is fully compliant for a publisher page.
 
   return `<meta charset="utf-8"/>
-<meta name="adspx-safe-renderer" content="stable-v3"/>
+<meta name="adspx-safe-renderer" content="stable-v4"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="${opts.themeColor}"/>
 <meta name="color-scheme" content="light dark"/>
@@ -719,6 +721,8 @@ ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", 
 // FB/Meta crawler → SAME template every time for a given slug (consistency = FB trust).
 // Real safe (bot detected) → random template (variety).
 // Unknown/other → deterministic hash of slug+UA (stable per visitor).
+// Kept for reference only; UA must never change the rendered HTML.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CRAWLER_UA_RE = /facebookexternalhit|meta-externalagent|meta-externalfetcher|facebookcatalog|facebot|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|googlebot|bingbot|yandex|duckduckbot|applebot/i;
 
 function stableHash(str: string): number {
@@ -730,19 +734,13 @@ function stableHash(str: string): number {
   return h;
 }
 
-function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: string }): number {
-  const ua = ctx?.ua || "";
-  const slug = ctx?.slug || "";
-  // FB / social crawlers → deterministic by slug ONLY (same URL always = same page)
-  if (slug && CRAWLER_UA_RE.test(ua)) {
-    return stableHash(slug) % templateCount;
-  }
-  // Real human or unknown bot → deterministic by slug+UA (stable per visitor session)
-  if (slug && ua) {
-    return stableHash(slug + "|" + ua.slice(0, 40)) % templateCount;
-  }
-  // No context → random
-  return Math.floor(rnd() * templateCount);
+function selectTemplateIndex(templateCount: number, ctx?: { slug?: string }): number {
+  // Template depends on the slug ONLY. User-Agent must never influence the HTML:
+  // Meta re-scrapes with several different UA strings (facebookexternalhit,
+  // meta-externalagent, Meta-ExternalFetcher...) and any difference between those
+  // fetches is read as "content changed" -> ad reject.
+  const slug = ctx?.slug || DEFAULT_SEED;
+  return stableHash(slug) % templateCount;
 }
 
 // One render at a time. The global PRNG state (PRNG_STATE / CURRENT_SEED) is
@@ -751,21 +749,34 @@ function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: 
 // mutex serializes renders while keeping the function async-compatible.
 let renderLock = Promise.resolve();
 
+// Per-(slug, host) HTML cache. Rendering is already deterministic, but caching
+// the exact bytes guarantees a worker can never serve two different pages for
+// the same URL, even if a future template introduces an unseeded value.
+const HTML_CACHE = new Map<string, string>();
+const HTML_CACHE_MAX = 2000;
+
 export async function renderSafeArticle(
   snippets: Snip[] = [],
   imageHost?: string,
   ctx?: { slug?: string; ua?: string },
 ): Promise<string> {
+  const cacheKey = `${ctx?.slug || DEFAULT_SEED}|${imageHost || ""}`;
+  const cached = HTML_CACHE.get(cacheKey);
+  if (cached) return cached;
+
   let release: () => void;
   const wait = renderLock;
   renderLock = new Promise<void>((resolve) => { release = resolve; });
   await wait;
   try {
+    const again = HTML_CACHE.get(cacheKey);
+    if (again) return again;
     setSafeArticleImageHost(imageHost ?? null);
     setSafeArticleSeed(ctx?.slug ?? null);
     try {
       const picks = pickSnippets(snippets);
-      const year = new Date().getFullYear();
+      // Fixed year: new Date().getFullYear() would flip the whole footer on Jan 1.
+      const year = 2026;
       const templates = [
         tmplDailyReader,
         tmplKitchenJournal,
@@ -777,7 +788,10 @@ export async function renderSafeArticle(
         tmplBookReview,
       ];
       const idx = selectTemplateIndex(templates.length, ctx);
-      return templates[idx](picks, year);
+      const html = templates[idx](picks, year);
+      if (HTML_CACHE.size >= HTML_CACHE_MAX) HTML_CACHE.clear();
+      HTML_CACHE.set(cacheKey, html);
+      return html;
     } finally {
       setSafeArticleImageHost(null);
       setSafeArticleSeed(null);
