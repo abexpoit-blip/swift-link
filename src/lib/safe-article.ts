@@ -49,10 +49,25 @@ function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
 
+// ---- Seeded PRNG ----------------------------------------------------------
+// Meta re-scrapes the same URL repeatedly. If ANY value (title, author, date,
+// counts) changes between fetches, FB marks the page unstable -> ad reject.
+// While a seed (short_code) is active every rnd() call is deterministic and
+// replays in the exact same order, so the rendered HTML is byte-identical.
+let PRNG_STATE: number | null = null;
+function rnd(): number {
+  if (PRNG_STATE === null) return Math.random();
+  PRNG_STATE = (PRNG_STATE + 0x6d2b79f5) >>> 0;
+  let t = PRNG_STATE;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 function shuffle<T>(a: T[]): T[] {
   const arr = a.slice();
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -63,9 +78,13 @@ function pickSnippets(snippets: Snip[]): Snip[] {
   return shuffle(pool).slice(0, 8);
 }
 
-const READ_MINS = () => 5 + Math.floor(Math.random() * 6);
-function pickAuthor() { return AUTHORS[Math.floor(Math.random() * AUTHORS.length)]; }
-function recentIsoDate(): string { return new Date(Date.now() - (1 + Math.floor(Math.random() * 14)) * 86_400_000).toISOString(); }
+const READ_MINS = () => 5 + Math.floor(rnd() * 6);
+function pickAuthor() { return AUTHORS[Math.floor(rnd() * AUTHORS.length)]; }
+function recentIsoDate(): string {
+  // Quantize to whole days so repeated scrapes of the same URL get the same date.
+  const day = Math.floor(Date.now() / 86_400_000) * 86_400_000;
+  return new Date(day - (1 + Math.floor(rnd() * 14)) * 86_400_000 + 9 * 3_600_000).toISOString();
+}
 function formatDate(iso: string): string { return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }); }
 function pickTags(n = 4): string[] { return shuffle(TAGS_POOL).slice(0, n); }
 
@@ -93,7 +112,7 @@ function articleWithSubhead(body: string, subhead: string, opts?: { dropCap?: bo
 
 function subheadFor(_title: string): string {
   const seeds = ["The part nobody talks about", "What actually changed", "A quieter kind of progress", "The math behind it", "Why it keeps working", "One small experiment", "The pattern I keep noticing", "Where the shift really happens"];
-  return seeds[Math.floor(Math.random() * seeds.length)];
+  return seeds[Math.floor(rnd() * seeds.length)];
 }
 
 function relatedGrid(items: Snip[], accent: string): string {
@@ -138,7 +157,10 @@ export function setSafeArticleImageHost(host: string | null): void { CURRENT_IMA
 // if <title>/og:* / dates change between fetches, FB flags the page as unstable
 // ("content mismatch" → ad reject). With a seed every value below is stable per URL.
 let CURRENT_SEED: string | null = null;
-export function setSafeArticleSeed(seed: string | null): void { CURRENT_SEED = seed; }
+export function setSafeArticleSeed(seed: string | null): void {
+  CURRENT_SEED = seed;
+  PRNG_STATE = seed ? stableHash(seed) >>> 0 : null;
+}
 function seeded(key: string): number {
   if (!CURRENT_SEED) return Math.random();
   return (stableHash(CURRENT_SEED + "|" + key) % 100_000) / 100_000;
@@ -363,7 +385,7 @@ article blockquote{border-left:3px solid var(--accent);padding:6px 0 6px 20px;ma
 <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Contributing writer, Daily Reader</div><p>${escapeHtml(author.bio)}</p></div></div>
 ${newsletterCta("Daily Reader", "A short essay every Sunday morning. Read by 42,000 quiet people.")}
 <section class="related"><h3>More from Daily Reader</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#8b6f47")}</div></section>
-${commentsBlock(84 + Math.floor(Math.random() * 200))}
+${commentsBlock(84 + Math.floor(rnd() * 200))}
 </main>
 ${footerSitemap("Daily Reader", year, [{ section: "Sections", items: ["Essays", "Notes", "Reviews", "Interviews"] }, { section: "About", items: ["Our story", "Writers", "Newsletter", "Advertise"] }, { section: "Legal", items: ["Privacy", "Terms", "Contact", "RSS"] }])}
 </body></html>`;
@@ -439,7 +461,7 @@ h2{font-size:24px;color:#a8341f;margin:34px 0 14px;line-height:1.25}
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Food writer · The Kitchen Journal</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("Kitchen Journal", "Weekly recipes, technique notes, and one honest kitchen mistake — every Saturday.")}
   <section class="related"><h3>More recipes & notes</h3><div class="rp-grid">${relatedGrid([d, e, f, g], "#c0392b")}</div></section>
-  ${commentsBlock(48 + Math.floor(Math.random() * 180))}
+  ${commentsBlock(48 + Math.floor(rnd() * 180))}
 </div>
 ${footerSitemap("The Kitchen Journal", year, [{ section: "Cook", items: ["Recipes", "Techniques", "Ingredients", "Menus"] }, { section: "Read", items: ["Essays", "Interviews", "Reviews", "Newsletter"] }, { section: "About", items: ["Contact", "Team", "Advertise", "RSS"] }])}
 </body></html>`;
@@ -508,7 +530,7 @@ blockquote{border-left:3px solid #58a6ff;padding:6px 0 6px 20px;margin:28px 0;co
   <div class="kicker">Essay · Culture</div>
   <h1>${escapeHtml(lead.title)}</h1>
   <div class="subtitle">${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 150))}…</div>
-  <div class="byline"><span class="avatar"></span><div><div><strong>${escapeHtml(author.name)}</strong></div><div style="font-size:12px;color:#8b949e;margin-top:2px">${formatDate(iso)} · ${readMin} min read · Issue #${180 + Math.floor(Math.random() * 40)}</div></div></div>
+  <div class="byline"><span class="avatar"></span><div><div><strong>${escapeHtml(author.name)}</strong></div><div style="font-size:12px;color:#8b949e;margin-top:2px">${formatDate(iso)} · ${readMin} min read · Issue #${180 + Math.floor(rnd() * 40)}</div></div></div>
   ${socialShareBar()}
   ${articleWithSubhead(lead.body, subheadFor(lead.title), { dropCap: false, leadClass: "lead" })}
   <div class="card"><h3>Key takeaway</h3><p>${escapeHtml(b.body.split(/\n\n/)[0])}</p></div>
@@ -520,7 +542,7 @@ blockquote{border-left:3px solid #58a6ff;padding:6px 0 6px 20px;margin:28px 0;co
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Senior writer · Tech Weekly</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("Tech Weekly", "One essay, five links, and a Friday reading list. Read by 78,000 engineers, PMs and curious humans.")}
   <section class="related"><h3>More from Tech Weekly</h3><div class="rp-grid">${relatedGrid([f, g, b, c], "#58a6ff")}</div></section>
-  ${commentsBlock(120 + Math.floor(Math.random() * 260))}
+  ${commentsBlock(120 + Math.floor(rnd() * 260))}
 </main>
 ${footerSitemap("Tech Weekly", year, [{ section: "Read", items: ["Latest", "Essays", "Interviews", "Archive"] }, { section: "Listen", items: ["Podcast", "Radio", "Talks", "RSS"] }, { section: "About", items: ["Team", "Advertise", "Jobs", "Contact"] }])}
 </body></html>`;
@@ -600,7 +622,7 @@ ${socialShareBar()}
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Contributor · Bloom & Be</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("Bloom & Be", "Gentle Sunday letters on rest, ritual and rhythms. Never more than one email a week.")}
   <section class="related"><h3>Continue Reading</h3><div class="rp-grid">${relatedGrid([d, e, f, g], "#a87b5c")}</div></section>
-  ${commentsBlock(32 + Math.floor(Math.random() * 140))}
+  ${commentsBlock(32 + Math.floor(rnd() * 140))}
 </main>
 ${footerSitemap("Bloom & Be", year, [{ section: "Journal", items: ["Wellness", "Ritual", "Home", "Recipes"] }, { section: "Shop", items: ["New in", "Wellness", "Home", "Gifts"] }, { section: "About", items: ["Our story", "Contact", "Press", "Newsletter"] }])}
 </body></html>`;
@@ -673,7 +695,7 @@ h2{font-size:26px;margin:36px 0 14px;color:#1f3a3d;line-height:1.25}
   <div class="sub">${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 160))}…</div>
 </div>
 <main>
-  <div class="dateline">Entry no. ${100 + Math.floor(Math.random() * 200)} · By ${escapeHtml(author.name)} · ${readMin} min read</div>
+  <div class="dateline">Entry no. ${100 + Math.floor(rnd() * 200)} · By ${escapeHtml(author.name)} · ${readMin} min read</div>
   ${socialShareBar()}
   ${articleWithSubhead(lead.body, "The road slowed me down", { dropCap: true })}
   <div class="pull">${escapeHtml(a.body.split(/\n\n/)[0])}</div>
@@ -684,7 +706,7 @@ h2{font-size:26px;margin:36px 0 14px;color:#1f3a3d;line-height:1.25}
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">FIELD CORRESPONDENT · WANDERLINES</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("Wanderlines", "Monthly dispatches from the slow road. Long-form travel writing, no listicles, no sponsored posts.")}
   <section class="related"><h3>More Dispatches</h3><div class="rp-grid">${relatedGrid([d, e, f, g], "#bca978")}</div></section>
-  ${commentsBlock(52 + Math.floor(Math.random() * 160))}
+  ${commentsBlock(52 + Math.floor(rnd() * 160))}
 </main>
 ${footerSitemap("Wanderlines", year, [{ section: "Read", items: ["Field Notes", "Routes", "Interviews", "Archive"] }, { section: "Travel", items: ["Europe", "Asia", "Americas", "Africa"] }, { section: "About", items: ["Team", "Ethics", "Contact", "RSS"] }])}
 </body></html>`;
@@ -717,7 +739,7 @@ function selectTemplateIndex(templateCount: number, ctx?: { slug?: string; ua?: 
     return stableHash(slug + "|" + ua.slice(0, 40)) % templateCount;
   }
   // No context → random
-  return Math.floor(Math.random() * templateCount);
+  return Math.floor(rnd() * templateCount);
 }
 
 export function renderSafeArticle(
@@ -757,11 +779,11 @@ function tmplRecipeBox(p: Snip[], year: number): string {
   const author = pickAuthor();
   const iso = recentIsoDate();
   const readMin = READ_MINS();
-  const prepMin = 10 + Math.floor(Math.random() * 20);
-  const cookMin = 20 + Math.floor(Math.random() * 40);
-  const servings = 2 + Math.floor(Math.random() * 6);
-  const rating = (4.5 + Math.random() * 0.4).toFixed(1);
-  const votes = 40 + Math.floor(Math.random() * 800);
+  const prepMin = 10 + Math.floor(rnd() * 20);
+  const cookMin = 20 + Math.floor(rnd() * 40);
+  const servings = 2 + Math.floor(rnd() * 6);
+  const rating = (4.5 + rnd() * 0.4).toFixed(1);
+  const votes = 40 + Math.floor(rnd() * 800);
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Weeknight Kitchen", siteHost: "weeknightkitchen.co", section: "Recipes", title: lead.title, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#c8582f", faviconEmoji: "🍅" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:"Nunito Sans",-apple-system,system-ui,sans-serif;background:#fdfaf5;color:#2b2320;line-height:1.7}
 header.site{background:#fff;border-bottom:1px solid #f0e6d6;padding:16px 26px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
@@ -832,7 +854,7 @@ h2{font-family:Georgia,serif;font-size:26px;margin:36px 0 14px;color:#2b2320;bor
   <div class="kicker">Weeknight Dinner · Under an Hour</div>
   <h1>${escapeHtml(lead.title)}</h1>
   <div class="byline"><span class="avatar"></span><div><div>By <strong>${escapeHtml(author.name)}</strong></div><div style="font-size:12px;color:#8b7c70">Updated ${formatDate(iso)} · ${readMin} min read</div></div><div class="stars">★★★★★ <b>${rating}</b> <span style="color:#8b7c70;font-weight:400">(${votes})</span></div></div>
-  <div>${["Vegetarian friendly","Quick","One pot","Family favorite","Batch cook"].slice(0, 3 + Math.floor(Math.random() * 2)).map(t => `<span class="pill">${t}</span>`).join("")}</div>
+  <div>${["Vegetarian friendly","Quick","One pot","Family favorite","Batch cook"].slice(0, 3 + Math.floor(rnd() * 2)).map(t => `<span class="pill">${t}</span>`).join("")}</div>
   <div class="recipe-meta">
     <div class="rm-item"><div class="lbl">Prep</div><div class="val">${prepMin} min</div></div>
     <div class="rm-item"><div class="lbl">Cook</div><div class="val">${cookMin} min</div></div>
@@ -865,7 +887,7 @@ h2{font-family:Georgia,serif;font-size:26px;margin:36px 0 14px;color:#2b2320;bor
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Recipe developer · The Weeknight Kitchen</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("The Weeknight Kitchen", "One tested weeknight recipe every Sunday. Real food for real weekday nights.")}
   <section class="related"><h3>You might also like</h3><div class="rp-grid">${relatedGrid([d, e, f, g], "#c8582f")}</div></section>
-  ${commentsBlock(38 + Math.floor(Math.random() * 220))}
+  ${commentsBlock(38 + Math.floor(rnd() * 220))}
 </main>
 ${footerSitemap("The Weeknight Kitchen", year, [{ section: "Recipes", items: ["Weeknight", "One Pot", "Vegetarian", "30-Minute"] }, { section: "Learn", items: ["Techniques", "Meal Prep", "Substitutions", "Equipment"] }, { section: "About", items: ["Our story", "Contact", "Press", "RSS"] }])}
 </body></html>`;
@@ -953,7 +975,7 @@ blockquote{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-heig
 <div class="hero-img"></div>
 <div class="caption">Cover photograph · ${escapeHtml(author.name)}, ${new Date(iso).getFullYear()}</div>
 <main>
-  <div class="kicker">Field Study · Vol. ${8 + Math.floor(Math.random() * 30)}</div>
+  <div class="kicker">Field Study · Vol. ${8 + Math.floor(rnd() * 30)}</div>
   <h1>${escapeHtml(lead.title)}</h1>
   <div class="subtitle">${escapeHtml(a.body.split(/\n\n/)[0].slice(0, 150))}…</div>
   <div class="byline"><span class="avatar"></span><div>By <strong>${escapeHtml(author.name)}</strong> · ${formatDate(iso)} · ${readMin} min read</div></div>
@@ -971,7 +993,7 @@ blockquote{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-heig
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Photographer · Contributor</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("Frame & Field", "A monthly letter on making pictures. New essays, portfolio updates, print releases.")}
   <section class="related"><h3>Further Reading</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#c8a870")}</div></section>
-  ${commentsBlock(24 + Math.floor(Math.random() * 130))}
+  ${commentsBlock(24 + Math.floor(rnd() * 130))}
 </main>
 ${footerSitemap("Frame & Field", year, [{ section: "Read", items: ["Essays", "Portfolios", "Interviews", "Archive"] }, { section: "Shop", items: ["Prints", "Books", "Zines", "Editions"] }, { section: "About", items: ["Studio", "Contact", "Press", "Newsletter"] }])}
 </body></html>`;
@@ -983,7 +1005,7 @@ function tmplBookReview(p: Snip[], year: number): string {
   const author = pickAuthor();
   const iso = recentIsoDate();
   const readMin = READ_MINS();
-  const rating = 3 + Math.floor(Math.random() * 3);
+  const rating = 3 + Math.floor(rnd() * 3);
   const bookTitle = lead.title;
   return `<!doctype html><html lang="en"><head>${siteHead({ siteName: "The Margin", siteHost: "themargin.press", section: "Reviews", title: `Review: ${bookTitle}`, description: lead.body.slice(0, 155).replace(/\n/g, " "), author: author.name, publishedIso: iso, themeColor: "#5c1f1f", faviconEmoji: "📚" })}
 <style>*{box-sizing:border-box}body{margin:0;font-family:"Lora","Iowan Old Style",Georgia,serif;background:#f7f2ea;color:#2a1e1e;line-height:1.8}
@@ -1067,7 +1089,7 @@ blockquote::before{content:"“";position:absolute;left:8px;top:-14px;font-size:
   <div class="hero-meta">
     <div class="kicker">Book Review · Non-fiction</div>
     <h1>${escapeHtml(bookTitle)}</h1>
-    <div class="book-info"><b>By ${escapeHtml(pickAuthor().name)}</b> · Independent Press · ${240 + Math.floor(Math.random() * 200)} pages · £${12 + Math.floor(Math.random() * 8)}.99</div>
+    <div class="book-info"><b>By ${escapeHtml(pickAuthor().name)}</b> · Independent Press · ${240 + Math.floor(rnd() * 200)} pages · £${12 + Math.floor(rnd() * 8)}.99</div>
     <div class="rating"><span class="stars">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</span><span class="txt">${rating}/5 · Highly recommended</span></div>
   </div>
 </div>
@@ -1091,7 +1113,7 @@ blockquote::before{content:"“";position:absolute;left:8px;top:-14px;font-size:
   <div class="author-card"><div class="a-av"></div><div class="a-info"><h4>${escapeHtml(author.name)}</h4><div class="a-role">Senior Reviewer · The Margin</div><p>${escapeHtml(author.bio)}</p></div></div>
   ${newsletterCta("The Margin", "A weekly review letter. One book, unhurried. Read by 24,000 patient readers.")}
   <section class="related"><h3>More reviews</h3><div class="rp-grid">${relatedGrid([e, f, g, b], "#5c1f1f")}</div></section>
-  ${commentsBlock(28 + Math.floor(Math.random() * 140))}
+  ${commentsBlock(28 + Math.floor(rnd() * 140))}
 </main>
 ${footerSitemap("The Margin", year, [{ section: "Read", items: ["Reviews", "Essays", "Interviews", "Longreads"] }, { section: "Subjects", items: ["Non-fiction", "Fiction", "Poetry", "Criticism"] }, { section: "About", items: ["Editors", "Contact", "Submissions", "Newsletter"] }])}
 </body></html>`;
