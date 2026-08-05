@@ -155,8 +155,10 @@ function clampText(input: string, max: number): string {
 
 function siteHead(opts: { siteName: string; siteHost: string; section: string; title: string; description: string; author: string; publishedIso: string; themeColor: string; faviconEmoji: string; wordCount?: number; keywords?: string[] }): string {
 
-  const t = escapeHtml(opts.title);
-  const d = escapeHtml(opts.description);
+  const titleText = clampText(opts.title, 88);
+  const descText = clampText(opts.description, 200);
+  const t = escapeHtml(titleText);
+  const d = escapeHtml(descText);
   const site = escapeHtml(opts.siteName);
   const host = opts.siteHost;
   const imageHost = CURRENT_IMAGE_HOST || opts.siteHost;
@@ -164,17 +166,18 @@ function siteHead(opts: { siteName: string; siteHost: string; section: string; t
   const slug = opts.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
   const url = `https://${host}/${new Date(opts.publishedIso).getFullYear()}/${slug}`;
   const kw = (opts.keywords ?? pickTags(6));
-  const wordCount = opts.wordCount ?? (900 + Math.floor(Math.random() * 600));
-  // Modified time: 2-72 hours after publish (real editorial workflow)
-  const modifiedIso = new Date(new Date(opts.publishedIso).getTime() + (2 + Math.floor(Math.random() * 70)) * 3_600_000).toISOString();
-  // Realistic CMS generator strings — rotates so fingerprint doesn't lock
+  const wordCount = opts.wordCount ?? (900 + Math.floor(seeded("wc") * 600));
+  // Modified time: 2-72 hours after publish (real editorial workflow), stable per URL
+  const modifiedIso = new Date(new Date(opts.publishedIso).getTime() + (2 + Math.floor(seeded("mod") * 70)) * 3_600_000).toISOString();
+  // Realistic CMS generator strings — stable per URL so repeat scrapes match
   const generators = ["WordPress 6.5.2", "Ghost 5.82", "WordPress 6.4.3", "Ghost 5.75", "WordPress 6.5.5"];
-  const generator = generators[Math.floor(Math.random() * generators.length)];
+  const generator = generators[Math.floor(seeded("gen") * generators.length)];
   // Universal editorial cover — real JPEG served from /public. Eliminates FB "og:image not explicit" warning
   // that was caused by the previous SVG-with-jpg-extension mismatch.
   const coverUrl = `https://${imageHost}/og-cover.jpg`;
   const authorSlug = opts.author.toLowerCase().replace(/\s+/g, "-");
-  const readMin = 5 + Math.floor(Math.random() * 6);
+  const readMin = 5 + Math.floor(seeded("read") * 6);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
