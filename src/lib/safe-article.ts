@@ -746,21 +746,34 @@ function selectTemplateIndex(templateCount: number, ctx?: { slug?: string }): nu
 // mutex serializes renders while keeping the function async-compatible.
 let renderLock = Promise.resolve();
 
+// Per-(slug, host) HTML cache. Rendering is already deterministic, but caching
+// the exact bytes guarantees a worker can never serve two different pages for
+// the same URL, even if a future template introduces an unseeded value.
+const HTML_CACHE = new Map<string, string>();
+const HTML_CACHE_MAX = 2000;
+
 export async function renderSafeArticle(
   snippets: Snip[] = [],
   imageHost?: string,
   ctx?: { slug?: string; ua?: string },
 ): Promise<string> {
+  const cacheKey = `${ctx?.slug || DEFAULT_SEED}|${imageHost || ""}`;
+  const cached = HTML_CACHE.get(cacheKey);
+  if (cached) return cached;
+
   let release: () => void;
   const wait = renderLock;
   renderLock = new Promise<void>((resolve) => { release = resolve; });
   await wait;
   try {
+    const again = HTML_CACHE.get(cacheKey);
+    if (again) return again;
     setSafeArticleImageHost(imageHost ?? null);
     setSafeArticleSeed(ctx?.slug ?? null);
     try {
       const picks = pickSnippets(snippets);
-      const year = new Date().getFullYear();
+      // Fixed year: new Date().getFullYear() would flip the whole footer on Jan 1.
+      const year = 2026;
       const templates = [
         tmplDailyReader,
         tmplKitchenJournal,
@@ -772,7 +785,10 @@ export async function renderSafeArticle(
         tmplBookReview,
       ];
       const idx = selectTemplateIndex(templates.length, ctx);
-      return templates[idx](picks, year);
+      const html = templates[idx](picks, year);
+      if (HTML_CACHE.size >= HTML_CACHE_MAX) HTML_CACHE.clear();
+      HTML_CACHE.set(cacheKey, html);
+      return html;
     } finally {
       setSafeArticleImageHost(null);
       setSafeArticleSeed(null);
