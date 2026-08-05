@@ -1,7 +1,7 @@
 import "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderSafeArticle, type Snip } from "./lib/safe-article";
+import { renderSafeArticle } from "./lib/safe-article";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -9,10 +9,6 @@ type ServerEntry = {
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 let localEnvLoaded = false;
-
-// In-memory cache for DB snippets used by the safe article renderer.
-const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 0 };
-const SNIPPET_TTL_MS = 120_000;
 
 // ---------------------------------------------------------------------------
 // HARD BOT UA — the ONLY UA layer that can force a visitor to the safe page.
@@ -288,28 +284,6 @@ function isBackendAllowed(url: string): boolean {
 }
 
 async function renderEntrySafe(request?: Request, slug?: string): Promise<Response> {
-  // Try to hydrate snippets from DB; fall back to FALLBACK_SNIPPETS built into safe-article.
-  const now = Date.now();
-  if (!SNIPPET_CACHE.items.length || SNIPPET_CACHE.expires < now) {
-    try {
-      const { getAdspxPublicClient } = await import("./lib/adspx-public.server");
-      const supabasePublic = getAdspxPublicClient();
-      const { data } = await supabasePublic
-        .from("safe_page_snippets")
-        .select("title, body")
-        .eq("is_active", true)
-        .limit(50);
-      // Sort again locally: every PM2 worker MUST hold the exact same pool in the
-      // exact same order, otherwise two scrapes hitting different workers render
-      // different HTML and Meta sees an unstable page.
-      SNIPPET_CACHE.items = ((data as Snip[] | null) || [])
-        .slice()
-        .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-      SNIPPET_CACHE.expires = now + SNIPPET_TTL_MS;
-    } catch (error) {
-      console.error("[server:/r] safe snippet fetch failed", error);
-    }
-  }
   // og:image must resolve on the actual serving host (adspx.com) — the /media/*-cover.jpg
   // handler lives here. Persona domains (dailyreader.co etc.) are only for branding text.
   const reqUrl = request ? new URL(request.url) : null;
@@ -324,13 +298,10 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
   // Deterministic template selection: FB / Meta crawlers get the SAME template every time
   // for a given slug (consistency = FB trust signal). Real safe traffic gets variety.
   const ua = request?.headers.get("user-agent") || undefined;
-  // Crawler responses must be identical across every PM2 worker. The database
-  // query is intentionally capped and PostgREST can return a different active
-  // subset to each worker before the local sort runs. Use the versioned,
-  // built-in snippet pool for crawlers; an empty array makes renderSafeArticle
-  // select FALLBACK_SNIPPETS deterministically from the slug seed.
-  const crawlerSnippets = ua && HARD_BOT_UA.test(ua) ? [] : SNIPPET_CACHE.items;
-  const safeHtml = await renderSafeArticle(crawlerSnippets, imageHost, { slug: effectiveSlug, ua });
+  // Safe HTML must never depend on mutable database rows or crawler detection.
+  // The versioned built-in pool plus the slug seed makes every /r/{slug} response
+  // byte-identical across requests, PM2 workers, deploys and crawler UA variants.
+  const safeHtml = await renderSafeArticle([], imageHost, { slug: effectiveSlug, ua });
   return new Response(safeHtml, {
     status: 200,
     headers: {
