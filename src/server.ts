@@ -324,7 +324,8 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
   // Deterministic template selection: FB / Meta crawlers get the SAME template every time
   // for a given slug (consistency = FB trust signal). Real safe traffic gets variety.
   const ua = request?.headers.get("user-agent") || undefined;
-  return new Response(renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug: effectiveSlug, ua }), {
+  const safeHtml = await renderSafeArticle(SNIPPET_CACHE.items, imageHost, { slug: effectiveSlug, ua });
+  return new Response(safeHtml, {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -333,6 +334,7 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
       "x-adspx-r-handler": "entry-safe",
     },
   });
+
 }
 
 
