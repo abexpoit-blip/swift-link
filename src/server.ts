@@ -37,8 +37,9 @@ const HARD_BOT_UA = new RegExp(
     "googlebot", "google-inspectiontool", "google-read-aloud", "googleother",
     "google-extended", "storebot-google", "adsbot-google", "mediapartners-google",
     "feedfetcher-google", "apis-google", "bingbot", "bingpreview", "adidxbot",
-    "msnbot", "yandex(bot|images|mobilebot)?", "duckduckbot", "duckduckgo",
-    "baiduspider", "sogou", "exabot", "seznambot", "naver", "coccocbot",
+    "msnbot", "yandex(bot|images|mobilebot)", "duckduckbot",
+    "baiduspider", "sogou\\s?(web|inst)?\\s?spider", "exabot", "seznambot",
+    "naverbot", "yeti\\/", "coccocbot",
     "applebot", "petalbot", "qwantify", "gigabot", "ia_archiver", "archive\\.org_bot",
     // --- SEO / marketing crawlers ---
     "semrushbot", "ahrefsbot", "ahrefssiteaudit", "mj12bot", "dotbot", "rogerbot",
@@ -71,7 +72,7 @@ const HARD_BOT_UA = new RegExp(
     "axios\\/", "got\\/", "undici", "node-fetch", "go-http-client", "java\\/",
     "jakarta", "okhttp", "apache-httpclient", "restsharp", "guzzlehttp", "php",
     "ruby", "perl", "powershell", "dart\\/", "postman", "insomnia", "httpie",
-    "haskell", "rust-reqwest", "c#", "\\.net clr",
+    "haskell", "rust-reqwest",
     // --- monitoring / uptime / feed / misc ---
     "uptimerobot", "pingdom", "statuscake", "site24x7", "newrelicpinger",
     "datadog", "nagios", "zabbix", "monitis", "hetrixtool", "betteruptime",
