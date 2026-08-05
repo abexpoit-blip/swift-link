@@ -236,22 +236,27 @@ function DashboardPage() {
         {/* Hero metrics — formal summary */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetricCard icon={Link2} label="Active Links" value={links.filter((l) => l.is_active).length.toString()} sub={`${links.length} total`} />
-          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} bot traffic fetch (not yours)`} />
+          <MetricCard icon={MousePointerClick} label="Delivered Human Clicks" value={totalHumanClicks.toLocaleString()} sub={`${totalFilteredClicks.toLocaleString()} crawler previews filtered`} />
           <MetricCard icon={ShieldCheck} label="Verified Humans" value={`${humanPct.toFixed(1)}%`} sub={`${humansCount} / ${logs.length || 0} recent · ${monetizedClicks.toLocaleString()} paid`} accent="cyan" />
           <MetricCard icon={DollarSign} label="Lifetime Earned" value={`$${totalEarned.toFixed(2)}`} sub={`$${balance.toFixed(2)} available`} accent="magenta" />
         </section>
 
-        {/* Bot traffic fetch explainer — prevents "traffic loss" confusion */}
-        <section className="rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3 flex items-start gap-3 text-sm">
-          <Bot className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-          <div className="text-muted-foreground">
-            <span className="font-semibold text-foreground">Bot Traffic fetch</span> counts automated preview
-            requests from Facebook, WhatsApp, Telegram and other platform crawlers that fetch your link
-            when it is shared. These are <span className="font-semibold text-foreground">not visitors you sent</span> and
-            are not lost traffic — blocking them is what keeps your domain safe.
-            Your real audience is shown as <span className="font-semibold text-foreground">Delivered Human Clicks</span>.
+        {/* Crawler-preview explainer — prevents "traffic loss" confusion */}
+        <section className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.07] to-transparent px-4 sm:px-5 py-4 flex items-start gap-3.5 text-sm">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div className="space-y-1 min-w-0">
+            <div className="font-display font-semibold text-foreground leading-none">Your traffic is protected, not lost</div>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              <span className="font-medium text-foreground">Crawler previews</span> are automated link-preview
+              requests from Facebook, WhatsApp and Telegram — never real visitors you sent. Filtering them is
+              what keeps your domain approved. Your real audience is
+              <span className="font-medium text-foreground"> Delivered Human Clicks</span>.
+            </p>
           </div>
         </section>
+
 
 
         {/* Monitor-mode banner (7-day observation window) */}
