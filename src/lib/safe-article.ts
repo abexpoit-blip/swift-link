@@ -107,30 +107,31 @@ function articleWithSubhead(body: string, subhead: string, opts?: { dropCap?: bo
   return `${firstHtml}<h2>${escapeHtml(subhead)}</h2>${restHtml}`;
 }
 
-function subheadFor(_title: string): string {
+function subheadFor(_title: string, key = "subhead"): string {
   const seeds = ["The part nobody talks about", "What actually changed", "A quieter kind of progress", "The math behind it", "Why it keeps working", "One small experiment", "The pattern I keep noticing", "Where the shift really happens"];
-  return seeds[Math.floor(rnd() * seeds.length)];
+  return seeds[Math.floor(srand(key) * seeds.length)];
 }
 
-function relatedGrid(items: Snip[], accent: string): string {
+function relatedGrid(items: Snip[], accent: string, key: string): string {
   return items.map((s, i) => {
-    const author = pickAuthor().name;
-    const date = formatDate(recentIsoDate());
-    const readMin = READ_MINS();
+    const author = pickAuthor(`${key}-author-${i}`).name;
+    const date = formatDate(recentIsoDate(`${key}-date-${i}`));
+    const readMin = READ_MINS(`${key}-read-${i}`);
     const tag = TAGS_POOL[(i * 3) % TAGS_POOL.length];
     return `<a class="rp-card" href="#"><div class="rp-thumb" style="background:linear-gradient(135deg, ${accent}22, ${accent}66)"><span class="rp-tag">${escapeHtml(tag)}</span></div><h4>${escapeHtml(s.title)}</h4><div class="rp-meta">${escapeHtml(author)} · ${date} · ${readMin} min</div></a>`;
   }).join("");
 }
 
-function commentsBlock(count: number): string {
-  const authors = shuffle(AUTHORS).slice(0, 3);
+function commentsBlock(count: number, key = "comments"): string {
+  const authors = shuffle(AUTHORS, `${key}-authors`).slice(0, 3);
   const bodies = [
     "This landed at exactly the right time — thank you for writing it.",
     "I read this twice. The paragraph about attention is going to stay with me.",
     "Bookmarked. I have been trying to articulate exactly this for months.",
   ];
-  return `<section class="comments"><h3>${count} responses</h3>${authors.map((a, i) => `<div class="comment"><div class="c-avatar"></div><div class="c-body"><div class="c-head"><strong>${escapeHtml(a.name)}</strong><span>· ${formatDate(recentIsoDate())}</span></div><p>${escapeHtml(bodies[i])}</p></div></div>`).join("")}<div class="c-more">Read all ${count} responses →</div></section>`;
+  return `<section class="comments"><h3>${count} responses</h3>${authors.map((a, i) => `<div class="comment"><div class="c-avatar"></div><div class="c-body"><div class="c-head"><strong>${escapeHtml(a.name)}</strong><span>· ${formatDate(recentIsoDate(`${key}-date-${i}`))}</span></div><p>${escapeHtml(bodies[i])}</p></div></div>`).join("")}<div class="c-more">Read all ${count} responses →</div></section>`;
 }
+
 
 function newsletterCta(siteName: string, blurb: string): string {
   return `<aside class="newsletter"><div class="nl-tag">Newsletter</div><h3>Get the weekly ${escapeHtml(siteName)} letter</h3><p>${escapeHtml(blurb)}</p><form class="nl-form" onsubmit="event.preventDefault();this.querySelector('.nl-done').style.display='block';this.querySelector('.nl-row').style.display='none'"><div class="nl-row"><input type="email" placeholder="you@example.com" required/><button type="submit">Subscribe</button></div><div class="nl-done" style="display:none">Thanks — please check your inbox.</div></form><div class="nl-fine">No spam. Unsubscribe with one click.</div></aside>`;
