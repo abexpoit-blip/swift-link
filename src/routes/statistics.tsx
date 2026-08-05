@@ -251,8 +251,8 @@ function StatisticsPage() {
         ) : (
           <>
             <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Kpi icon={MousePointerClick} label="Delivered human clicks" value={totalHumans.toLocaleString()} sub={`${totalBots.toLocaleString()} bot traffic fetch`} />
-              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} human · ${totalBots} bot fetch`} accent />
+              <Kpi icon={MousePointerClick} label="Delivered human clicks" value={totalHumans.toLocaleString()} sub={`${totalBots.toLocaleString()} crawler previews filtered`} />
+              <Kpi icon={ShieldCheck} label="Verified humans" value={typeof humanPct === "string" && humanPct.endsWith("—") ? humanPct : `${humanPct}%`} sub={`${totalHumans} human · ${totalBots} crawler`} accent />
               <Kpi icon={Users} label="Countries seen" value={totalCountries.toString()} sub={totalCountries ? "across your traffic" : "none yet"} />
               <Kpi icon={TrendingUp} label="Earnings (lifetime)" value={`$${totalEarnings.toFixed(4)}`} sub="from earnings ledger" />
             </section>
@@ -265,7 +265,7 @@ function StatisticsPage() {
                 </div>
                 <div className="hidden md:flex items-center gap-4 text-xs">
                   <Legend2 color="hsl(var(--primary))" label="Humans" />
-                  <Legend2 color="#FF3D71" label="Bot Traffic fetch" />
+                  <Legend2 color="#FF3D71" label="Crawler previews" />
                 </div>
               </div>
               <div className="h-72">
@@ -331,7 +331,7 @@ function StatisticsPage() {
                           <tr>
                             <th className="text-left px-3 py-2">Country</th>
                             <th className="text-right px-3 py-2">Clicks</th>
-                            <th className="text-right px-3 py-2">Human / Bot fetch</th>
+                            <th className="text-right px-3 py-2">Human / Crawler</th>
                             <th className="text-right px-3 py-2">Share</th>
                           </tr>
                         </thead>
@@ -411,7 +411,7 @@ function StatisticsPage() {
             <section className="rounded-2xl glass-card p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-xl font-semibold">Bot Traffic fetch — last 30 days</h2>
+                <h2 className="font-display text-xl font-semibold">Crawler previews — last 30 days</h2>
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">

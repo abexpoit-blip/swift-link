@@ -298,7 +298,7 @@ function DashboardPage() {
           <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
             <Mini label="Total requests" value={liveStats.total.toLocaleString()} />
             <Mini label="Delivered humans" value={liveStats.humans.toLocaleString()} sub="passed" />
-            <Mini label="Bot Traffic fetch" value={displayBotCount(liveStats.bots).toLocaleString()} sub={`${liveStats.total ? ((displayBotCount(liveStats.bots) / liveStats.total) * 100).toFixed(1) : "0.0"}% crawler/preview`} />
+            <Mini label="Crawler previews" value={displayBotCount(liveStats.bots).toLocaleString()} sub="auto-filtered" />
 
           </div>
         </section>
@@ -369,7 +369,7 @@ function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-xs">
                         <span className="text-emerald-500 font-medium">{humanClicks.toLocaleString()} human</span>
-                        <span className="text-muted-foreground" title="Platform crawler / link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} bot fetch</span>
+                        <span className="text-muted-foreground" title="Platform link-preview fetches — not traffic you sent">{botFetch.toLocaleString()} crawler</span>
 
                         <span className="font-display font-bold text-gradient">${(e?.earnings_usd ?? 0).toFixed(3)}</span>
                       </div>
