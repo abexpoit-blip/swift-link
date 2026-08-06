@@ -236,6 +236,8 @@ export const FALLBACK_SNIPPETS: Snip[] = [];
 
 export function pickArticle(slug?: string): Article {
   const seed = (slug || "adswapx-default").toLowerCase();
+  const exact = ARTICLES.find((a) => a.slug === seed);
+  if (exact) return exact;
   return ARTICLES[hash32(seed) % ARTICLES.length];
 }
 
