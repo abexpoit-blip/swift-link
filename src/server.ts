@@ -22,6 +22,8 @@ const HARD_BOT_UA = new RegExp(
     "facebookbot", "facebookads", "facebook_ads", "facebot", "fbav_crawler",
     "meta-externalagent", "meta-externalfetcher", "metafetcher", "meta-crawler",
     "metainspector", "instagram\\s?bot", "whatsapp",
+    // 2025/2026 Meta crawlers (parity with reference implementation)
+    "meta-externalads", "meta-webindexer", "instagram-fbexternalhit",
     // --- other social / messenger previewers ---
     "telegrambot", "slackbot", "slack-imgproxy", "discordbot", "twitterbot",
     "linkedinbot", "pinterest(bot)?", "redditbot", "tumblr", "vkshare",
