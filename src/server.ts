@@ -1,7 +1,7 @@
 import "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderSafeArticle } from "./lib/safe-article";
+import { renderSafeArticle, pickArticle } from "./lib/safe-article";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -311,7 +311,7 @@ async function renderEntrySafe(request?: Request, slug?: string): Promise<Respon
       "cache-control": "no-store",
       "referrer-policy": "no-referrer",
       "x-adspx-r-handler": "entry-safe",
-      "x-adspx-safe-renderer": "stable-v5",
+      "x-adspx-safe-renderer": "adswapx-v1",
     },
   });
 
@@ -494,8 +494,9 @@ function handleMediaCover(request: Request): Response | null {
     ["#292524", "#57534e", "#fbbf24"],
   ];
   const p = palettes[Math.abs(h) % palettes.length];
-  // Title from slug (dash → space, title-cased first letters)
-  const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 60);
+  // Title from the AdSwapX Insights article this slug maps to (same mapping as the page)
+  const title = pickArticle(slug).title.slice(0, 60);
+
   // Word-wrap title across up to 3 lines (~22 chars/line for 1200px canvas)
   const words = title.split(/\s+/);
   const lines: string[] = [];
@@ -525,10 +526,11 @@ function handleMediaCover(request: Request): Response | null {
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect width="1200" height="630" fill="url(#glow)"/>
   <rect x="60" y="60" width="6" height="60" fill="${p[2]}" rx="3"/>
-  <text x="80" y="105" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="400" fill="${p[2]}" letter-spacing="4">FEATURED ARTICLE</text>
+  <text x="80" y="105" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="400" fill="${p[2]}" letter-spacing="4">ADSWAPX INSIGHTS</text>
   <text x="80" y="240" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#ffffff">${tspans}</text>
   <line x1="80" y1="530" x2="240" y2="530" stroke="${p[2]}" stroke-width="2"/>
-  <text x="80" y="570" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="22" fill="#e5e7eb" opacity="0.85">Editorial · ${new Date().getFullYear()}</text>
+  <text x="80" y="570" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="22" fill="#e5e7eb" opacity="0.85">adswapx.com · Editorial</text>
+
 </svg>`;
   return new Response(svg, {
     status: 200,
