@@ -525,13 +525,14 @@ function AIProtectionPanel({ humans, bots }: { humans: number; bots: number }) {
           <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
             Each click runs through our proprietary stack tuned specifically for{" "}
             <strong className="text-foreground">Facebook → Adsterra</strong> and other ad-network campaigns.
-            Reviewers, scrapers and bots get filtered out automatically — only verified humans reach your money URL,
-            so your offer never gets flagged.
+            Reviewers, scrapers and platform link-preview crawlers get separated automatically — only verified humans
+            reach your money URL, so your offer never gets flagged.
           </p>
           <div className="flex flex-wrap gap-4 text-xs pt-1">
-            <div><span className="text-muted-foreground">Humans this session: </span><span className="font-mono text-primary">{humans}</span></div>
-            <div><span className="text-muted-foreground">Filtered: </span><span className="font-mono text-[#FF3D71]">{bots}</span></div>
+            <div><span className="text-muted-foreground">Delivered humans: </span><span className="font-mono text-primary">{humans}</span></div>
+            <div title="Automated link-preview fetches from Facebook / WhatsApp / Telegram — not traffic you sent"><span className="text-muted-foreground">Crawler previews: </span><span className="font-mono text-muted-foreground">{bots}</span></div>
             <div><span className="text-muted-foreground">Added latency: </span><span className="font-mono">~12ms</span></div>
+
           </div>
         </div>
 
